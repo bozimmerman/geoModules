@@ -1,0 +1,259 @@
+<!DOCTYPE html><html><head><title>Untitled</title></head><body><pre><span align="left">.noeqin
+<span align="left">.include	GEOSequates
+.glbl
+.eqin
+
+<span align="left">;****************************************
+;* MODseqR - geoProjects library (C) 1998 Bo Zimmerman
+<span align="left">;*
+;* Intro:
+;* 	This modules supports C= seq/prg file
+;* 	reading.  A read buffer will be maintained
+;*	during execution.
+;*
+;* Functions:
+;*	OpenSF(	.word	Filename pointer
+;*			.byte	Drive search flag, 0=current only) *
+;*	GetSByte()		.a	 byte read in, .x error
+;*	GetSString(	.word	String pointer) *
+;*	GetSBuf(	.word	Buffer pointer
+;*			.word	Number of bytes) *
+;*	GetSMem(	.word	Buffer pointer
+;*			.word	Last byte pointer) *
+;*
+;*	* = includes i_Function call, and returns 
+;*		status in the .x register
+;*
+;* Comments:
+;****************************************
+.psect
+
+<span align="left">;******************************
+;* OpenSF	Open a file for reading
+;* Inputs:
+;*		A2	name of file to open
+;*		A3L	drive flag byte for open (0=both, X=1)
+;* Outputs:	
+;*		curDrive	drive file found on
+;*		.x 	status
+;*		.a	?
+;******************************
+
+OpenSF:	mvw	A2,R6	; put filename into position
+	mvb	A3L,$886e	; which drive to search
+	jsr	FindFile
+	cpx	#0
+	beq	10$
+	rts		; some sort of disk error, exit!
+10$:	mvb	curDrive,SIORdrv	; save this drive letter
+	mvw	$8401,R1	; setup to read first block
+	mvw	R1,SIORTnS
+	ldw	R4,#SIORBuf+2
+	jsr	GetBlock	; get the block
+	cpx	#0
+	bne	11$
+	jsr	SIORths
+	cpx	#0
+11$:	rts
+
+
+<span align="left">;******************************
+;* i_OpenSF	Open a file for reading
+;* Inputs:
+;*		.word	name of file to open
+;*		.byte	flag byte for open (0=both, X=1)
+;* Outputs:	
+;*		curDrive	drive file found on
+;*		.x 	status
+;*		.a	?
+;******************************
+
+i_OpenSF:
+	jsr	APIinit
+	jsr	OpenSF
+	ldy	#3	; 1 word and 2 bytes = 4 bytes
+	jmp	APIreturn
+
+<span align="left">;******************************
+;* GetSByte	Read a byte from an open file
+;* Inputs:
+;* Outputs:	
+;*		.x 	status
+;*		.a	byte returned
+;******************************
+GetSByte:
+	jsr	SIORrDrv
+	ldx	#0
+	ldy	SIORBuf
+	lda	SIORBuf+2,y
+	pha
+	cpy	SIORBuf+1
+	blt	10$
+	jsr	SIORNxt
+	bra	11$
+10$:	iny
+	sty	SIORBuf
+11$:	pla	
+	cpx	#0
+	rts
+
+<span align="left">;******************************
+;* GetSString	Inputs a string from a sequential file
+;* Inputs:
+;*		A2	pointer to $ buffer
+;* Outputs:	
+;*		.x 	status
+;*		.a	?
+;* Destroyed:
+;*		A3	ptr to string Null
+;******************************
+
+GetSString:
+	mvw	A2,A3	; create a work pointer
+SIORSS2:	jsr	GetSByte
+	cpx	#0
+	beq	10$
+	cpx	#11
+	bne	12$	; if error, also exit
+10$:	ldy	#0
+	sta	(A3),y	; sta a byte
+	beq	12$	; if NULL, end
+	cpx	#0
+	bne	12$	; if there was an error, yer done
+	inc	A3L	; otherwise increment work pointer
+	bne	11$	; if low byte no zeroed, skip
+	inc	A3H	; increment high byte of wk ptr
+11$:	jmp	SIORSS2	; go write the next byte
+12$:	rts
+
+<span align="left">;******************************
+;* i_GetSString	Input a string from a sequential file
+;* Inputs:
+;*		.word	pointer to $ buffer
+;* Outputs:	
+;*		.x 	status
+;*		.a	?
+;******************************
+
+i_GetSString:
+	jsr	APIinit
+	jsr	GetSString
+	ldy	#2
+	jmp	APIreturn
+
+<span align="left">;******************************
+;* GetSBuf	Input a buffer from a seq file
+;* Inputs:
+;*		A2	pointer to buffer
+;*		A3	number of bytes to read 
+;* Outputs:	
+;*		.x 	status
+;*		.a	?
+;* Destroyed:
+;*		A3	converted to last byte
+;******************************
+
+GetSBuf:	adw	A2,A3	; convert to GetSMem
+	dec	A3L	; now lose the extra byte
+	cbi	A3L,#255
+	bne	10$
+	dec	A3H
+10$:	jmp	GetSMem
+
+<span align="left">;******************************
+;* i_GetSBuf	Input a buffer from a seq file
+;* Inputs:
+;*		.word	pointer to buffer
+;*		.word	number of bytes to read 
+;* Outputs:	
+;*		.x 	status
+;*		.a	?
+;* Destroyed:
+;*		A3	converted to last byte
+;******************************
+
+i_GetSBuf:
+	jsr	APIinit
+	jsr	GetSBuf
+	ldy	#4
+	jmp	APIreturn
+
+<span align="left">;******************************
+;* GetSMem	Input a block of memory from a seq file
+;* Inputs:
+;*		A2	pointer to start location
+;*		A3	pointer to last byte 
+;* Outputs:	
+;*		.x 	status
+;*		.a	?
+;* Destroyed:
+;*		A2	will point to end of buffer
+;******************************
+
+GetSMem:
+10$:	jsr	GetSByte
+	cpx	#0
+	beq	11$
+	cpx	#11
+	bne	13$
+11$:	ldy	#0
+	sta	(A2),y	; get the byte
+	cpx	#0
+	bne	13$
+	cpw	A2,A3	; now see if end is reached
+<span align="left">	beq	13$	; if yes, then exit
+	inc	A2L	; otherwise increment A2
+	bne	12$	; no low byte overflow?
+	inc	A2H	; low byte overflow means inc A2H
+12$:	bra	10$	; and write the next byte
+13$:	rts
+
+<span align="left">;******************************
+;* i_GetSMem	Input a block of memory from a seq file
+;* Inputs:
+;*		.word	pointer to start location
+;*		.word	pointer to last byte 
+;* Outputs:	
+;*		.x 	status
+;*		.a	?
+;* Destroyed:
+;*		A2	will point to end of buffer
+;******************************
+
+i_GetSMem:
+	jsr	APIinit
+	jsr	GetSMem
+	ldy	#4
+	jmp	APIreturn
+
+<span align="left">SIORrDrv:
+	cpb	curDrive,SIORdrv
+	beq	99$
+	lda	SIORdrv
+	jsr	SetDevice
+99$:	rts
+
+SIORNxt:	lda	SIORBuf+2	; get track byte
+	bne	10$	; if its not a track
+	ldx	#11	; then return eof, we're done
+	rts
+10$:	mvw	SIORBuf+2,R1	; now load next track into R1
+	ldw	R4,#SIORBuf+2	; point to buffer
+	jsr	GetBlock	; gets it
+	cpx	#0
+	beq	SIORths	; no errors allowed
+	rts
+SIORths:	ldb	SIORBuf,#$02	; default first byte to $02 ALWAYS
+	ldb	SIORBuf+1,#$ff	; otherwise, default end byte
+	lda	SIORBuf+2	; is there a NEXT track
+<span align="left">	bne	10$
+	mvb	SIORBuf+3,SIORBuf+1
+10$:	ldx	#0	; if not, move end byte into place
+	rts
+
+
+<span align="left">.ramsect
+
+SIORBuf:	.block	258 * 1	; want to support multiple open files
+SIORdrv:	.block	1	; drive type reading from
+SIORTnS:	.block	2	; track and sectors</pre></body></html>

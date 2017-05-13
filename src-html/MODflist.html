@@ -1,0 +1,562 @@
+<!DOCTYPE html><html><head><title>Untitled</title></head><body><pre><span align="left">.noeqin
+.include	GEOSequates
+.glbl
+.eqin
+
+;****************************************
+;* MODflist - geoProjects library (C) 1998 Bo Zimmerman
+<span align="left">;*
+;* Intro:
+;*	Retreives list of filenames (all), includes
+;*	all manner of list traversal/display funcs.
+;*
+;* Functions:
+;* FileList	(.word	Location of dest buffer
+;*	.word	End of dest buffer
+;*	opened curDrive) .x=errors, .a=# read  *
+;* File2List	(.word	Location of dest buffer
+;*	.word	End of dest buffer
+;*	.byte	# items to skip
+;*	.byte	max items to read
+;*	opened curDrive) .x=errors, .a=# read  *
+;* CopyFnam(.word Pointer to filename
+;*	.word	Pointer to destination) *
+;* PrntList	(A2	Pointer to top of printable list
+;*	A3L	Which relative item to highlight) * !
+;*	.a=highlight, .x=# shown
+;* DownList(.word	Pointer to start item
+;*	.word	Where to put result ptr
+;*	.byte	How far down to point) *
+;*	.x =0 is ok, 1 is too far
+;* UpList	(.word	Pointer to start item
+;*	.word	Pointer to start o' list
+;*	.word	Where to put result ptr
+;*	.byte	How far up to point) *
+;*	.x =0 is ok, 1 is too far
+;* ClkList () ! .x=0 or which one
+;* PikList	(.byte	Which to affect) * !
+;*	.x = 0 is ok, 1 is not done
+;*
+;* Comments:
+;*   * = includes i_ version
+;*   ! = requires the following:
+;*	R2L	Top of box to print in
+;*	R2H	Bottom of box
+;*	R3	Left side of box
+;*	R4	Right side of box
+;****************************************
+.psect
+
+<span align="left">;*******************************
+;* FileList
+;*
+;* Inputs:	
+;*	A2	Location of dest buffer
+;*	A3	End of dest buffer
+;*	
+;* Outputs:
+;*	.a	?
+;*	.x	errors, if any
+;*******************************
+
+FileList:	ldw	A4,#0
+	jmp	File2List
+
+<span align="left">;*******************************
+;* i_FileList
+;*
+;* Inputs:	
+;*	.word	Location of dest buffer
+;*	.word	End of dest buffer
+;*	
+;* Outputs:
+;*	.a	?
+;*	.x	errors, if any
+;*******************************
+
+i_FileList:
+	jsr	APIinit
+	jsr	FileList
+	ldy	#4	; 2 word ptrs = 4 bytes
+	jmp	APIreturn
+
+
+<span align="left">;*******************************
+;* File2List
+;*
+;* Inputs:	
+;*	A2	Location of dest buffer
+;*	A3	End of dest buffer
+;*	A4L	number of entries to skip
+;*	A4H	number of entries total
+;*	
+;* Outputs:
+;*	.a	?
+;*	.x	errors, if any
+;*******************************
+File2List:	ldb	A5L,#1
+	ldb	A5H,#1
+	jsr	OpenDisk
+	txa		; check for dir header error
+	beq	11$
+10$:	dec	A5H
+	lda	A5H
+	rts		; disk error!!
+<span align="left">11$:	svw	#3,A2
+	jsr	Get1stDirEntry
+12$:	txa
+	bne	10$	; check for error (and eof?)
+	tya
+	bne	10$	; end of directory perhaps?
+	lda	(R5),y	; does the file exist?
+	beq	16$	; no, so skip to next
+	jsr	FLSTok	; this is for FileLst2
+	bcs	16$
+	iny
+	iny
+13$:	iny		; now jump to filename itself
+	lda	(R5),y	; get a letter of the filename
+	cmp	#$a0	; end of the filename reached?
+	beq	14$
+	sta	(A2),y	; y offset is ok, R6 is offset too!
+	cpy	#$13	; too far?
+	bne	13$	; no, so get next letter to copy
+14$:	lda	#0	; put filename delimeter in
+	sta	(A2),y
+	iny		; step out one byte for 0
+	sta	(A2),y	; spare 0, just in case
+	tya		; add file length to R6
+	clc
+	adc	A2L
+	sta	A2L
+	bcc	15$
+	inc	A2H
+15$:	svw	#3,A2	; and take 3 right back!	
+16$:	cpw	A2,A3 	; run out of space yet?
+	bge	17$	; yes, so get outa here
+	jsr	GetNxtDirEntry	; try for the next
+	bra	12$
+17$:	dec	A5H
+	lda	A5H
+	rts	
+
+<span align="left">;*******************************
+;* i_File2List
+;*
+;* Inputs:	
+;*	.word	Location of dest buffer
+;*	.word	End of dest buffer
+;*	.byte	number of entries to skip
+;*	.byte	number of entries total
+;*	
+;* Outputs:
+;*	.a	?
+;*	.x	errors, if any
+;*******************************
+
+i_File2List:
+	jsr	APIinit
+	jsr	FileList
+	ldy	#6	; 2 word ptrs + 2 bytes = 6 bytes
+	jmp	APIreturn
+
+
+<span align="left">;*******************************
+;* CopyFnam
+;*
+;* Inputs:	
+;*	A2	Pointer to filename
+;*	A3	Pointer to destination
+;*	
+;* Outputs:
+;*	.a	0
+;*	.x	0
+;*******************************
+
+CopyFnam:
+	ldy	#0
+10$:	lda	(A2),y	; copy disk name over
+	sta	(A3),y
+	beq	12$	; a surprising null found in name?
+	cmp	#$a0	; $a0 delimeter reached in name?
+	beq	11$
+	iny
+	cpy	#16	; name gone too long?
+	bne	10$
+11$:	lda	#0
+	sta	(A3),y
+12$:	tax	
+	rts
+
+<span align="left">;*******************************
+;* i_CopyFnam
+;*
+;* Inputs:	
+;*	.word	Pointer to filename
+;*	.word	Pointer to destination
+;*	
+;* Outputs:
+;*	.a	0
+;*	.x	0
+;*******************************
+
+i_CopyFnam:
+	jsr	APIinit
+	jsr	CopyFnam
+	ldy	#4	; 2 word ptrs = 4 bytes
+	jmp	APIreturn
+
+
+<span align="left">;*******************************
+;* PrntList
+;*
+;* Inputs:	
+;*	A2	Pointer to start of printable list
+;*	A3L	Which relative item to highlight
+;*	R2L	Top of box to print in
+;*	R2H	Bottom of box
+;*	R3	Left side of box
+;*	R4	Right side of box
+;*	
+;* Outputs:
+;*	.a	1=highlight, 0=not
+;*	.x	number shown
+;*******************************
+PrntList:	jsr	UseSystemFont		; save old margin first
+	ldx	#0
+10$:	lda	windowTop,x	; save margins
+	sta	APITemp1,x
+	inx
+	cpx	#6
+	bne	10$
+	mvw	StringFaultVec,APITemp1+6
+	ldx	#0
+11$:	lda	R2L,x	; get new margins
+	sta	APITemp1+8,x
+	sta	windowTop,x
+	inx
+	cpx	#6
+	bne	11$
+	ldw	StringFaultVec,#0	
+	mvw	A2,R0	; now prepare to print
+	mvb	windowTop,R1H
+	ldb	A3H,#1	; init which is shown/#total
+	ldb	A4L,#0	; init the highlight flag
+
+
+<span align="left">;*******************************
+;* PrntList
+;*
+;* Continued
+;*******************************
+12$:	mvw	leftMargin,R11
+	avb	#8,R1H
+	cpb	R1H,windowBottom
+	bge	14$	; too far down?
+	ldy	#0
+	lda	(R0),y
+	beq	14$
+	jsr	PutString
+	inc	A3H
+	ldy	#$ff
+13$:	iny		; find end of string
+	lda	(R0),y
+	bne	13$				
+	iny
+	lda	(R0),y	; was this the terminating point?
+	beq	14$
+	tya	; no, so set pointer for next
+	clc
+	adc	R0L
+	sta	R0L
+	bcc	12$
+	inc	R0H
+	bne	12$
+14$:	ldx	#0
+15$:	lda	APITemp1,x	; restore margins
+	sta	windowTop,x
+	inx
+	cpx	#6
+	bne	15$
+	mvw	APITemp1+6,StringFaultVec
+	ldx	#0
+16$:	lda	APITemp1+8,x	; restore R2L
+	sta	R2L,x
+	inx
+	cpx	#6
+	bne	16$
+	lda	A3L	; shall we highlight?
+	beq	17$
+	cmp	A3H	; so far, no
+	bgt	17$
+	inc	A4L	; set highlight flag
+	mvb	A3L,A2L
+	jsr	PikList
+17$:	lda	A4L	; get the highlight flag
+	ldx	A3H	; get the total shown
+	rts			
+
+
+<span align="left">;*******************************
+;* i_PrntList
+;*
+;* Inputs:	
+;*	.word	Pointer to start of printable list
+;*	.byte	Which relative item to highlight
+;*	R2L	Top of box to print in
+;*	R2H	Bottom of box
+;*	R3	Left side of box
+;*	R4	Right side of box
+;*	
+;* Outputs:
+;*	.a	1=highlight, 0=not
+;*	.x	number shown
+;*******************************
+i_PrntList:
+	jsr	APIinit
+	jsr	PrntList
+	ldy	#3	; 1 word ptrs + 1 byte = 3 bytes
+	jmp	APIreturn
+
+<span align="left">;*******************************
+;* DownList
+;*
+;* Inputs:	
+;*	A2	Pointer to start item
+;*	A3	Where to put result ptr
+;*	A4L	How far down to point
+;*	
+;* Outputs:
+;*	.a	0
+;*	.x	0=found, 1=too far
+;*******************************
+
+DownList:
+	lda	#$ff	
+	sta	A5L	; init the which one pointer
+10$:	inc	A5L
+	cpb	A5L,A4L
+	beq	14$
+	ldy	#0	; start the search loop
+11$:	lda	(A2),y
+	beq	12$	; end of this string
+	jsr	FLSTincA	; increment pointer
+	bne	11$	
+12$:	jsr	FLSTincA	; new item, so increment pointer
+13$:	lda	(A2),y
+	bne	10$	; not end of list, so look at nxt
+	ldx	#1
+	rts
+14$:	ldy	#0	; start the search loop
+	lda	A2L	; found. so update ptr, exit
+<span align="left">	sta	(A3),y
+	iny
+	lda	A2H
+	sta	(A3),y
+	ldx	#0
+	rts	
+
+
+<span align="left">;*******************************
+;* i_DownList
+;*
+;* Inputs:	
+;*	.word	Pointer to start item
+;*	.word	Where to put result ptr
+;*	.byte	How far down to point
+;*	
+;* Outputs:
+;*	.a	0
+;*	.x	0=found, 1=too far
+;*******************************
+
+i_DownList:
+<span align="left">	jsr	APIinit
+	jsr	DownList
+	ldy	#5	; 2 word ptrs + 1 byte = 5 bytes
+	jmp	APIreturn
+
+<span align="left">;*******************************
+;* UpList
+;*
+;* Inputs:	
+;*	A2	Pointer to start item
+;*	A3	Pointer to start o' list
+;*	A4	Where to put result ptr
+;*	A5L	How far up to point
+;*	
+;* Outputs:
+;*	.a	0
+;*	.x	0=found, 1=too far
+;*******************************
+
+UpList:
+	ldb	A6L,#0
+	ldy	#0
+	lda	A5L	; check how far to go
+	beq	11$	; going nowhere, so exit
+	cpw	A2,A3	; starting at beginning?
+	beq	14$	; yep, so a bad abort
+	jsr	FLSTdecA	; point before the start
+10$:	jsr	FLSTdecA	; now REALLY start search
+	cpw	A2,A3	; reached the beginning?
+	ble	13$	; yep, so possibly abort
+	lda	(A2),y	
+	bne	10$	; loop through this one	
+	inc	A6L	; done with one!
+	cpb	A6L,A5L	; gone back enough?
+	bne	10$	; nope, so keep going
+	jsr	FLSTincA	; point back to beginning
+11$:	ldx	#0
+12$:	ldy	#0	; start the search loop
+	lda	A2L
+<span align="left">	sta	(A4),y
+	iny
+	lda	A2H
+	sta	(A4),y
+	rts
+13$:	inc	A6L	; top check
+	cpb	A6L,A5L	; was it ok?
+	beq	11$
+14$:	mvw	A3,A2
+	ldx	#1	; no, so abort
+	bne	12$
+
+<span align="left">;*******************************
+;* i_UpList
+;*
+;* Inputs:	
+;*	.word	Pointer to start item
+;*	.word	Pointer to start o' list
+;*	.word	Where to put result ptr
+;*	.byte	How far up to point
+;*	
+;* Outputs:
+;*	.a	0
+;*	.x	0=found, 1=too far
+;*******************************
+
+i_UpList:
+	jsr	APIinit
+	jsr	UpList
+	ldy	#7	; 3 word ptrs + 1 byte = 7 bytes
+	jmp	APIreturn
+
+<span align="left">;*******************************
+;* ClkList
+;*
+;* Inputs:	
+;*	R2L	Top of click window
+;*	R2H	Bottom of click window
+;*	R3	Left of click window
+;*	R4	Right of click window
+;*	
+;* Outputs:
+;*	.a	0
+;*	.x	0=no click, ?=which
+;*******************************
+ClkList:	ldb	A5L,#0	; which one flag
+	mvw	R2,APITemp1	; save top/bottom
+	lda	mouseData
+	beq	11$
+10$:	mvw	APITemp1,R2
+	ldx	A5L
+	txa
+	rts		; no click at all
+11$:	jsr	IsMseInRegion
+	tay		; inside box at all??
+	beq	10$
+	inc	R2L
+	mvb	R2L,R2H
+12$:	avb	#8,R2H	; prepare check spot
+	cpb	R2H,APITemp1+1	; gone too far down?
+	ble	13$
+	ldb	A5L,#0	; yes, so exit w/o success
+	beq	10$
+13$:	inc	A5L
+	jsr	IsMseInRegion	; check this box
+	tay
+	bne	10$	; inside! so, success!
+	mvb	R2H,R2L
+	bra	12$	; move down and check next
+	rts
+
+<span align="left">;*******************************
+;* PikList
+;*
+;* Inputs:	A2L	Which to affect
+;*	R2L	Top of click window
+;*	R2H	Bottom of click window
+;*	R3	Left of click window
+;*	R4	Right of click window
+;*	
+;* Outputs:
+;*	.a	0
+;*	.x	0=ok, 1=not done
+;*******************************
+
+PikList:	ldb	A5L,#0	; which one flag
+	mvw	R2,APITemp1	; save top/bottom
+	inc	R2L
+	mvb	R2L,R2H
+10$:	avb	#8,R2H	; prepare check spot
+	cpb	R2H,APITemp1+1	; gone too far down?
+	ble	12$
+	ldx	#1	; yes, so exit w/fail
+11$:	mvw	APITemp1,R2
+	rts
+12$:	inc	A5L
+	cpb	A5L,A2L
+	beq	13$	
+	mvb	R2H,R2L
+	bra	10$	; move down and check next
+13$:	jsr	InvertRectangle
+	ldx	#0
+	beq	11$	; report success!
+	rts
+
+<span align="left">;*******************************
+;* i_PikList
+;*
+;* Inputs:	.byte	Which to affect
+;*	R2L	Top of click window
+;*	R2H	Bottom of click window
+;*	R3	Left of click window
+;*	R4	Right of click window
+;*	
+;* Outputs:
+;*	.a	0
+;*	.x	0=ok, 1=not done
+;*******************************
+i_PikList:
+<span align="left">	jsr	APIinit
+	jsr	PikList
+	ldy	#1	; 1 byte = 1 byte
+	jmp	APIreturn
+
+<span align="left">FLSTdecA:	dec	A2L
+	cbi	A2L,#$ff
+	bne	10$
+	dec	A2H
+10$:	rts
+
+FLSTincA:	inc	A2L
+	bne	10$
+	inc	A2H
+10$:	rts
+
+FLSTok:	lda	A4L
+	beq	11$
+	cmp	A5L
+	blt	11$
+	inc	A5L
+10$:	sec
+	rts
+11$:	lda	A4H
+	beq	12$
+	cmp	A5H
+	blt	10$
+	inc	A5H
+12$:	clc
+	rts
+</pre></body></html>

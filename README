@@ -1,0 +1,953 @@
+geoModules (C)1997-2017 Bo Zimmerman
+Please read the LICENSE file for license information
+Please read the NOTICE file for credits information
+Home Page: http://www.zimmers.net/geos/geomods.html
+
+
+The geoModules project
+
+
+The purpose of my geoModules project:. The user interface standards of GEOS are well known to users and programmers alike, and this creates the constant threat of duplicate code whenever a new app is written. With this in mind, I embarked on my geoModules project with the following goals:
+
+That each module should support a single programming purpose.
+That each module be self contained and self reliant.
+All modules use shared temporary space.
+All module functions support a common function-calling convention.
+All modules adopt a standard naming convention to support the function-calling conventions, as well as naming all local labels by beginning the name with a three character code unique to that module.
+
+The implementation of these goals required that first a meta-module be created to provide the common temporary work space, and a common set of routines to support the calling standard calling convention.
+
+
+The Common Function Interface
+
+The function interface for all modules is as follows:
+
+All functions have a normal and in-line call.
+Normal calls are unprotected. Registers are not saved, and all parameters must be manually loaded into the proper registers before calling.
+In-line calls are protected. Registers A2-A6 are saved, along with the .y register.
+In-line function names begin with the standard "i_" prefix.
+All functions will use the module and common work space, system registers, and application registers A2-A6 only.
+Parameters may be pointers, characters, or whatever will fit in registers A2-A6, which is the limit of the parameter passing space.
+This common functional interface is supported by a single linkable module called "APIcommon". It is required of all modules that they be linked along with this "metamodule" in order to make use of the shared resources. APIcommon contains four 20 character temporary buffers to be shared by all modules, and also includes the following functions:
+
+APISavRegs: saves the status register, .a, and .x
+APIResRegs: restores .a, .x, and the status register
+APISavSys: calls APISavRegs, saves GEOS registers A2-A6, and then APIResRegs
+APIinit: Calls APISavSys, and saves its return address
+APIreturn: Calls APISavRegs, restores the return address, and restores A2-A6
+
+geoModules implemented
+
+Below are all of the modules hitherto implemented along with their functions and parameters. They are all tested unless otherwise noted.
+
+MODstring - Various string handling routines
+MODwin2 - Dual movable windows module
+MODflist - Directory files/list handling routines
+MODclicks - Random click area helper code
+MODdaAB - Desk accessory menu and About menu module
+MODferr - File/Disk error message box
+MODscrn - General OK, Cancel, and Yes/No dialogs
+MODvPrg - VLIR application support module
+MODfbox - Open/Create/Quit box, along with support dialogs
+MODseqW - Create and write to sequential-type files.
+MODgeoWx - Creation and writing to geoWrite documents.
+MODseqR - Opening and reading from sequential-type files.
+MODsecIO - Support for reading to and from disk sectors in order.
+MODgeoRx - Opening and reading geoWrite documents to a window.
+MODtbox - Multi-line text box support.
+MODdemo - Assist in creation of limited-use demo applications.
+MODconvert - Convert and Unconvert GEOS files to and from .CVT.
+MODfcopy - Copy any file type from one drive to another.
+
+MODstring
+
+Introduction: This module is intended to handle all facets of string manipulation. A string is defined as a sequential series of bytes representing GEOS ASCII characters, and terminated by a null character (0).
+
+Functions:
+
+Append String: appends the source string to the end of the destination string.
+Return Values: returns the high byte of string length in .a and low byte in .x
+AppStr
+	A2	Pointer to destination string
+	A3	Pointer to source string
+i_AppStr
+	.word	Pointer to destination string
+	.word	Pointer to source string
+
+String Length: returns the length of a string
+Return Values: returns the high byte of string length in .a and low byte in .x
+StrLen
+	A2	Pointer to source string
+i_StrLen
+	.word	Pointer to source string
+
+Reverse Strng: reverses (mirror images) the characters in a given string
+Return Values: returns the high byte of string length in .a and low byte in .x
+RevStr
+	A2	Pointer to source string
+i_RevStr
+	.word	Pointer to source string
+
+To Uppercase : converts a string to uppercase characters
+Return Values: returns the high byte of string length in .a and low byte in .x
+ToUpper
+	A2	Pointer to source string
+i_ToUpper
+	.word	Pointer to source string
+
+To Lowercase : converts a string to lowercase characters
+Return Values: returns the high byte of string length in .a and low byte in .x
+ToLower
+	A2	Pointer to source string
+i_ToLower
+	.word	Pointer to source string
+
+To PETSKII   : converts a string to the CBM "PETSKII" character set
+Return Values: returns the high byte of string length in .a and low byte in .x
+ToPETSKII
+	A2	Pointer to source string
+i_ToPETSKII
+	.word	Pointer to source string
+
+To Uppercase : converts a null terminated CBM "PETSKII" string to GEOS ASCII characters
+Return Values: returns the high byte of string length in .a and low byte in .x
+ToASCII
+	A2	Pointer to source string
+i_ToASCII
+	.word	Pointer to source string
+
+
+Inside String: Locates the location of one string inside another
+Return Values: returns the high byte of found string in .a and low byte in .x, null otherwise
+InStr
+	A2	Pointer to source string
+	A3	Pointer to string to search for
+i_InStr
+	.word	Pointer to source string
+	.word	Pointer to string to search for
+
+Compare Strng: Compares two strings
+Return Values: returns result of the search in .a, .x has 0
+CmpStr
+	A2	Pointer to first string
+	A3	Pointer to second string
+i_CmpStr
+	.word	Pointer to first string
+	.word	Pointer to second string
+
+Copy Strings : Copies first string into the second
+Return Values: returns the high byte of string length in .a and low byte in .x
+CpyStr
+	A2	Pointer to source string
+	A3	Pointer to destination string
+i_CpyStr
+	.word	Pointer to source string
+	.word	Pointer to destination string
+
+
+MODwin2
+
+Introduction: This powerful modules provides support for the creation of two movable, resizable, overlapping windows. The windows contain a centered titlebar, and two work bars on the right and bottom, which the programmer may use as he pleases. They also contain a programmable close button on the top right, and a resizing gadget on the bottom right. The windows are moved by dragging the window by the title bar. The windows are initialized by calling Win1Mv, Win2Mv, Win1Init, Win2Init, and finally WindInit. Only that last should receive a non-null for the "Draw Now" parameter. Also, WindInit must only be called once per application, while the others may be re-called at will.
+
+Functions:
+
+Window 1 Move: Initializes the position of, or moves, Window 1.
+Return Values: NONE
+Win1Mv
+	A2L	The top position for the window
+	A2H	The bottom position for the window
+	A3	The left position for the window
+	A4	The right position for the window
+	A5L	Draw Now flag (0=no, 1=yes)
+i_Win1Mv
+	.byte	The top position for the window
+	.byte	The bottom position for the window
+	.word	The left position for the window
+	.word	The right position for the window
+	.byte	Draw Now flag (0=no, 1=yes)
+
+Window 2 Move: Initializes the position of, or moves, Window 2.
+Return Values: NONE
+Win2Mv
+	A2L	The top position for the window
+	A2H	The bottom position for the window
+	A3	The left position for the window
+	A4	The right position for the window
+	A5L	Draw Now flag (0=no, 1=yes)
+i_Win2Mv
+	.byte	The top position for the window
+	.byte	The bottom position for the window
+	.word	The left position for the window
+	.word	The right position for the window
+	.byte	Draw Now flag (0=no, 1=yes)
+
+Window 1 Init: Initializes certain variables for Window 1
+Return Values: NONE
+Win1Init
+	A2	Pointer to null terminated titlebar string
+	A3	Pointer to a routine to execute when close button clicked
+	A4	Pointer to code to complete drawing of this window
+	A5L	Enabled flag (1=enabled, 0=disabled)
+i_Win1Init
+	.word	Pointer to null terminated titlebar string
+	.word	Pointer to a routine to execute when close button clicked
+	.word	Pointer to code to complete drawing of this window
+	.byte	Enabled flag (1=enabled, 0=disabled)
+
+Window 2 Init: Initializes certain variables for Window 2
+Return Values: NONE
+Win1Init
+	A2	Pointer to null terminated titlebar string
+	A3	Pointer to a routine to execute when close button clicked
+	A4	Pointer to code to complete drawing of this window
+	A5L	Enabled flag (1=enabled, 0=disabled)
+i_Win1Init
+	.word	Pointer to null terminated titlebar string
+	.word	Pointer to a routine to execute when close button clicked
+	.word	Pointer to code to complete drawing of this window
+	.byte	Enabled flag (1=enabled, 0=disabled)
+
+IsOverlapping: Returns whether the two windows are presently overlapped. * Unprotected.
+Return Values: .a $ff=overlapped, 0=no overlap
+IsOverlap
+
+ReDraw Windw1: Completely redraws window 1.  Must set dispBufferOn first. * Unprotected.
+Return Values: NONE
+DrawWin1
+
+ReDraw Windw2: Completely redraws window 2.  Must set dispBufferOn first. * Unprotected.
+Return Values: NONE
+DrawWin2
+
+ReDraw Active: Completely redraws active window. Must set dispBufferOn first. * Unprotected.
+Return Values: NONE
+DrawWinA
+
+ReDraw InActv: Completely redraws inactive window. Must set dispBufferOn first. * Unprotected.
+Return Values: NONE
+DrawWinI
+
+Ready Window1: Copies the coordinates of window 1 into R2-R4.  *Unprotected.
+Return Values: R2L - Top of window
+               R2H - Bottom of window
+               R3  - Left coordinate of window
+               R4  - Right coordinate of window
+RedyWin1
+
+Ready Window2: Copies the coordinates of window 2 into R2-R4.  *Unprotected.
+Return Values: R2L - Top of window
+               R2H - Bottom of window
+               R3  - Left coordinate of window
+               R4  - Right coordinate of window
+RedyWin2
+
+Ready Active : Copies the coordinates of active window into R2-R4.  *Unprotected.
+Return Values: R2L - Top of window
+               R2H - Bottom of window
+               R3  - Left coordinate of window
+               R4  - Right coordinate of window
+RedyWinA
+
+Ready InActiv: Copies the coordinates of inactive window into R2-R4.  *Unprotected.
+Return Values: R2L - Top of window
+               R2H - Bottom of window
+               R3  - Left coordinate of window
+               R4  - Right coordinate of window
+RedyWinI
+
+Get Str Width: Returns the pixel width of a given string.  *Unprotected.
+Return Values: APITemp2 contains width of string in LB/HB format.
+GetStrWidth
+	R0	points to null-terminated string
+
+Win Activate : Activates (brings to the foreground) a particular window and redraws.
+Return Values: NONE
+WinAct
+	A2L	0 = swap, 1=activate Window 1, 2=activate Window 2
+i_Winact
+	.byte	0 = swap, 1=activate Window 1, 2=activate Window 2
+
+
+MODflist
+
+Introduction: Handles the retreival of complete disk filename lists into a buffer as null-terminated strings. It also includes all manner of traversal and display routines for any lists formatted in this way.
+
+Functions:
+
+Get File List: Retreives a buffer of filenames from the current drive.
+Return Values: .x contains standard errors
+FileList
+	A2	Pointer to a destination buffer
+	A3	Pointer to the end of the destination buffer
+i_File2List
+	.word	Pointer to a destination buffer
+	.word	Pointer to the end of the destination buffer
+
+Get File List 2: Retreives a buffer of filenames from the current drive.
+				This version is slightly more versatile than Get File List
+Return Values: .x contains standard errors
+FileList
+	A2	Pointer to a destination buffer
+	A3	Pointer to the end of the destination buffer
+	A4L	Number of file entries to skip
+	A4H	Maximum number of file entried to read
+i_FileList
+	.word	Pointer to a destination buffer
+	.word	Pointer to the end of the destination buffer
+	.byte	Number of file entries to skip
+	.byte	Maximum number of file entried to read
+
+Copy Filename: Copies a $A0 terminated filename string into a null terminated string buffer.
+Return Values: NONE
+CopyFnam
+	A2	Pointer to the filename
+	A3	Pointer to the destination string buffer
+i_CopyFnam
+	.word	Pointer to the filename
+	.word	Pointer to the destination string buffer
+
+Print a List : Displays a list inside of a window
+Return Values: .a = whether a filename was highlighted, .x = total files displayed
+PrntList
+	A2	Pointer to the first string to display
+	A3L	Which filename (relative to the first) to highlight
+	R2L	Top of the box to print inside
+	R2H	Bottom of the box to print inside
+	R3	Left side of the box to print in
+	R4	Right side of the box to print in
+i_PrntList
+	.word	Pointer to the first string to display
+	.byte	Which filename (relative to the first) to highlight
+	R2L	Top of the box to print inside
+	R2H	Bottom of the box to print inside
+	R3	Left side of the box to print in
+	R4	Right side of the box to print in
+
+Go Down List : Skip down a number of strings in a list
+Return Values: .x = 0 if ok, 1 of error
+DownList
+	A2	Pointer to the first string
+	A3	Pointer to a place to put the result pointer
+	A4L	How far down to skip
+i_DownList
+	.word	Pointer to the first string
+	.word	Pointer to a place to put the result pointer
+	.byte	How far down to skip
+
+Go Up in List: Travel up a list of null-terminated strings
+Return Values: .x = 0 if ok, 1 of error
+UpList
+	A2	Pointer to the current string
+	A3	Pointer to the start of the list
+	A4	Pointer to a place to put the result pointer
+	A5L	How far up to skip
+i_UpList
+	.word	Pointer to the current string
+	.word	Pointer to the start of the list
+	.word	Pointer to a place to put the result pointer
+	.byte	How far up to skip
+
+Click in List: Determine if one of the items in a list has been clicked on
+Return Values: .x = 0 if none, or the filename number clicked on
+ClkList
+	R2L	Top of the box to print inside
+	R2H	Bottom of the box to print inside
+	R3	Left side of the box to print in
+	R4	Right side of the box to print in
+
+Pick frm List: Select (highlight) an item in a list
+Return Values: .x = 0 if ok, 1 if not done
+PikList
+	A2L	Which item number to affect
+	R2L	Top of the box to print inside
+	R2H	Bottom of the box to print inside
+	R3	Left side of the box to print in
+	R4	Right side of the box to print in
+i_PikList
+	.byte	Which item number to affect
+	R2L	Top of the box to print inside
+	R2H	Bottom of the box to print inside
+	R3	Left side of the box to print in
+	R4	Right side of the box to print in
+
+
+MODclicks
+
+Introduction: Remembers the dimensions of 20 or more click areas (buttons, or whatever). Includes functions to dynamically set the click areas, detect mouse clicks within them, and automatically handle these clicks.
+
+Functions:
+
+Set a Click  : Set or change a click area
+Return Values: NONE
+SetClick
+	A2L	Top of the click area
+	A2H	Bottom of the click area
+	A3	Left side of click area
+	A4	Right side of the click area
+	A5	Routine to execute on click (or null if none)
+	A6L	Click area ID number to set (1-20)
+i_SetClick
+	.byte	Top of the click area
+	.byte	Bottom of the click area
+	.word	Left side of click area
+	.word	Right side of the click area
+	.word	Routine to execute on click (or null if none)
+	.byte	Click area ID number to set (1-20)
+
+Set Click Win: Set or change a click area using window data
+Return Values: NONE
+WSetClick
+	A2	Routine to execute on click (or null if none)
+	A3L	Click area ID number to set (1-20)
+	R2L	Top of the click area
+	R2H	Bottom of the click area
+	R3	Left side of click area
+	R4	Right side of the click area
+i_WSetClick
+	.word	Routine to execute on click (or null if none)
+	.byte	Click area ID number to set (1-20)
+	R2L	Top of the click area
+	R2H	Bottom of the click area
+	R3	Left side of click area
+	R4	Right side of the click area
+
+Check Click  : Determine if a click area has been clicked in
+Return Values: .x = 0 if clicked inside, $ff if not clicked inside
+ChkClick
+	A2L	Click area ID number to check (1-20)
+i_ChkClick
+	.byte	Click area ID number to check (1-20)
+
+Do a Click   : Check if a click area's selected; execute its routine if so. * Unprotected.
+Return Values: NONE
+DoClick
+	A2L	Click area ID number to check (1-20)
+
+Do all Clicks: Check all active click areas; execute routines if necessary. * Unprotected.
+Return Values: NONE
+DoAllClicks
+
+
+MODdaAB
+
+Introduction: This great module handles the initialization of a GEOS menu to include all desk accessories on the current drive. It will handle execution of the desk accessories on this menu when appropriate. It also includes a "program info" (about) option off the geos menu, and will display a dialog box with strings of your choice on selection of this option. After this module is initialized, it must be linked to your main menu code by pointing your "geos" menu to the structure "DAABMenu".
+
+Functions:
+
+Init DAs, Abt: Initialize the functionality of this module
+Return Values: NONE
+InitDaAb
+	A2	Routine pointer to refresh the screen after about box display (or null)
+	A3	Routine pointer to refresh the app after desk accessory return (or null)
+	A4	Routine pointer to save app data before desk accessory execute (or null)
+	A5	Pointer to a buffer of four strings to display in the about box
+i_InitDaAb
+	.word	Routine pointer to refresh the screen after about box display (or null)
+	.word	Routine pointer to refresh the app after desk accessory return (or null)
+	.word	Routine pointer to save app data before desk accessory execute (or null)
+	.word	Pointer to a buffer of four strings to display in the about box
+
+
+MODferr
+
+Introduction: Displays a dialog box with one of the GEOS disk error messages.
+
+Functions:
+
+File Error   : Display an error dialog box
+Return Values: NONE
+FError
+	.x	error message to generate, or 0 to abort
+
+
+MODscrn
+
+Introduction: Module to contain some common screen controls.
+
+Functions:
+
+Clear Screen : Clear the screen with the standard GEOS fill pattern
+Return Values: NONE
+ClrScrn
+
+OK Box Disply: Display an OK dialog box with a short message.
+Return Values: NONE
+OKBox
+	A2	Pointer to string message to display
+i_OKBox
+	.word	Pointer to string message to display
+
+CANCEL Box   : Display a CANCEL dialog box with a short message.
+Return Values: NONE
+CNCLBox
+	A2	Pointer to string message to display
+i_CNCLBox
+	.word	Pointer to string message to display
+Yes/No Box   : Display a Yes/No dialog box with a short message.
+Return Values: NONE
+YNBox
+	A2	Pointer to string message to display
+i_YNBox
+	.word	Pointer to string message to display
+
+OK/Cancel Box   : Display an OK/Cancel dialog box with a short message.
+Return Values: NONE
+OKCANBox
+	A2	Pointer to string message to display
+i_OKCANBox
+	.word	Pointer to string message to display
+
+
+MODvPrg
+
+Introduction: Module to support VLIR applications with module loading/app init functions.
+
+Functions:
+
+Init VLIR    : Initialize VLIR application by reading in links.
+Return Values: .x error message if any
+InitVPrg
+	A2	Pointer to application permanent name
+i_InitVPrg
+	.word	Pointer to application permanent name
+
+Load module  : Swap a new code module into memory.
+Return Values: .x error message if any
+LdMod
+	A2L	Module number to load in (1..2..3..)
+i_LdMod
+	.byte	Module number to load in (1..2..3..)
+
+Virtual Jump  : Swap a new code module into memory and jump to an offset routine.
+Return Values: .x error message if any
+VJump
+	A2L	Module number to load in (1..2..3..)
+	A2H Offset from VPRGBase to execute (0,3,6,9,etc.)
+i_VJump
+	.byte	Module number to load in (1..2..3..)
+	.byte	Offset from VPRGBase to execute (0,3,6,9,etc)
+
+
+
+MODfbox
+
+Introduction: Module to support all major opening file screens for a workfile based application. This includes the standard OPEN an existing file/CREATE a new file/QUIT to deskTop. The Open/Create screens screens include fully functional DISK/DRIVE icons which are sensitive to the application disk (see curDrive below), and to single drive systems. The Create box will check for already existing files. Auto-clicked filenames are also supported.
+
+Functions:
+
+Opening Box  : Handle all opening screens as described in introduction.
+
+Return Values: A5 - the filename created or selected
+               curDrive - the drive the file was opened from/created
+               sysDBData - $00 if create done, $ff if open
+FileBox
+        A2      Pointer to any extra display code besides the opening screen.
+        A3      Pointer to any clean up code for the A2 routine
+        A4      Pointer to the permanent name for data files
+        A5      Pointer to destination for opened/created file name
+        curDrive the application drive (no DISK icon will appear on this drive)
+
+
+
+MODseqW
+
+Introduction: The creation of standard commodore sequential and program files is supported here as well as writing to them. All write/file buffers are maintained internally. Only one open file is supported at present.
+
+Functions:
+
+Create SF    : Create the file on disk and prepare for writing
+Return Values: .x error message if any
+CreatSF
+	A2	Pointer to seq file name
+i_CreatSF
+	.word	Pointer to seq file name
+
+Put S Byte   : Output a single character to the current file
+Return Values: .x error message if any
+PutSByte
+	A2L	Character to output
+i_PutSByte
+	.byte	Character to output
+
+Put S String : Output a null-terminated string to the current file
+Return Values: .x error message if any
+PutSString
+	A2	Pointer to the string to output
+i_PutSString
+	.word	Pointer to the string to output
+
+Put S Buffer : Output a buffer of data to the current file
+Return Values: .x error message if any
+PutSBuf
+	A2	Pointer to the buffer to output
+	A3	Number of bytes in the buffer
+i_PutSBuf
+	.word	Pointer to the buffer to output
+	.word	Number of bytes in the buffer
+
+Put S Memory : Output a block of memory to the current file
+Return Values: .x error message if any
+PutSMem
+	A2	Pointer to the buffer to output
+	A3	Pointer to the last byte in the buffer
+i_PutSMem
+	.word	Pointer to the buffer to output
+	.word	Pointer to the last byte in the buffer
+
+Copy filename: Copy an $a0 terminated string to a standard one
+Return Values: none
+CpyFName
+	A2	Pointer to filename
+	A3	Pointer to destination
+
+Fname Uppcase: Make an $a0 terminated string uppercase (for C= files)
+Return Values: none
+MakeFNUpp
+	A2	Pointer to filename
+
+Close SF     : Close the last page in the geoWrite file and close the file.
+Return Values: .x error message if any
+ClosSF
+	A2L	File type to save as
+i_ClosSF
+	.byte	File type to save as
+
+
+
+MODgeoWx
+
+Introduction: This module supports the creation and SEQUENTIAL writing of genuine geoWrite 2.0 style files. This version is compatible with MODvPrg above, meaning that the file will remain open no matter what virtual block of code is loaded into memory. However, this means that all the standard disk block buffers ($8000-$8300) were extensively used. Pictures are also supported, as well as auto-matic page breaking after 65 lines.
+
+Functions:
+
+Create WF    : Create the geoWrite file on disk and prepare the first page
+Return Values: .x error message if any
+CreatWF
+	A2	Pointer to geoWrite file name
+i_CreatWF
+	.word	Pointer to geoWrite file name
+
+Put W Byte   : Output a single character to the current page
+Return Values: .x error message if any
+PutWByte
+	A2L	Character to output
+i_PutWByte
+	.byte	Character to output
+
+Put W String : Output a null-terminated string to the current page
+Return Values: .x error message if any
+PutWString
+	A2	Pointer to the string to output
+i_PutWString
+	.word	Pointer to the string to output
+
+Put W Buffer : Output a buffer of data to the current page
+Return Values: .x error message if any
+PutWBuf
+	A2	Pointer to the buffer to output
+	A3	Number of bytes in the buffer
+i_PutWBuf
+	.word	Pointer to the buffer to output
+	.word	Number of bytes in the buffer
+
+Put W Memory : Output a block of memory to the current page
+Return Values: .x error message if any
+PutWMem
+	A2	Pointer to the buffer to output
+	A3	Pointer to the last byte in the buffer
+i_PutWMem
+	.word	Pointer to the buffer to output
+	.word	Pointer to the last byte in the buffer
+
+Put W Picture: Output a photo-scrap picture to the current page.  Picture scrap
+               should be organized as .byte width, .byte height, and then the data.
+Return Values: .x error message if any
+PutWPic
+	A2	Pointer to the scrap to output
+	A3	Pointer to the last byte in the buffer
+i_PutWPic
+	.word	Pointer to the scrap to output
+	.word	Pointer to the last byte in the buffer
+
+geoWrite Page: Close the current page and start a new page (Next Page).
+Return Values: .x error message if any
+GWPage
+
+Close WF     : Close the last page in the geoWrite file and close the file.
+Return Values: .x error message if any
+CloseWF
+	A2	Pointer to geoWrite file name
+i_CloseWF
+	.word	Pointer to geoWrite file name
+
+
+
+MODseqR
+
+Introduction: The reading of standard commodore sequential and program files is supported here. All read/file buffers are maintained internally. Only one open file is supported at present.
+
+Functions:
+
+Open SF    : Open the sequential file for reading.
+Return Values: .x error message if any
+OpenSF
+	A2	Pointer to file name
+	A3L	Drive search flag, 0=current only
+i_OpenSF
+	.word	Pointer to file name
+	.byte	Drive search flag, 0=current only
+
+Get S Byte   : Input a single character from the current file
+Return Values: .a byte read in, .x error message if any
+GetSByte
+
+Get S String : Input a null-terminated string from the current file
+Return Values: String where designated, .x error message if any
+GetSString
+	A2	Pointer to the string destination buffer
+i_GetSString
+	.word	Pointer to the string destination buffer
+
+Get S Buffer : Input a buffer of data from the current file
+Return Values: Data at designated place, .x error message if any
+GetSBuf
+	A2	Pointer to the buffer for input
+	A3	Maximum number of bytes to read in
+i_GetSBuf
+	.word	Pointer to the buffer for input
+	.word	Maximum number of bytes to read in
+
+Get S Memory : Input a block of memory from the current file
+Return Values: Data at designated place, .x error message if any
+GetSMem
+	A2	Pointer to the buffer for input
+	A3	Pointer to the last byte in the buffer
+i_GetSMem
+	.word	Pointer to the buffer for input
+	.word	Pointer to the last byte in the buffer
+
+
+
+MODsecIO
+
+Introduction: This module supports reading from and writing to direct disk sectors in clumps. Only useful for disk archiver so far, but I may find another use in the future.
+
+Functions:
+
+SectorIO Init: Open the disk for reading/writing
+Return Values: .x error message if any
+SecIOinit
+	.a	Device/Drive to Open
+i_SecIOinit
+	.byte	Device/Drive to Open
+
+PutWholeTrack: Write an entire track out from the buffer
+Return Values: .x error message if any
+PutWTrk
+	A2	Pointer to track buffer
+	TRACK	Pre-set
+i_PutWTrk
+	.word	Pointer to track buffer
+	TRACK	Pre-set
+
+ReadWholeTrak: Read an entire track into a buffer
+Return Values: Data where designated, .x error message if any
+ReadWTrk
+	A2	Pointer to the destination buffer
+	A3	Buffer end byte pointer
+	TRACK	Pre-set
+i_ReadWTrk
+	.word	Pointer to the destination buffer
+	.word	Buffer end byte pointer
+	TRACK	Pre-set
+
+Read Sectors : Read as many sectors as will fit in the buffer
+Return Values: Data where designated, .x error message if any
+ReadSecs
+	A2	Pointer to the destination buffer
+	A3	Buffer end byte pointer
+	TRACK	Pre-set
+	SECTOR	Pre-set
+i_ReadSecs
+	.word	Pointer to the destination buffer
+	.word	Buffer end byte pointer
+	TRACK	Pre-set
+	SECTOR	Pre-set
+
+Write Sectors: Write as many sectors as fit in the buffer
+Return Values: .x error message if any
+WriteSecs
+	A2	Pointer to the source buffer
+	A3	Buffer end byte pointer
+	TRACK	Pre-set
+	SECTOR	Pre-set
+i_WriteSecs
+	.word	Pointer to the source buffer
+	.word	Buffer end byte pointer
+	TRACK	Pre-set
+	SECTOR	Pre-set
+
+
+
+MODgeoRx
+
+Introduction: Given a particular window size, this module supports displaying and navigating the pages of a geoWrite document. Coded so far is support for Fonts, pictures, styles, and rulers.
+
+Functions:
+
+Init geoRead : Initialize the module for geoWrite file reading
+Return Values: .x error message if any
+InitGeoR
+	A2	Pointer to font buffer
+	A3	Size of font buffer
+	A4	Pointer to page buffer
+	A5	Size of page buffer
+	A6	Pointer to pages buffer
+i_InitGeoR
+	.word	Pointer to font buffer
+	.word	Size of font buffer
+	.word	Pointer to page buffer
+	.word	Size of page buffer
+	.word	Pointer to pages buffer
+
+Open geoW doc: Open a geoWrite document for reading
+Return Values: .x error message if any
+OpenGeoR
+	A2	Pointer to the file name
+	A3L	Top row of window
+	A3H	Bottom row of window
+	A4	Left col of window
+	A5	Right col of window
+i_OpenGeoR
+	.word	Pointer to the file name
+	.byte	Top row of window
+	.byte	Bottom row of window
+	.word	Left col of window
+	.word	Right col of window
+
+Load page   : Read current geoWrite doc page into memory
+Return Values: .x error message if any
+LoadGPg
+i_LoadGPg
+
+Show page   : Show current geoWrite doc page on screen
+Return Values: .x error message if any
+ShowGPg
+i_ShowGPg
+
+Previous page: Read previous geoWrite doc page into memory
+Return Values: .x error message if any
+PrevGPg
+i_PrevGPg
+
+Next page   : Read next geoWrite doc page into memory
+Return Values: .x error message if any
+NextGPg
+i_NextGPg
+
+
+
+
+MODtbox
+
+Introduction: Supports the maintenance of one or more text boxes which may have character limits for both input and display, and also may be more than one line.
+
+Functions:
+
+Open TextBox : Begin taking input from a text box
+Return Values: Data in appropriate buffer
+OpenTBox
+	A2	Pointer to text buffer
+	A3L	Maximum number of lines
+	A3H	Maximum number of characters
+	R2-R4	Dimensions of the input buffer
+i_OpenTBox
+	.word	Pointer to text buffer
+	.byte	Maximum number of lines
+	.byte	Maximum number of characters
+	R2-R4	Dimensions of the input buffer
+
+Print TextBox: Display the text in a text box
+Return Values: none
+PrintTBox
+	A2	Pointer to text buffer
+	A3L	Maximum number of lines
+	A3H	Maximum number of characters
+	R2-R4	Dimensions of the input buffer
+i_PrintTBox
+	.word	Pointer to text buffer
+	.byte	Maximum number of lines
+	.byte	Maximum number of characters
+	R2-R4	Dimensions of the input buffer
+
+Close TextBox: Remove focus from a text box
+Return Values: none
+TBoxClose
+
+ResumeTextBox: If a text box has been closed, this routine resumes entry without reopening
+Return Values: none
+TBoxResume
+
+
+
+MODdemo
+
+Introduction: For a special edition of ChromeMag, I received permission from LoadStar to republish many of my old GEOS programs. To encourage people to actually purchase the edition of LoadStar from which these programs came, I added code that would mark both the disk and the file with a counter. The same code then used the counter to enforce a limit on the number of times the program would run.
+
+Functions:
+
+Set Demo     : Evaluate whether the limit of execution for this program has expired.
+Return Values: .x $0 means the program may execute, $ff means it may not
+SetDemo
+	A2	Name of the executable
+	A3L	Identifying code number (from $bd - $dc)
+	A3H	Maximum number of times to run
+i_SetDemo
+	.word	Name of the executable
+	.byte	Identifying code number (from $bd - $dc)
+	.byte	Maximum number of times to run
+
+
+
+MODconvert
+
+Introduction: The Convert series of applications has long been a staple in the GEOS world, allowing the non-standard GEOS formatted file to be changed into a more standard sequential style file, and back again. This allows the files to be easily transmitted between different computers. This module contains the basic functionality of that process.
+
+Functions:
+
+Convert      : Convert a GEOS file to a .CVT file (sequential format)
+Return Values: .x $0 is ok, $ff means that the file was not a GEOS file, and other is error.
+Convert
+	A2	Name of GEOS file to convert
+i_Convert
+	.word	Name of GEOS file to convert
+
+unConvert    : Convert a .CVT (sequential format) file back to the GEOS format.
+Return Values: .x $0 is ok, $ff means that the file was not a .CVT file, and other is error.
+unConv
+	A2	Name of .CVT file to unconvert
+i_Convert
+	.word	Name of .CVT file to unconvert
+
+
+MODfcopy
+
+Introduction: Quite simply, this module supports copying of a file of any file type between two drives. The copy buffer must be supplied by the application, and must be between 3 and 126 blocks long.
+
+Functions:
+
+FileCopy     : Copy a file from the current drive to a given destination drive.
+Return Values: .x $0 is ok, other is a disk error
+FileCopy
+	A2	Name of the source file
+	A3	Name of the destination file
+	A4	Address of the beginning of the copy buffer
+	A5	Address of the end of the copy buffer (+1)
+	A6L	The destination drive device number
+i_FileCopy
+	.word	Name of the source file
+	.word	Name of the destination file
+	.word	Address of the beginning of the copy buffer
+	.word	Address of the end of the copy buffer (+1)
+	.byte	The destination drive device number
+

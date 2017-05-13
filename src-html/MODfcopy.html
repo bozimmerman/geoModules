@@ -1,0 +1,760 @@
+<!DOCTYPE html><html><head><title>Untitled</title></head><body><pre><span align="left">.noeqin
+.include	GEOSequates
+.glbl
+.eqin
+;****************************************
+;* MODfcopy - geoProjects library (C) 1998 Bo Zimmerman
+<span align="left">;*
+;* Copies any file type to another drive.
+;*
+;* Functions:
+;* FileCopy	(A2	pointer to source filename
+;*	 A3	pointer to destination filename
+;*	 A4	pointer to buffer to use
+;*	 A5	pointer to end of buffer
+;*	 A6L	destination drive) *
+;*
+;* 	* = includes i_Function call
+;*	.x	errors if any, 0 = ok
+;*	curDrive - device source file is on
+;* Comments:
+;*	buffer must be between 3 and 126 pages
+;****************************************
+
+
+<span align="left">;*******************************
+;* FileCopy
+;*
+;* Inputs:	
+;*	A2	pointer to filename of source file
+;*	A3	pointer to filename of destination file
+;*	A4	pointer to buffer to use
+;*	A5	pointer to end of buffer
+;*	A6L	destination drive
+;*
+;*	curDrive - device source file is on
+;* Outputs:
+;*	.x	errors if any, 0 = ok
+;*******************************
+
+FileCopy:	mvb	curDrive,FCOPsrc
+	mvb	A6L,FCOPdst
+	mvw	A4,FCOPbufS
+	mvw	A5,FCOPbufE
+	mvw	A2,R6
+	ldb	$886e,#$ff	; find source file
+	jsr	FindFile
+	ldy	#0
+	cpx	#0
+	beq	10$
+99$:	rts
+10$:	lda	(R5),y	; save dir entry
+	sta	APITemp1,y
+	iny
+	cpy	#$1e
+	blt	10$
+	ldw	FCOPinfo,#0
+	ldw	FCOPvlir,#0
+	mvw	FCOPbufS,FCOPbufP	; set buffer pointer
+	mvw	APITemp1+1,FCOPtns
+	ldx	#0
+	lda	APITemp1
+	and	#$1f
+	cmp	#4	; rel files may have "info"
+	beq	12$	; 
+	cmp	#3	; USR files otherwise!
+	bne	15$
+90$:	lda	APITemp1+$15	; check for info sector
+	beq	11$
+	jsr	FCOPgetV
+	cpx	#0
+	bne	99$
+11$:	lda	APITemp1+$16	; either has info sector
+	beq	15$	; or is a relative file
+12$:	jsr	FCOPgetI
+	cpx	#0
+	bne	99$
+15$:	stx	FCOPaflg
+	jmp	FCOPcopy
+
+<span align="left">;*******************************
+;* i_FileCopy
+;*
+;* Inputs:	
+;*	.word	pointer to filename of source file
+;*	.word	pointer to filename of destination file
+;*	.word	pointer to buffer to use
+;*	.word	pointer to end of buffer
+;*	.byte	destination drive
+;*
+;*	curDrive - device source file is on
+;* Outputs:
+;*	.x	errors if any, 0 = ok
+;*******************************
+
+i_FileCopy:	jsr	APIinit
+	jsr	FileCopy
+	ldy	#9	; 4 words + 1 byte
+	jmp	APIreturn
+
+<span align="left">FCOPgetI:	mvw	APITemp1+$13,R1
+	lda	FCOPbufP
+	sta	FCOPinfo
+	lda	FCOPbufP+1
+	sta	FCOPinfo+1
+10$:	mvw	FCOPbufP,R4
+	jsr	GetBlock
+<span align="left">	cpx	#0
+	beq	20$
+	rts
+20$:	mvw	FCOPbufP,R4
+	ldy	#0
+<span align="left">	lda	(R4),y
+	beq	30$
+	sta	R1L
+	iny
+	lda	(R4),y
+	sta	R1H
+	inc	FCOPbufP+1
+	bra	10$
+<span align="left">30$:	inc	FCOPbufP+1
+	ldx	#0
+<span align="left">	rts
+
+<span align="left">FCOPgetV:	mvw	APITemp1+1,R1
+	lda	FCOPbufP
+	sta	FCOPbufS
+	sta	FCOPvlir
+	sta	R4L
+	lda	FCOPbufP+1
+	sta	FCOPvlir+1
+	sta	FCOPbufS+1
+	sta	R4L+1
+	inc	FCOPbufP+1
+	inc	FCOPbufS+1
+	jsr	GetBlock
+	cpx	#0
+	beq	10$
+	rts
+10$:	ldb	FCOPvdex,#$00
+	sta	FCOPvddx
+	jmp	FCOPnxtV
+
+<span align="left">FCOPnxtV:	mvw	FCOPvlir,R4
+	ldy	FCOPvdex
+10$:	lda	(R4),y
+	beq	11$
+	sta	FCOPtns
+	iny
+	lda	(R4),y
+	sta	FCOPtns+1
+	iny
+	sty	FCOPvdex
+	lda	#$ff	; NEQ is continue
+	rts
+11$:	iny
+	iny
+	bne	10$
+	sty	FCOPvdex	; set to 0, means done
+	rts		; EQ is done
+
+
+<span align="left">FCOPcopy:	jsr	FCOPosrc
+	bne	10$
+	jsr	FCOPfill
+	cpx	#0
+	beq	11$
+	cpx	#$ff
+	beq	11$
+	ldx	#0
+10$:	rts
+11$:	stx	FCOPendf
+	mvw	FCOPbufS,FCOPbufD	; set destination start
+	jsr	FCOPodst
+<span align="left">	bne	10$
+	jsr	FCOPcrfi	; create the file on disk
+	cpx	#0
+	bne	10$
+	jsr	FCOPwrinfo	; wr info sector if necessary
+	bne	10$
+	jsr	FCOPwrset	; setup first block, or vlir
+	bne	10$
+16$:	ldx	FCOPendf
+17$:	stx	FCOPendf	; update end of source status
+	jsr	FCOPodst	; set destination drive
+	bne	10$
+	jsr	FCOPwr	; write data blocks
+	cpx	#0
+	bne	10$
+	ldx	FCOPendf
+	bne	20$
+	mvw	FCOPbufS,FCOPbufP	; reset read buf
+	jsr	FCOPosrc	; set source drive
+	bne	10$
+	jsr	FCOPfill	; read more data blocks
+	mvw	FCOPbufS,FCOPbufD	; set destination start
+	cpx	#0
+<span align="left">	beq	17$
+	cpx	#$ff
+	beq	17$
+	rts
+20$:	jsr	FCOPodst	; set destination drive
+	bne	10$
+	jsr	FCOPclose	; finalize the file
+	rts	
+
+
+
+<span align="left">FCOPwrinfo:	lda	FCOPinfo+1
+	bne	10$
+	rts
+10$:	jsr	FCOPallo
+	mvw	FCOPdptr,R4
+	ldy	#$13
+	lda	R1L
+	sta	FCOPitns
+	sta	(R4),y
+	iny
+	lda	R1H
+	sta	FCOPitns+1
+	sta	(R4),y
+20$:	mvw	FCOPinfo,R4	; now save it to disk
+	ldy	#0
+	lda	(R4),y
+	beq	30$
+	mvw	R1,FCOPlas2	; save current write tns
+	jsr	FCOPallo	; allocate the next
+	mvw	FCOPinfo,R4	; now save it to disk
+	ldy	#0
+<span align="left">	lda	R1L
+	sta	(R4),y
+	iny
+	lda	R1H
+	sta	(R4),y
+	mvw	FCOPlas2,R1
+30$:	jsr	PutBlock
+	cpx	#0
+	bne	99$
+	mvw	FCOPinfo,R4	; now save it to disk
+	ldy	#0
+	lda	(R4),y
+	beq	70$
+	sta	R1L
+	iny
+	lda	(R4),y
+	sta	R1H
+	inc	FCOPinfo+1
+	bra	20$
+70$:	mvw	FCOPinfo,FCOPbufD
+	inc	FCOPbufD+1	; protect old info sec
+	ldw	FCOPinfo,#0
+	cpx	#0
+99$:	rts
+
+
+
+<span align="left">FCOPwrset:	jsr	FCOPallo	; grab a block
+	bne	99$
+	mvw	FCOPdptr,R4
+	ldy	#$01
+	lda	R1L
+	sta	(R4),y	; make it first
+	sta	FCOPvtns
+	sta	FCOPbtns
+	sta	FCOPlast
+	iny
+	lda	R1H
+	sta	(R4),y
+	sta	FCOPvtns+1
+	sta	FCOPbtns+1
+	sta	FCOPlast+1
+<span align="left">	lda	FCOPvlir+1	; now, is this vlir block?
+	beq	99$
+	jsr	FCOPallo	; grab a block
+	bne	99$
+	lda	R1L	; yes it was, so get
+	sta	FCOPlast	; another one to be 1st
+	iny
+	lda	R1H
+	sta	FCOPlast+1
+	ldb	FCOPfrst,#$01
+	ldx	#0
+99$:	rts
+
+
+<span align="left">FCOPfill:	lda	FCOPtns	; always data block!
+	bne	20$
+	lda	FCOPvlir+1	; is a VLIR?
+	bne	15$
+13$:	ldx	#$ff	; no, so return done.
+	rts
+15$:	lda	FCOPvdex	; yes, so check index
+	beq	13$	; if 0, then done!
+	jsr	FCOPnxtV
+	beq	13$	; returns 0 means done!
+	bne	FCOPfill	; return NEQ, means ok!
+20$:	cpw	FCOPbufP,FCOPbufE
+	blt	25$
+	ldx	#0	; buf full, return continue
+	rts
+25$:	mvw	FCOPtns,R1
+	mvw	FCOPbufP,R4
+	jsr	GetBlock
+	cpx	#0
+	beq	30$
+	rts
+30$:	mvw	FCOPbufP,R4
+	ldy	#0
+	lda	(R4),y
+	sta	FCOPtns
+	iny
+	lda	(R4),y
+	sta	FCOPtns+1
+	inc	FCOPbufP+1
+40$:	jmp	FCOPfill
+
+<span align="left">FCOPcrfi:	mvw	A3, R6	; copy dst filename pointer
+	ldb	$886e,#1
+	jsr	FindFile	; ensure file doesn't already exist
+	cpx	#5	; file not found only good error
+	beq	21$
+	cpx	#0	; zero means file exists
+	bne	20$
+	ldx	#63	; so change it to 63--file exists
+20$:	rts		; exit in early disgrace
+21$:	jsr	GetDirHead
+	cpx	#0
+	bne	20$
+	mvw	R4,R5
+	jsr	CalcBlksFree	; check dest disk blks free
+	cpx	#0
+	bne	20$
+	cpw	R4,APITemp1+$1c	; if not enough, error!
+	bgt	30$
+	ldx	#3
+	rts
+30$:	ldb	R10L,#0
+	jsr	GetFreeDirBlk	; now find a directory entry
+	cpx	#0
+	bne	20$	; a error getting dir entry!
+	mvw	R1,FCOPdtns	; OK! now save the dir block tk & sec
+	ldb	FCOPdptr+1,#$80
+	sty	FCOPdptr	; now have dir entry ptr
+	mvw	FCOPdptr,R2
+	ldw	R0,#APITemp1	; now copy dir block
+	lda	APITemp1
+	and	#$7f	; set to splat file
+	sta	APITemp1
+	ldy	#0
+35$:	lda	(R0),y	; now copy whole entry
+	sta	(R2),y
+	iny
+	cpy	#$1d
+	ble	35$
+	avw	#$03,R2	; point to filename part
+	ldy	#0
+36$:	lda	(A3),y
+	beq	37$	; now copy dest filename
+	sta	(R2),y
+	iny
+	cpy	#$10
+	blt	36$
+	bra	40$
+37$:	lda	#$a0	; and pad with A0s
+	sta	(R2),y
+	iny
+	cpy	#$10
+	blt	37$
+40$:	mvw	FCOPdtns,R1	; resave new dir entry
+	ldw	R4,#$8000
+	jsr	PutBlock
+	rts
+
+<span align="left">FCOPwr:	mvw	FCOPbufD,R4	; check for end of chain
+	ldw	R1,#0
+	ldy	#0
+	lda	(R4),y	; don't allocate ahead
+	bne	10$	; of last block
+	lda	FCOPvlir+1	; unless its vlir
+	beq	11$
+	lda	FCOPendf	; and there's more
+<span align="left">	beq	10$	
+<span align="left">	mvw	FCOPbufD,R1
+	inc	R1H
+	cpw	FCOPbufP,R1
+	ble	11$
+10$:	jsr	FCOPallo
+	cpx	#0
+	beq	11$
+	rts
+11$:	mvw	R1,FCOPlas2
+	lda	FCOPfrst
+	beq	20$
+	jsr	FCOPvdput
+20$:	ldb	FCOPfrst,#0
+30$:	mvw	FCOPbufD,R4	; check for end of chain
+	ldy	#0
+	lda	(R4),y
+	beq	31$	; end blocks dont ahead
+	lda	FCOPlas2
+	sta	(R4),y	; y from above
+	iny		; save for next sec
+	lda	FCOPlas2+1
+	sta	(R4),y	
+31$:	mvw	FCOPlast,R1	; and write it out
+	jsr	PutBlock
+	cpx	#0
+	beq	33$
+	rts
+33$:	mvw	FCOPlas2,FCOPlast
+	mvw	FCOPbufD,R4	; check for end of chain
+	ldy	#0
+	lda	(R4),y
+	bne	40$
+	lda	FCOPvlir+1	; for vlir, end is not the end
+	beq	39$
+	inc	FCOPfrst	; set flag, but last is useless	
+	bra	40$
+39$:	ldx	#0
+	rts
+40$:	inc	FCOPbufD+1
+	cpw	FCOPbufP,FCOPbufD
+	ble	39$
+	jmp	FCOPwr
+
+<span align="left">FCOPvdput:	mvw	FCOPvlir,R1
+	ldy	FCOPvddx
+	lda	(R1),y
+	beq	10$
+	lda	FCOPlast
+	sta	(R1),y
+	iny
+	lda	FCOPlast+1
+	sta	(R1),y
+	iny
+	sty	FCOPvddx
+	rts
+10$:	inc	FCOPvddx
+	inc	FCOPvddx
+	jmp	FCOPvdput
+
+<span align="left">FCOPclose:	lda	FCOPvlir+1
+	beq	11$
+	mvw	FCOPvtns,R1
+	mvw	FCOPvlir,R4
+	jsr	PutBlock
+	cpx	#0
+	beq	11$
+10$:	rts
+11$:	mvw	FCOPdtns,R1
+	mvw	FCOPdptr,R4
+	ldy	#0
+	lda	(R4),y
+	ora	#$80
+	sta	(R4),y
+	ldw	R4,#$8000
+	jsr	PutBlock
+	cpx	#0
+	bne	10$
+	mvw	FCOPdptr,R4
+	ldy	#0
+	lda	(R4),y
+	and	#$1f
+	cmp	#4
+	bne	13$
+	jsr	FCOPreLink
+	bne	99$
+13$:	lda	FCOPaflg
+	beq	12$
+	ldb	FCOPaflg,#0
+	jsr	PutDirHead
+	cpx	#0
+	bne	99$
+12$:	jsr	FCOPosrc
+99$:	rts
+
+<span align="left">FCOPodst:	lda	FCOPdst	; if disks same, no re-open
+	ldx	#0
+	cmp	curDrive
+<span align="left">	beq	13$
+	jsr	SetDevice	; if diff, reopen
+	jsr	OpenDisk
+	cpx	#0
+	bne	13$
+	jsr	GetDirHead
+13$:	cpx	#0
+	rts
+
+FCOPosrc:	lda	FCOPaflg
+	beq	12$
+	ldb	FCOPaflg,#0
+	jsr	PutDirHead
+	cpx	#0
+	beq	12$
+	rts
+12$:	lda	FCOPsrc	; if disks same, no re-open
+	ldx	#0
+	cmp	curDrive
+<span align="left">	beq	13$
+	jsr	SetDevice	; if diff, reopen
+	jsr	OpenDisk
+13$:	cpx	#0
+	rts
+
+FCOPallo:	ldw	R2,#$0a
+	ldw	R6,#$8300	; tns area
+	jsr	BlkAlloc
+	cpx	#0
+	beq	13$
+12$:	rts
+13$:	mvw	$8300,R1
+	ldb	FCOPaflg,#1
+	cpx	#0
+	rts
+
+<span align="left">FCOPreLink:	mvw	FCOPbufS,FCOPinfo
+	mvw	FCOPbufS,FCOPvlir
+	inc	FCOPvlir+1
+	mvw	FCOPvlir,FCOPbufP
+	inc	FCOPbufP+1
+	ldb	FCOPvddx,#3
+	ldb	FCOPendf,#0
+	mvw	FCOPitns,R1
+	mvw	FCOPinfo,R4
+	jsr	GetBlock
+	cpx	#0
+	beq	10$
+99$:	rts
+10$:	ldy	#2
+	mvw	FCOPinfo,R4
+	lda	(R4),y
+	bne	20$
+	mvw	FCOPitns,FCOPvtns
+	jsr	FCOPrst
+	blt	11$
+	jsr	FCOPradd
+	bne	99$
+	bra	30$
+11$:	jsr	FCOPreL1
+	bne	99$
+	jsr	FCOPreL2	; this is a ONE-SHOT!
+	cpx	#0
+	rts
+20$:	ldy	#0
+	lda	(R4),y
+	sta	FCOPvtns
+	iny
+	lda	(R4),y
+	sta	FCOPvtns+1
+	jsr	FCOPrst
+	bge	30$
+	jsr	FCOPrdel
+	bne	99$
+	beq	11$
+30$:	mvw	FCOPinfo,R4
+	ldy	FCOPvddx
+	lda	FCOPvtns
+	sta	(R4),y
+	iny
+	lda	FCOPvtns+1
+	sta	(R4),y
+	avb	#2,FCOPvddx
+	ldb	FCOPendf,#0
+	jsr	FCOPreL1
+	bne	34$
+	jsr	FCOPreL2
+	cpx	#0
+	beq	35$
+34$:	rts
+35$:	cbi	FCOPendf,#6
+	blt	40$
+	lda	FCOPbtns
+	bne	30$
+40$:	mvw	FCOPitns,R1
+	mvw	FCOPinfo,R4
+	jsr	PutBlock
+	cpx	#0
+	rts	
+
+<span align="left">FCOPreL1:	ldb	FCOPvdex,#2
+	mvw	FCOPvtns,R1
+	ldy	#0
+90$:	lda	#0
+	sta	FCOPbuf,y
+	iny
+	cpy	#13
+	blt	90$
+	mvw	FCOPvtns,FCOPbuf
+10$:	mvw	FCOPvlir,R4
+	jsr	GetBlock
+	cpx	#0
+	beq	15$
+99$:	rts
+15$:	mvw	FCOPvlir,R4
+	ldy	#0
+	lda	(R4),y
+	beq	98$
+	ldx	FCOPvdex
+	sta	FCOPbuf,x
+	sta	R1L
+	iny
+	lda	(R4),y
+	inx
+	sta	FCOPbuf,x
+	sta	R1H
+	inx
+	stx	FCOPvdex
+	cpx	#12
+	blt	10$
+98$:	ldx	#0
+	rts
+
+<span align="left">FCOPreL2:	mvw	FCOPvlir,R4
+	mvw	FCOPvtns,R1	; get THIS index block
+	jsr	GetBlock
+	cpx	#0
+	beq	10$
+99$:	rts
+10$:	ldb	FCOPvdex,#$10
+	mvw	FCOPvlir,R4	; store index page #0-5
+	ldy	#2
+	lda	FCOPendf
+	sta	(R4),y
+	ldy	#4	; store index page tnss
+	ldx	#0
+11$:	lda	FCOPbuf,x	; saved in FCOPreL1
+	sta	(R4),y
+	iny
+	inx
+	lda	FCOPbuf,x	; by looping
+	sta	(R4),y
+	inx
+	iny
+	cpx	#12	; until done
+	blt	11$
+	jmp	FCOPreL4
+
+FCOPrsav:	mvw	FCOPvlir,R4
+	mvw	FCOPvtns,R1	; get THIS index block
+	jsr	PutBlock
+	cpx	#0
+	rts
+
+
+<span align="left">FCOPrst:	ldy	FCOPdst
+	lda	driveType-8,y
+	and	#%00000111
+	cmp	#3
+	rts
+
+FCOPrdel:	mvw	FCOPvtns,R1
+	mvw	FCOPvtns,A0
+	jsr	GetBlock
+	cpx	#0
+	beq	10$
+	rts
+10$:	mvw	FCOPvtns,R6
+	jsr	FreeBlock
+	mvw	FCOPitns,R1
+	mvw	FCOPinfo,R4
+	mvw	FCOPitns,FCOPvtns
+	jsr	PutBlock
+	cpx	#0
+	rts
+
+FCOPradd:	jsr	FCOPallo
+	mvw	R1,FCOPvtns
+<span align="left">	mvw	FCOPinfo,R4
+	jsr	PutBlock
+	cpx	#0
+	beq	10$
+	rts
+10$:	mvw	FCOPinfo,R4
+	ldy	#0
+<span align="left">11$:	lda	#0
+	sta	(R4),y
+	iny
+	bne	11$
+	ldy	#0
+	lda	FCOPvtns
+<span align="left">	sta	(R4),y
+	iny
+	lda	FCOPvtns+1
+<span align="left">	sta	(R4),y
+	iny
+	lda	#254
+	sta	(R4),y
+	mvw	FCOPitns,R1
+	jsr	PutBlock
+	cpx	#0
+	rts
+
+<span align="left">FCOPreL4:	mvw	FCOPvlir,R4	; now store data sectors
+	ldy	FCOPvdex
+	lda	FCOPbtns
+	sta	(R4),y
+	sta	R1L
+	iny
+	lda	FCOPbtns+1
+	sta	(R4),y
+	sta	R1H
+	iny
+	sty	FCOPvdex	; read next data block
+	mvw	FCOPbufP,R4
+	jsr	GetBlock
+	cpx	#0
+	beq	25$
+	rts
+25$:	mvw	FCOPbufP,R4	; and store ahead block
+	ldy	#0
+	lda	(R4),y
+	sta	FCOPbtns
+	iny
+	lda	(R4),y
+	sta	FCOPbtns+1
+	lda	FCOPbtns	; reached end of data?
+	bne	30$
+	jsr	FCOPrsav	; yes, so save this one
+29$:	rts
+30$:	lda	FCOPvdex	; loop to end of this
+	beq	31$	; index block
+	jmp	FCOPreL4
+31$:	jsr	FCOPrsav	; end! so save this block
+	bne	29$
+	mvw	FCOPvlir,R4
+	ldy	#0
+	lda	(R4),y
+	sta	FCOPvtns	; store next vtns
+	iny
+	lda	(R4),y
+	sta	FCOPvtns+1
+	inc	FCOPendf
+	cbi	FCOPendf,#6
+	beq	50$
+	jmp	FCOPreL2
+50$:	ldx	#0
+	rts	
+
+<span align="left">.ramsect
+FCOPsrc:	.block 1	; the source drive
+FCOPdst:	.block 1	; the destination drive
+FCOPbufS:	.block 2	; start of usable buffer
+FCOPbufP:	.block 2	; current buffer pointer
+FCOPbufE:	.block 2	; end buf: FCOPbufE % 256 = 0
+FCOPinfo:	.block 2	; pointer info sec
+FCOPvlir:	.block 2	; pointer vlir sec
+FCOPtns:	.block 2	; current src track and sector
+FCOPvdex:	.block 1	; index into src vlir buffer
+FCOPendf:	.block 1	; flag for eof, $ff=true
+FCOPitns:	.block	2	; info/rel ss tns
+FCOPbtns:	.block	2	; first data block tns
+FCOPdtns:	.block 2	; T&S for dest dir block
+FCOPdptr:	.block 2	; pointer to dest dir entry
+FCOPvddx:	.block 1	; index into dst vlir buffer
+FCOPfrst:	.block 1	; 1st alloced block sig. flag
+FCOPvtns:	.block 2	; dest vlir block tns
+FCOPbufD:	.block 2	; dest buffer pointer
+FCOPbuf:	.block	20	; some work butes
+FCOPlast:	.block 2	; next dest tns
+FCOPlas2:	.block 2	; temp next dest tns holder
+FCOPaflg:	.block	1	; allocated block flag</pre></body></html>

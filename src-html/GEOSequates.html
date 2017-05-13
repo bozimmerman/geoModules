@@ -1,0 +1,625 @@
+<!DOCTYPE html><html><head><title>Untitled</title></head><body><pre><span align="left">R0	== $0002
+R0H	== $03
+R0L	== $02
+R1	== $0004
+R1H	== $05
+R1L	== $04
+R2	== $0006
+R2H	== $07
+R2L	== $06
+R3	== $0008
+R3H	== $09
+R3L	== $08
+R4	== $000a
+R4H	== $0b
+R4L	== $0a
+R5	== $000c
+R5H	== $0d
+R5L	== $0c
+R6	== $000e
+R6H	== $0f
+R6L	== $0e
+R7	== $0010
+R7H	== $11
+R7L	== $10
+R8	== $0012
+R8H	== $13
+R8L	== $12
+R9	== $0014
+R9H	== $15
+R9L	== $14
+R10	== $0016
+R10H	== $17
+R10L	== $16
+R11	== $0018
+R11H	== $19
+R11L	== $18
+R12	== $001a
+R12H	== $1b
+R12L	== $1a
+R13	== $001c
+R13H	== $1d
+R13L	== $1c
+R14	== $001e
+R14H	== $1f
+R14L	== $1e
+R15	== $0020
+R15H	== $21
+R15L	== $20
+A0	== $fb
+A0L	== $fb
+A0H	== $fc
+A1	== $fd
+A1L	== $fd
+A1H	== $fe
+A2	== $70
+A2L	== $70
+A2H	== $71
+A3	== $72
+A3L	== $72
+A3H	== $73
+A4	== $74
+A4L	== $74
+A4H	== $75
+A5	== $76
+A5L	== $76
+A5H	== $77
+A6	== $78
+A6L	== $78
+<span align="left">A6H	== $79
+A7	== $7a
+A7L	== $7a
+A7H	== $7b
+A8	== $7c
+A8L	== $7c
+A8H	== $7d
+A9	== $7e
+A9L	== $7e
+A9H	== $7f
+
+<span align="left">BACK_SCR_BASE	== $6000
+APP_VAR	== $7F40
+SPRITE_PICS	== $8A00
+COLOR_MATRIX	== $8C00
+DISK_BASE	== $9000
+SCREEN_BASE	== $A000
+curPattern	== $0022
+string	== $0024
+baselineOffset	== $0026
+curSetWidth	== $0027
+curHeight	== $0029
+curIndexTable	== $002a
+cardDataPntr	== $002c
+currentMode	== $002e
+dispBufferOn	== $002f
+mouseOn	== $0030
+msePicPtr	== $0031
+windowTop	== $0033
+windowBottom	== $0034
+leftMargin	== $0035
+rightMargin	== $0037
+pressFlag	== $0039
+mouseXPos	== $003a
+mouseYPos	== $003c
+returnAddress	== $003d
+STATUS	== $0090
+curDevice	== $00BA
+diskBlkBuf	== $8000
+fileHeader	== $8100
+curDirHead	== $8200
+fileTrScTab	== $8300
+dirEntryBuf	== $8400
+DrACurDkNm	== $841e
+DrBCurDkNm	== $8430
+dataFileName	== $8442
+dataDiskName	== $8453
+PrntFilename	== $8465
+PrntDiskName	== $8476
+curDrive	== $8489
+diskOpenFlg	== $848a
+isGEOS	== $848b
+numDrives	== $848d
+driveType	== $848e
+curRecord	== $8496
+usedRecords	== $8497
+fileWritten	== $8498
+fileSize	== $8499
+appMain	== $849b
+intTopVector	== $849d
+intBotVector	== $849f
+mouseVector	== $84a1
+keyVector	== $84a3
+inputVector	== $84a5
+mouseFaultVec	== $84a7
+otherPressVec	== $84a9
+StringFaultVec	== $84ab
+alarmTmtVector	== $84ad
+BRKVector	== $84af
+RecoverVector	== $84b1
+selectionFlash	== $84b3
+alphaFlag	== $84b4
+iconSelFlag	== $84b5
+faultData	== $84b6
+menuNumber	== $84b7
+mouseTop	== $84b8
+mouseBottom	== $84b9
+mouseLeft	== $84ba
+mouseRight	== $84bc
+<span align="left">stringX	== $84be
+stringY	== $84c0
+mousePicData	== $84c1
+maxMouseSpeed	== $8501
+minMouseSpeed	== $8502
+mouseAccel	== $8503
+keyData	== $8504
+mouseData	== $8505
+inputData	== $8506
+random	== $850a
+saveFontTab	== $850c
+dblClickCount	== $8515
+year	== $8516
+month	== $8517
+day	== $8518
+hour	== $8519
+minutes	== $851a
+seconds	== $851b
+alarmSetFlag	== $851c
+sysDBData	== $851d
+screencolors	== $851e
+dlgBoxRamBuf	== $851f
+savedmoby2	== $88bb
+ramExpSize	== $88c3
+sysRAMFlg	== $88c4
+curType	== $88c6
+inputDevName	== $88cb
+DrCCurDkNm	== $88dc
+DrDCurDkNm	== $88ee
+dir2Head	== $8900
+
+<span align="left">InitForPrint	== $7900
+StartPrint	== $7903
+PrintBuffer	== $7906
+StopPrint	== $7909
+GetDimensions	== $790c
+PrintASCII	== $790f
+StartASCII	== $7912
+SetNLQ	== $7915
+Get1stDirEntry	== $9030
+GetNxtDirEntry	== $9033
+AllocateBlock	== $9048
+ReadLink	== $904B
+BootGEOS	== $c000
+ResetHandle	== $c003
+InterruptMain	== $c100
+InitProcesses	== $c103
+RestartProcess	== $c106
+EnableProcess	== $c109
+BlockProcess	== $c10c
+UnblockProcess	== $c10f
+FreezeProcess	== $c112
+UnfreezeProcess	== $c115
+HorizontalLine	== $c118
+InvertLine	== $c11b
+RecoverLine	== $c11e
+VerticalLine	== $c121
+Rectangle	== $c124
+FrameRectangle	== $c127
+InvertRectangle	== $c12a
+RecoverRectangle	== $c12d
+DrawLine	== $c130
+DrawPoint	== $c133
+GraphicsString	== $c136
+SetPattern	== $c139
+GetScanLine	== $c13c
+TestPoint	== $c13f
+BitmapUp	== $c142
+PutChar	== $c145
+PutString	== $c148
+UseSystemFont	== $c14b
+StartMouseMode	== $c14e
+DoMenu	== $c151
+RecoverMenu	== $c154
+RecoverAllMenus	== $c157
+DoIcons	== $c15a
+DShiftLeft	== $c15d
+BBMult	== $c160
+BMult	== $c163
+DMult	== $c166
+Ddiv	== $c169
+DSdiv	== $c16c
+Dabs	== $c16f
+Dnegate	== $c172
+Ddec	== $c175
+ClearRam	== $c178
+FillRam	== $c17b
+MoveData	== $c17e
+InitRam	== $c181
+PutDecimal	== $c184
+GetRandom	== $c187
+MouseUp	== $c18a
+MouseOff	== $c18d
+DoPreviousMenu	== $c190
+ReDoMenu	== $c193
+GetSerialNumber	== $c196
+Sleep	== $c199
+ClearMouseMode	== $c19c
+i_Rectangle	== $c19f
+
+<span align="left">i_FrameRectangle	== $c1a2
+i_RecoverRectangle	== $c1a5
+i_GraphicsString	== $c1a8
+i_BitmapUp	== $c1ab
+i_PutString	== $c1ae
+GetRealSize	== $c1b1
+i_FillRam	== $c1b4
+i_MoveData	== $c1b7
+GetString	== $c1ba
+GotoFirstMenu	== $c1bd
+InitTextPrompt	== $c1c0
+MainLoop	== $c1c3
+DrawSprite	== $c1c6
+GetCharWidth	== $c1c9
+LoadCharSet	== $c1cc
+PosSprite	== $c1cf
+EnablSprite	== $c1d2
+DisablSprite	== $c1d5
+CallRoutine	== $c1d8
+CalcBlksFree	== $c1db
+ChkDkGEOS	== $c1de
+NewDisk	== $c1e1
+GetBlock	== $c1e4
+PutBlock	== $c1e7
+SetGEOSDisk	== $c1ea
+SaveFile	== $c1ed
+SetGDirEntry	== $c1f0
+BldGDirEntry	== $c1f3
+GetFreeDirBlk	== $c1f6
+
+
+<span align="left">WriteFile	== $c1f9
+BlkAlloc	== $c1fc
+ReadFile	== $c1ff
+SmallPutChar	== $c202
+FollowChain	== $c205
+GetFile	== $c208
+FindFile	== $c20b
+CRC	== $c20e
+LdFile	== $c211
+EnterTurbo	== $c214
+LdDeskAcc	== $c217
+ReadBlock	== $c21a
+LdApplic	== $c21d
+WriteBlock	== $c220
+VerWriteBlock	== $c223
+FreeFile	== $c226
+GetFHdrInfo	== $c229
+EnterDeskTop	== $c22c
+StartAppl	== $c22f
+ExitTurbo	== $c232
+PurgeTurbo	== $c235
+DeleteFile	== $c238
+FindFTypes	== $c23b
+RstrAppl	== $c23e
+ToBasic	== $c241
+FastDelFile	== $c244
+GetDirHead	== $c247
+PutDirHead	== $c24a
+NxtBlkAlloc	== $c24d
+ImprintRectangle	== $c250
+i_ImprintRectangle	== $c253
+DoDlgBox	== $c256
+RenameFile	== $c259
+InitForIO	== $c25c
+DoneWithIO	== $c25f
+DShiftRight	== $c262
+CopyString	== $c265
+CopyFString	== $c268
+CmpString	== $c26b
+CmpFString	== $c26e
+FirstInit	== $c271
+OpenRecordFile	== $c274
+CloseRecordFile	== $c277
+NextRecord	== $c27a
+PreviousRecord	== $c27d
+PointRecord	== $c280
+DeleteRecord	== $c283
+InsertRecord	== $c286
+AppendRecord	== $c289
+ReadRecord	== $c28c
+WriteRecord	== $c28f
+
+
+<span align="left">SetNextFree	== $c292
+UpdateRecordFile	== $c295
+GetPtrCurDkNm	== $c298
+PromptOn	== $c29b
+PromptOff	== $c29e
+OpenDisk	== $c2a1
+DoInlineReturn	== $c2a4
+GetNextChar	== $c2a7
+BitmapClip	== $c2aa
+FindBAMBit	== $c2ad
+SetDevice	== $c2b0
+IsMseInRegion	== $c2b3
+ReadByte	== $c2b6
+FreeBlock	== $c2b9
+ChangeDiskDevice	== $c2bc
+RstrFrmDialogue	== $c2bf
+Panic	== $c2c2
+BitOtherClip	== $c2c5
+StashRAM	== $c2c8
+FetchRAM	== $c2cb
+SwapRAM	== $c2ce
+VerifyRAM	== $c2d1
+DoRAMOp	== $c2d4
+
+;Jump addresses within input drivers
+
+InitMouse	== $fe80	;address of InitMouse entry (MOUSE_JMP)
+SlowMouse	== $fe83	;address of SlowMouse entry
+UpdateMouse	== $fe86	;address of UpdateMouse entry
+SetMouse	== $fe89	;address of SetMouse entry (128 only!)
+
+
+
+<span align="left">NOT_GEOS	= 0
+BASIC	= 1
+ASSEMBLY	= 2
+DATA	= 3
+SYSTEM	= 4
+DESK_ACC	= 5
+APPLICATION	= 6
+APPL_DATA	= 7
+FONT	= 8
+PRINTER	= 9
+INPUT_DEVICE	= 10
+DISK_DEVICE	= 11
+SYSTEM_BOOT	= 12
+TEMPORARY	= 13
+AUTO_EXEC	= 14
+INPUT_128	= 15
+SEQUENTIAL	= 0
+VLIR	= 1
+
+<span align="left">HORIZONTAL	= %00000000
+VERTICAL	= %10000000
+CONSTRAINED	= %01000000
+UN_CONSTRAINED	= %00000000
+SUB_MENU	= $80
+DYN_SUB_MENU	= $40 
+MENU_ACTION	= $00
+BOLDON	= 24
+ITALICON	= 25	
+OUTLINEON	= 26
+PLAINTEXT	= 27
+USELAST	= 127	
+SHORTCUT	= 128
+ST_WR_FORE	= $80
+ST_WR_BACK	= $40
+ST_WRGS_FORE	= $20
+MOVEPENTO	= 1
+LINETO	= 2
+RECTANGLETO	= 3
+NEWPATTERN	= 5
+ESC_PUTSTRING	= 6
+FRAME_RECTO	= 7
+PEN_X_DELTA	= 8
+PEN_Y_DELTA	= 9
+PEN_XY_DELTA	= 10
+SET_LEFTJUST	= %10000000
+SET_RIGHTJUST	= %00000000
+SET_SUPRESS	= %01000000
+SET_NOSUPRESS	= %00000000
+
+<span align="left">.macro ldb dest,value		;ldb DEST with VALUE
+ lda #value
+ sta dest
+.endm
+
+.macro ldw dest,value	;ldw DEST with VALUE
+ lda #](value)
+ sta dest+1
+ lda #[(value)
+ sta dest+0
+.endm
+
+.macro mvb source,dest	;mvb SOURCE to DEST
+ lda source
+ sta dest
+.endm
+
+.macro mvw source,dest	;mbw SOURCE to DEST
+ lda source+1
+ sta dest+1
+ lda source+0
+ sta dest+0
+.endm
+
+.macro add source		;add SOURCE
+ clc
+ adc source
+.endm
+
+.macro adb source,dest	;adb SOURCE in-to DEST
+ clc
+ lda source
+ adc dest
+ sta dest
+.endm
+
+.macro adw source,dest	;adw SOURCE in-to DEST
+ lda source
+ clc
+ adc dest+0
+ sta dest+0
+ lda source+1
+ adc dest+1
+ sta dest+1
+.endm
+
+.macro avb value,dest	;avb VALUE in-to DEST
+ lda dest
+ clc
+ adc #value
+ sta dest
+.endm
+
+.macro avw value,dest	;avw VALUE in-to DEST
+ clc
+ lda #[(value)
+ adc dest+0
+ sta dest+0
+.if (value >= 0) && (value <= 255)
+ bcc noInc
+ inc dest+1
+noInc:
+.else
+ lda #](value)
+ adc dest+1
+ sta dest+1
+.endif
+<span align="left">.endm
+<span align="left">
+.macro sub source		;sub SOURCE
+ sec
+ sbc source
+.endm
+
+.macro sbb source,dest	;sbb SOURCE from-to DEST
+ sec
+ lda dest
+ sbc source
+ sta dest
+.endm
+
+.macro sbw source,dest	;sbw SOURCE from-to DEST
+ lda dest+0
+ sec
+ sbc source+0
+ sta dest+0
+ lda dest+1
+ sbc source+1
+ sta dest+1
+.endm
+
+.macro svb  value,dest
+ lda dest
+ sec
+ sbc #value
+ sta dest	
+.endm
+
+.macro svw value,dest	;svw VALUE in-to DEST
+ lda dest+0
+ sec
+ sbc #[(value)
+ sta dest+0
+.if (value >= 0) && (value <= 255)
+ bcs noDec
+ dec dest+1
+noDec:
+.else
+ lda dest+1
+ sbc #](value)
+ sta dest+1
+.endif
+.endm
+
+.macro cpb source,dest	;cpb SOURCE to DEST
+ lda source
+ cmp dest
+.endm
+
+.macro cbi source,immed	;cbi SOURCE to IMMED
+ lda source
+ cmp #immed
+.endm
+
+.macro cpw source,dest	;cpw SOURCE to DEST
+ lda source+1
+ cmp dest+1
+ bne done
+ lda source+0
+ cmp dest+0
+done:
+.endm
+
+.macro cwi source,immed	;cwi SOURCe to IMMED
+ lda source+1
+ cmp #](immed)
+<span align="left"> bne done
+ lda source+0
+ cmp #[(immed)
+done:
+.endm
+
+.macro phb source		;phb SOURCE
+ lda source
+ pha
+.endm
+
+.macro phw source		;phw SOURCE
+ lda source+1
+ pha
+ lda source+0
+<span align="left"> pha
+.endm
+
+.macro plb dest		;plb DEST
+ pla
+ sta dest
+.endm
+<span align="left">
+.macro plw dest		;plw DEST
+ pla
+ sta dest+0
+ pla
+ sta dest+1
+.endm
+
+.macro bra addr		;bra ADDR
+ clv
+ bvc addr
+.endm
+ 
+.macro blt dest
+  bcc dest
+.endm
+
+.macro bgt dest
+  beq  NoEq
+  bcs  dest
+NoEq:
+.endm
+
+.macro ble dest
+  beq dest
+  bcc dest
+.endm
+
+.macro bge dest
+  bcs dest
+.endm
+
+.macro ylp dest
+  dey
+  bne dest
+.endm
+
+.macro inw source
+  inc source+0
+  bne done
+  inc source+1
+done:
+.endm
+
+.macro dew source
+<span align="left">  dec source+0
+<span align="left">  lda source+0
+  cmp #255
+  bne done
+  dec source+1
+done:
+.endm
+
+</pre></body></html>

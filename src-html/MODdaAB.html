@@ -1,0 +1,250 @@
+<!DOCTYPE html><html><head><title>Untitled</title></head><body><pre><span align="left">.noeqin
+.include	GEOSequates
+.glbl
+.eqin
+
+;****************************************
+;* MODdaAB - geoProjects library (C) 1998 Bo Zimmerman
+<span align="left">;*
+;* Intro:
+;*	Handles initialization of geos menu, 
+;*	execution of DA's off that menu, and
+;*	the display of the prog info (about) box.
+;*
+;* Functions:
+;* InitDaAb	(.word	Pointer to about refresh
+;*	.word	Pointer to DA refresh
+;*	.word	Pointer to DA init
+;*	.word	Pointer to 4 About $) * !
+;*
+;* Comments:
+;*	* = includes i_version
+;*	! = first three pointers may be null
+;*	Must point geos menu to "DAABMenu"!!
+;****************************************
+.psect
+
+<span align="left">;*******************************
+;* InitDaAb
+;*
+;* Inputs:
+;*	A2	Pointer to about refresh
+;*	A3	Pointer to DA refresh
+;*	A4	Pointer to DA init
+;*	A5	Pointer to 4 About $
+;*	* A2-A4 may be null	
+;*	* curDrive = DADrive
+;* Outputs:
+;*	.a	0
+;*	.x	0
+;*******************************
+InitDaAb:	mvb	curDrive,DAABdrv
+	lda	A2H
+	beq	10$
+	mvw	A2,DAABabt2+1
+10$:	lda	A3H
+	beq	11$
+	mvw	A3,DAABrun3+1
+11$:	lda	A4H
+	beq	12$
+	mvw	A4,DAABrun2+1
+12$:	ldx	#4	; copy the about strings
+13$:	lda	A5L
+	sta	DAABbox,x
+	inx
+	lda	A5H
+	sta	DAABbox,x
+	cpx	#20
+	bge	16$
+	inx
+	inx
+	inx
+	inx
+14$:	ldy	#0
+	lda	(A5),y
+	pha
+	inc	A5L
+	bne	15$
+	inc	A5H
+15$:	pla
+	beq	13$
+	bne	14$
+16$:	jsr	DAABinit
+	rts
+
+<span align="left">;*******************************
+;* i_InitDaAb
+;*
+;* Inputs:
+;*	.word	Pointer to about refresh
+;*	.word	Pointer to DA refresh
+;*	.word	Pointer to DA init
+;*	.word	Pointer to 4 About $
+;*	
+;* Outputs:
+;*	.a	0
+;*	.x	0
+;*******************************
+
+i_InitDaAb:
+	jsr	APIinit
+	jsr	InitDaAb
+	ldy	#8	; 4 words = 10 bytes
+	jmp	APIreturn
+
+
+<span align="left">DAABinit:
+	ldw	R6,#DAABaces
+	ldb	R7L,#DESK_ACC
+	ldb	R7H,#7
+	ldw	R10,#0
+	jsr	FindFTypes
+	lda	#7
+	sub	R7H
+	beq	10$
+	clc
+	adc	#1
+	pha
+	ora	#VERTICAL
+	sta	DAABMenu+6
+	plb	R0L
+	asl	a
+	asl	a
+	asl	a
+	asl	a
+	sub	R0L
+	sub	R0L
+	clc
+	adc	#16
+	sta	DAABMenu+1
+10$:	rts
+
+<span align="left">DAABabout:
+	jsr	GotoFirstMenu	; 0,1,2
+	ldb	dispBufferOn,#ST_WR_FORE
+	ldw	R0,#DAABbox
+	jsr	DoDlgBox
+DAABabt2:	jmp	DAABnada
+
+DAABrunDA:
+	pha
+	jsr	GotoFirstMenu
+	pla
+	jmp	DAABrun
+
+<span align="left">DAABrun:	sta	R6L
+	asl	a
+	asl	a
+	asl	a
+	asl	a
+	add	R6L
+	clc
+	adc	#[(DAABaces-17)
+	sta	R6L
+	lda	#0
+	adc	#](DAABaces-17)
+	sta	R6H
+	phw	R6
+DAABrun2:	jsr	DAABnada
+	lda	DAABdrv
+	jsr	SetDevice
+
+	ldw	R0,#$8a00	; base of sprite pics
+	ldw	R1,#DAABsprt
+	ldw	R2,#(7*64)
+	jsr	MoveData
+	plw	R6
+	ldx	$0001
+	ldb	$0001,#$35
+	phb	$d017
+	ldb	$d017,#0
+	stx	$0001
+
+	ldb	R0L,#0
+	lda	#%00000000
+	sta	R10L
+	jsr	GetFile
+	
+	ldx	$0001
+	ldb	$0001,#$35
+	plb	$d017
+	stx	$0001
+	ldw	R0,#DAABsprt
+	ldw	R1,#$8a00
+	ldw	R2,#(7*64)
+	jsr	MoveData
+
+	mvb	screencolors,R2L
+	ldw	R1,#COLOR_MATRIX
+	ldw	R0,#(25*40)
+	jsr	FillRam
+	ldb	R2L,#15
+	ldb	R2H,#199
+	ldw	R3,#0
+	ldw	R4,#319
+	jsr	RecoverRectangle
+DAABrun3:	jmp	DAABnada
+
+<span align="left">DAABnada:	rts
+DAABbox:
+	.byte	$80 | $01
+	.byte	11
+	.byte	$16,$12
+	.word	DAABtxt2
+	.byte	11
+	.byte	$16,$26
+	.word	DAABtxt2
+	.byte	11
+	.byte	$16,$3d
+	.word	DAABtxt2
+	.byte	11
+	.byte	$16,$50
+	.word	DAABtxt2
+	.byte	14
+	.byte	0
+DAABtxt2:	.byte	" ",0
+
+<span align="left">DAABMenu:
+	.byte	15
+	.byte	15+1+(1*14)
+	.word	0
+	.word	79
+	.byte	VERTICAL | 1
+
+	.word	DAABtext
+	.byte	MENU_ACTION
+	.word	DAABabout
+
+	.word	DAABaces
+	.byte	MENU_ACTION
+	.word	DAABrunDA
+	.word	DAABaces+$11
+	.byte	MENU_ACTION
+	.word	DAABrunDA
+	.word	DAABaces+$22
+	.byte	MENU_ACTION
+	.word	DAABrunDA
+	.word	DAABaces+$33
+	.byte	MENU_ACTION
+	.word	DAABrunDA
+	.word	DAABaces+$44
+	.byte	MENU_ACTION
+	.word	DAABrunDA
+	.word	DAABaces+$55
+	.byte	MENU_ACTION
+	.word	DAABrunDA
+	.word	DAABaces+$66
+	.byte	MENU_ACTION
+	.word	DAABrunDA
+	.word	DAABaces+$77
+	.byte	MENU_ACTION
+	.word	DAABrunDA
+DAABtext:	.byte	"prog info",0
+
+
+<span align="left">.ramsect
+
+DAABdrv:	.block	1
+DAABsprt:	.block	7*65
+DAABaces:	.block	148
+</pre></body></html>

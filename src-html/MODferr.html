@@ -1,0 +1,146 @@
+<!DOCTYPE html><html><head><title>Untitled</title></head><body><pre><span align="left">.noeqin
+.include	GEOSequates
+.glbl
+.eqin
+
+;****************************************
+;* MODferr - geoProjects library (C) 1998 Bo Zimmerman
+<span align="left">;*
+;* Intro:
+;*	Displays a Disk Error: dialog box based on
+;*	a disk error in .x.
+;*
+;* Functions:
+;* FError	(.x error to notify of)
+;*
+;* Comments:
+;****************************************
+.psect
+
+<span align="left">;*******************************
+;* FError
+;*
+;* Inputs:
+;*	.x	error to notify of
+;*	
+;* Outputs:
+;*	.a	?
+;*	.x	error
+;*******************************
+
+FError:	txa
+	pha
+	sta	A5L
+	bne	10$
+	pla
+	rts
+10$:	ldy	#0
+11$:	lda	FERRcht,y
+	cmp	A5L
+	beq	12$
+	iny
+	iny
+	iny
+	cpy	#(3*24)
+	bcc	11$
+	ldw	A4,#FERRtu	; unknown disk error
+	bra	13$
+12$:	lda	FERRcht+1,y
+	sta	A4L
+	lda	FERRcht+2,y
+	sta	A4H
+13$:	ldw	R0,#FERRbox
+	jsr	DoDlgBox
+	pla
+	rts		
+	
+
+
+<span align="left">FERRcht:	.byte	1
+	.word	FERRt1
+	.byte	2
+	.word	FERRt2
+	.byte	3
+	.word	FERRt3
+	.byte	4
+	.word	FERRt4
+	.byte	5
+	.word	FERRt5
+	.byte	6
+	.word	FERRt6
+	.byte	7
+	.word	FERRt7
+	.byte	8
+	.word	FERRt8
+	.byte	9
+	.word	FERRt9
+	.byte	10
+	.word	FERRt10
+	.byte	11
+	.word	FERRt11
+	.byte	13
+	.word	FERRt13
+	.byte	31
+	.word	FERRt31
+	.byte	32
+	.word	FERRt32
+	.byte	33
+	.word	FERRt33
+	.byte	34
+	.word	FERRt34
+	.byte	35
+	.word	FERRt35
+	.byte	36
+	.word	FERRt36
+	.byte	37
+	.word	FERRt37
+	.byte	38
+	.word	FERRt38
+	.byte	39
+	.word	FERRt39
+	.byte	41
+	.word	FERRt41
+	.byte	63
+	.word	FERRt63
+	.byte	115
+	.word	FERRt115
+
+<span align="left">FERRbox:	.byte	$80 | $01
+	.byte	11
+	.byte	$20,$14
+	.word	FERRt
+	.byte	12
+	.byte	$20,$28
+	.byte	A4
+	.byte	$02,$0f,$40
+	.byte	0
+
+<span align="left">
+FERRt:	.byte	$18,"Disk error:",27,0
+FERRtu:	.byte	$18,"Unknown disk error.",27,0
+.noglbl
+FERRt1:	.byte	$18,"Not enough blocks.",27,0
+FERRt2:	.byte	$18,"Illegal track or sector.",27,0
+FERRt3:	.byte	$18,"Disk full.",27,0
+FERRt4:	.byte	$18,"Directory full.",27,0
+FERRt5:	.byte	$18,"File not found.",27,0
+FERRt6:	.byte	$18,"Block deallocation error.",27,0
+FERRt7:	.byte	$18,"Illegal VLIR chain number.",27,0
+FERRt8:	.byte	$18,"VLIR: Illegal track or sector.",27,0
+FERRt9:	.byte	$18,"Too many VLIR chains.",27,0
+FERRt10:	.byte	$18,"File is not a VLIR file.",27,0
+FERRt11:	.byte	$18,"End of file. File too long.",27,0
+FERRt13:	.byte	$18,"Device not present.",27,0
+FERRt31:	.byte	$18,"Write protect is on.",27,0
+FERRt32:	.byte	$18,"No header block.",27,0
+FERRt33:	.byte	$18,"Drive not ready.",27,0
+FERRt34:	.byte	$18,"No data block.",27,0
+FERRt35:
+FERRt36:
+FERRt37:	.byte	$18,"Bad block on disk.",27,0
+FERRt38:	.byte	$18,"Write protext is on.",27,0
+FERRt39:	.byte	$18,"Bad header block.",27,0
+FERRt41:	.byte	$18,"Cannot open disk.",27,0
+FERRt63:	.byte	$18,"File exists.",27,0
+FERRt115:	.byte	$18,"DOS mismatch on disk.",27,0
+</pre></body></html>

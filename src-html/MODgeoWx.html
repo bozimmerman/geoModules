@@ -1,0 +1,596 @@
+<!DOCTYPE html><html><head><title>Untitled</title></head><body><pre><span align="left">.noeqin
+<span align="left">.include	GEOSequates
+GEOWLBuf = $8100	; fileHeader is our Links buffer
+GEOWLTnS = $7ffe	; Links TNS ($8873)
+GEOWPTnS = $7ffc	; Page TNS ($886f)
+GEOWLptr = $7ffa	; Page Pointer into links ($8877)
+GEOWLnum = $7ff8	; LineNum ($8879)
+GEOWCTnS = $7ff6	; picture track and sector ($887a)
+GEOWCBuf = $8300
+; curRecord = current PICTURE record
+.glbl
+.eqin
+
+<span align="left">;****************************************
+;* MODgeoWx - geoProjects library (C) 1998 Bo Zimmerman
+<span align="left">;*
+;* Intro:
+;* 	This modules supports the creation of
+;*	geoWrite files, and includes support
+;*	for adding pictures. This version is
+;*	multi-module (VLIR).  It does this by
+;*	bastardiZing all the standard GEOS
+;*	disk buffers, so protect them.
+;*
+;* Functions:
+;*	CreatWF(	.word	Filename pointer) *
+;*	PutWByte(	.a	Byte to write out) *
+;*	PutWString(	.word	String pointer) *
+;*	PutWBuf(	.word	Buffer pointer
+;*			.word	Number of bytes) *
+;*	PutWMem(	.word	Buffer pointer
+;*			.word	Last byte pointer) *
+;*	PutWPic(	.word	Pointer to photo scrap
+;*			.word	Pointer to last byte) * !
+;*	GWPage() - closes current page & opens another.
+;*	CloseWF(	.word	Filename pointer) *
+;*
+;*	* = includes i_Function call, and returns 
+;*		status in the .x register
+;*
+;* Comments:
+;* !	The only non-standard aspect here is PutWPic. A2
+;*	should point to a width byte, followed by a SINGLE
+;*	height byte, followed by the data.  A3 should
+;*	point just beyond the last byte.
+;****************************************
+.psect
+
+<span align="left">;******************************
+;* CreatWF	Create a new geoWrite file
+;* Inputs:
+;*		A2	pointer to a file name
+;*		curDrive	drive to create file on
+;* Outputs:	
+;*		.x 	status
+;*		.a	0
+;******************************
+
+CreatWF:	jsr	OpenDisk
+	cpx	#0
+	beq	10$
+	rts
+10$:	mvw	A2,R6
+	ldb	$886e,#$ff
+	jsr	FindFile	; see if file already exists
+	cpx	#0
+	bne	11$
+	ldx	#63
+99$:	rts
+11$:	mvw	A2,GEOWHead
+	ldw	R9,#GEOWHead
+	ldb	R10L,#0
+	jsr	SaveFile	; create the geoWrite VLIR file
+	cpx	#0
+	bne	99$
+	ldy	#2
+	lda	fileTrScTab,y	; find the links block
+	sta	GEOWLTnS
+	iny
+	lda	fileTrScTab,y
+	sta	GEOWLTnS+1
+	iny		; here is the free sector i forgot
+	lda	fileTrScTab,y
+	sta	APITemp2
+	iny
+	lda	fileTrScTab,y	; ill make use...
+	sta	APITemp2+1
+	ldw	R1,#GEOWLBuf
+	ldy	#0
+12$:	lda	#0
+	sta	(R1),y
+	iny		; init the links page
+	lda	#$ff
+	sta	(R1),y
+	iny
+	bne	12$
+	ldw	R4,#GEOWLBuf
+	mvw	GEOWLTnS,R1
+	jsr	PutBlock	; put the first links block
+	cpx	#0
+	beq	13$
+	rts
+13$:	ldy	#0
+14$:	lda	$9c80,y	; save the BAM here, please
+	sta	BAM3HEAD,y
+	iny
+	bne	14$
+	ldw	GEOWLptr,#GEOWLBuf+2	; gets to the first record
+	ldw	fileSize,#3	; we start w/ info, links, and 1 more
+	ldb	curRecord,#64	; current picture record, thanks.
+	jmp	GEOWfstP	; set up the first page
+
+<span align="left">;******************************
+;* i_CreatWF	Create a new c= geowrite file
+;* Inputs:
+;*		.word	pointer to a file name
+;*		curDrive	drive to create file on
+;* Outputs:	
+;*		.x 	status
+;*		.a	0
+;******************************
+
+i_CreatWF:
+	jsr	APIinit
+	jsr	CreatWF
+	ldy	#2	; two byte parameter list
+	jmp	APIreturn
+
+<span align="left">;******************************
+;* PutWByte	Output a byte to a geowrite file
+;* Inputs:
+;*		.a	byte to write out
+;*		curDrive	drive to create file on
+;* Outputs:	
+;*		.x 	status
+;*		.a	?
+;******************************
+
+PutWByte:
+	sta	R10L	; save the byte for a sec
+10$:	lda	diskBlkBuf+1
+	bne	12$	; have we gone over?
+	jsr	GEOWnxtB
+	beq	10$	; if no error, then try again
+	rts		; return an error
+12$:	ldy	diskBlkBuf+1
+	lda	R10L
+	sta	diskBlkBuf,y
+	inc	diskBlkBuf+1
+	ldx	#0	; return no error
+	rts
+
+<span align="left">;******************************
+;* i_PutWByte	Output a byte to a geowrite file
+;* Inputs:
+;*		.byte	byte to write out
+;*		curDrive	drive to create file on
+;* Outputs:	
+;*		.x 	status
+;*		.a	byte written
+;******************************
+
+i_PutWByte:
+	jsr	APIinit
+	lda	A2L
+	jsr	PutWByte
+	ldy	#1
+	lda	A2L
+	cpx	#0
+	jmp	APIreturn
+
+<span align="left">;******************************
+;* PutWString	Output a string to a geowrite file
+;* Inputs:
+;*		A2	pointer to $ to write out
+;*		curDrive	drive to create file on
+;* Outputs:	
+;*		.x 	status
+;*		.a	?
+;* Destroyed:
+;*		A2	ptr to string Null
+;******************************
+
+PutWString:
+	ldy	#0	; increments A2, so this is necc
+	lda	(A2),y
+	bne	11$	; Zero is delimeter
+	ldx	#0	; non-disk exit though
+	rts	
+11$:	jsr	PutWByte
+	bne	13$	; finally save the byte
+	inw	A2	; increment the string pointer
+	cbi	R10L,#13	; a CR is a special case
+	bne	PutWString	; loop back if not a CR
+	inc	GEOWLnum
+	cbi	GEOWLnum,#65
+	bne	PutWString	; if plenty of lines left, loop back
+	jsr	GWPage	; close this page & move to next
+	beq	PutWString	; loop back up to keep going...
+13$:	rts
+
+<span align="left">;******************************
+;* i_PutWString	Output a string to a geowrite file
+;* Inputs:
+;*		.word	pointer to $ to write out
+;*		curDrive	drive to create file on
+;* Outputs:	
+;*		.x 	status
+;*		.a	?
+;******************************
+
+i_PutWString:
+	jsr	APIinit
+	jsr	PutWString
+	ldy	#2
+	cpx	#0
+	jmp	APIreturn
+
+<span align="left">;******************************
+;* PutWBuf	Output a buffer to a geowrite file
+;* Inputs:
+;*		A2	pointer to buffer
+;*		A3	number of bytes to write 
+;*		curDrive	drive to create file on
+;* Outputs:	
+;*		.x 	status
+;*		.a	?
+;* Destroyed:
+;*		A2	converted to last byte
+;******************************
+
+PutWBuf:	ldy	#0
+	lda	(A2),y
+	jsr	PutWByte
+	bne	10$
+	inw	A2
+	dew	A3
+	cwi	A3,#0
+	bne	PutWBuf
+10$:	rts
+
+<span align="left">;******************************
+;* i_PutWBuf	Output a buffer to geowrite file
+;* Inputs:
+;*		.word	pointer to buffer
+;*		.word	number of bytes to write 
+;*		curDrive	drive to create file on
+;* Outputs:	
+;*		.x 	status
+;*		.a	?
+;* Destroyed:
+;******************************
+
+i_PutWBuf:
+	jsr	APIinit
+	jsr	PutWBuf
+	ldy	#4
+	cpx	#0
+	jmp	APIreturn
+
+<span align="left">;******************************
+;* PutWMem	Output a block of memory to a geowrite file
+;* Inputs:
+;*		A2	pointer to start location
+;*		A3	pointer to last byte 
+;*		curDrive	drive to create file on
+;* Outputs:	
+;*		.x 	status
+;*		.a	?
+;* Destroyed:
+;*		A2	will point to end of buffer
+;******************************
+
+PutWMem:
+	ldy	#0
+	lda	(A2),y
+	jsr	PutWByte
+	bne	10$
+	inw	A2
+	cpw	A2,A3
+	bne	PutWMem
+10$:	rts
+
+<span align="left">;******************************
+;* i_PutWMem	Output a picture to geowrite file
+;* Inputs:
+;*		.word	pointer to a photo scrap
+;*		.word	pointer to number of bytes
+;*		curDrive	drive to create file on
+;* Outputs:	
+;*		.x 	status
+;*		.a	?
+;* Destroyed:
+;******************************
+
+i_PutWMem:
+	jsr	APIinit
+	jsr	PutWMem
+	ldy	#4
+	cpx	#0
+	jmp	APIreturn
+
+<span align="left">;******************************
+;* PutWPic	Output a picture to a geowrite file
+;* Inputs:
+;*		A2	pointer to photo scrap
+;*		A3	pointer to last byte
+;* Outputs:	
+;*		.x 	status
+;*		.a	?
+;* Destroyed:
+;*		A2	will point to end of buffer
+;******************************
+
+PutWPic:	lda	#$10	; put gfx escape
+	jsr	PutWByte
+	ldy	#0
+	lda	(A2),y	; put the width
+	jsr	PutWByte
+	ldy	#1
+	lda	(A2),y	; put the height lsb
+	jsr	PutWByte
+	lda	#0
+	jsr	PutWByte	; put the height hsb
+	cpx	#0
+	beq	11$
+98$:	rts
+11$:	lda	curRecord
+	jsr	PutWByte	; put the VLIR link into page
+	bne	98$
+	ldw	R0,#256
+	ldw	R1,#GEOWCBuf	; GEOWCBuf is our pic buffer!!!
+	jsr	ClearRam	; gimma a fresh, happy piece
+	ldb	GEOWCBuf,$00
+	ldb	GEOWCBuf+1,$02	; prepare for next block please
+	jsr	GEOWaloc
+	beq	10$
+	rts
+10$:	mvw	APITemp2,GEOWCTnS
+	lda	curRecord	; get index into Links
+	asl	a	; multiply by two
+	tay		; and make it an index
+	iny
+	iny		; point beyond the block link
+	lda	GEOWCTnS
+	sta	GEOWLBuf,y	; by copying our new TNS
+	iny
+	lda	GEOWCTnS+1
+	sta	GEOWLBuf,y	; to the Links table
+	mvw	GEOWLTnS,R1
+	ldw	R4,#GEOWLBuf
+	jsr	PutBlock	; now resave the Links data
+	cpx	#0
+	bne	50$
+	jsr	GEOWputP
+	beq	50$
+	rts
+50$:	mvw	GEOWCTnS,R1
+	ldw	R4,#GEOWCBuf	; save the last sector
+	jsr	PutBlock
+	inc	curRecord	; and increment it for later
+	ldx	#0	; and return with happiness
+	rts
+
+<span align="left">;******************************
+;* i_PutWPic	Output a picture to geowrite file
+;* Inputs:
+;*		.word	pointer to a photo scrap
+;*		.word	pointer to last byte
+;* Outputs:	
+;*		.x 	status
+;*		.a	?
+;* Destroyed:
+;******************************
+
+i_PutWPic:
+	jsr	APIinit
+	jsr	PutWPic
+	ldy	#4
+	cpx	#0
+	jmp	APIreturn
+
+<span align="left">;******************************
+;* CloseWF	Close a file opened with CreatWF
+;* Inputs:	A2	file name to close
+;*		curDrive	drive file created on
+;* Outputs:	
+;*		.x 	status
+;*		.a	0
+;******************************
+
+CloseWF:	lda	#0
+	jsr	PutWByte	; is this necessary?	
+	jsr	GEOWClo2
+	ldy	#0
+11$:	lda	BAM3HEAD,y
+	sta	$9c80,y
+	iny
+	bne	11$
+	jsr	PutDirHead	; write 18,0 -- experiment with no
+<span align="left">	cpx	#0
+	bne	10$
+	mvw	A2,R6
+	ldb	$886e,#$ff
+	jsr	FindFile	; this shouldn't take long
+	cpx	#0
+	bne	10$	; always check for errors
+	ldy	#$1c
+	lda	fileSize	; now fix the file siZe
+	sta	(R5),y
+	iny
+	lda	fileSize+1
+	sta	(R5),y	; please thank you
+	ldw	R4,#$8000
+	jsr	PutBlock	; and save the dir sector back
+	cpx	#0
+10$:	rts
+
+GEOWClo2:
+	dec	diskBlkBuf+1	; make the pointer proper
+	mvw	GEOWPTnS,R1
+	ldw	R4,#diskBlkBuf
+	jsr	PutBlock	; save the last block
+	cpx	#0
+	bne	11$
+	mvw	GEOWLTnS,R1
+	ldw	R4,#GEOWLBuf
+	jsr	PutBlock	; and save the links again...
+	cpx	#0
+11$:	rts
+
+<span align="left">;******************************
+;* i_CloseWF	Close a file opened with CreatWF
+;* Inputs:	.word	file name to close
+;*		curDrive	drive file created on
+;* Outputs:	
+;*		.x 	status
+;*		.a	0
+;******************************
+
+i_CloseWF:
+	jsr	APIinit
+	jsr	CloseWF
+	ldy	#2
+	cpx	#0
+	jmp	APIreturn
+
+<span align="left">;******************************
+;* GWPage	Close this page and move to next
+;* Inputs:
+;*		curDrive	drive file created on
+;* Outputs:	
+;*		.x 	status
+;*		.a	0
+;******************************
+
+GWPage:
+	lda	#12
+	jsr	PutWByte	; page break, please
+	bne	11$
+	jsr	GEOWClo2	; close this page
+	bne	11$
+	jsr	GEOWnewP	; start the next one...
+11$:	rts
+
+<span align="left">GEOWnewP:	inw	GEOWLptr	; increment links for next page
+	inw	GEOWLptr	; twice
+	jsr	GEOWaloc	; get our first page sector
+	beq	10$
+	rts		; error is returned
+10$:
+GEOWfstP:	mvw	APITemp2,GEOWPTnS ; and save it
+	ldw	R0,#256
+	ldw	R1,#diskBlkBuf
+	jsr	ClearRam	; gimma a fresh, happy piece
+	mvw	GEOWLptr,R0
+	ldy	#0	; save link in Links for this page
+	lda	GEOWPTnS
+	sta	(R0),y
+	iny
+	lda	GEOWPTnS+1	; save link in Links for this page
+	sta	(R0),y
+	ldy	#0
+12$:	lda	GEOWPtop,y	; copy in the top of page data
+	sta	diskBlkBuf,y
+	iny
+	cpy	#33
+	blt	12$
+	ldx	#1	; return no error
+	stx	GEOWLnum
+	ldx	#0
+	rts		; and we're done!
+
+<span align="left">GEOWnxtB:	jsr	GEOWaloc	; save this allocated block
+	beq	12$
+10$:	cpx	#0
+11$:	rts		; return an error!
+12$:	mvw	APITemp2,diskBlkBuf	; save the block linker
+	mvw	GEOWPTnS,R1
+	ldw	R4,#diskBlkBuf; save the last sector
+	jsr	PutBlock
+	cpx	#0
+	bne	11$	; save it
+	mvw	APITemp2,GEOWPTnS
+	ldw	R0,#256
+	ldw	R1,#diskBlkBuf
+	jsr	ClearRam	; gimma a fresh, happy piece
+	ldb	diskBlkBuf,$00
+	ldb	diskBlkBuf+1,$02	; prepare for next block please
+	bra	10$
+
+GEOWaloc:	ldy	#0
+10$:	lda	BAM3HEAD,y
+	sta	$9c80,y
+	iny
+	bne	10$
+	ldw	R2,#200	; allocates a block in memory
+	ldw	R6,#APITemp2	; and returns it in APITemp2
+	jsr	BlkAlloc
+	cpx	#0
+	bne	11$
+	inw	fileSize
+	ldy	#0
+12$:	lda	$9c80,y
+	sta	BAM3HEAD,y
+	iny
+	bne	12$
+	cpx	#0	; reestablish the .x factor
+11$:	rts
+
+<span align="left">GEOWputP:	ldy	#0	; now start on the picture itself
+	lda	(A2),y	; put the width
+	jsr	GEOWppB
+	ldy	#1
+	lda	(A2),y	; put the height lsb
+	jsr	GEOWppB
+	lda	#0
+	jsr	GEOWppB ; put the height hsb
+	beq	11$
+99$:	rts
+11$:	mvw	A2,A4	; get us a work pointer to data
+	avw	#2,A4	; by pointing it at it
+12$:	cpw	A4,A3
+	blt	13$	; if they are equal, we are done!
+	ldx	#0	; if everything's cool, no prob
+	rts
+13$:	ldy	#0
+	lda	(A4),y
+	jsr	GEOWppB ; now its all conventional copying
+	bne	99$	; an unusual way to exit, but ohwell
+	inw	A4
+	bra	12$
+
+GEOWppB:	sta	R10L	; save the byte for a sec
+10$:	lda	GEOWCBuf+1
+	bne	14$	; have we gone over?
+	jsr	GEOWaloc	; save this allocated block
+	beq	13$
+11$:	cpx	#0
+12$:	rts		; return an error!
+13$:	mvw	APITemøˇˇˇÄpÄpˇp
+ˇQΩü„ˇè√ˇè◊ˇè«ˇèCyÜ
+}ÑˇÇ˝Å«ôÉÁ¡ÉÁ¡É„ãÅ¡áÅÅGÅˇˇˇÉˇgeoWAR      V1.0Lysle E. Shields    Play the game of world domination !<span align="left">GEOWHead:
+<span align="left">	.word	$0000
+	.byte	$03,$15,$bf
+<span align="left">	.byte	$ff,$ff,$ff,$80,$00,$01,$8f,$ff
+	.byte	$01,$88,$01,$01,$8b,$ff,$c1,$8a
+	.byte	$00,$41,$8a,$ff,$f1,$8a,$80,$11
+	.byte	$8a,$8e,$11,$8a,$80,$11,$8a,$bf
+	.byte	$91,$8a,$80,$11,$8a,$9f,$11,$8a
+	.byte	$80,$11,$8a,$bf,$91,$8e,$80,$11
+	.byte	$82,$bf,$91,$83,$80,$11,$80,$80
+	.byte	$11,$80,$ff,$f1,$ff,$ff,$ff
+	.byte	$83
+<span align="left">	.byte	APPL_DATA
+	.byte	VLIR
+	.word	0
+	.word	$00f0
+	.word	$5772 ; ????
+	.byte	"Write Image V2.0",0,0,0,$00
+	.byte	"Bo Zimmerman",0,0,0,0,0,0,0,0
+	.byte	"geoWrite    V2.0",0,0,0,$00
+	.byte	$01,$00,$00,$00,$00,$00,$00,$f0
+	.byte	$02,$20,$12,$0e,$20,$b7,$c1,$cc
+	.block	144-117
+
+<span align="left">GEOWPtop:	.byte	$00,$21	; number of bytes (temp link) = 33
+	.byte	$11,$00,$00,$df,$01,$38,$00,$50
+	.byte	$00,$b0,$00,$df,$01,$df,$01,$df
+	.byte	$01,$df,$01,$df,$01,$00,$00,$30
+	.byte	$00,$00,$00,$17,$09,$00,$00
+
+
+<span align="left">.ramsect
+BAM3HEAD:	.block	256
+</pre></body></html>

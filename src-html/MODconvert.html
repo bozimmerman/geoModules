@@ -1,0 +1,478 @@
+<!DOCTYPE html><html><head><title>Untitled</title></head><body><pre><span align="left">.noeqin
+.include	GEOSequates
+.glbl
+.eqin
+;****************************************
+;* MODconvert - geoProjects library (C) 1998 Bo Zimmerman
+<span align="left">;*
+;* Grants the functionality to do in-place file 
+;* conversions to and from the .cvt format.
+;*
+;* Functions:
+;* Convert	(A2	pointer to filename) *
+;* unConv	(A2	pointer to .cvt filename) *
+;*
+;* 	* = includes i_Function call
+;*	.x	errors if any, 
+;*		0 = ok, 
+;*		$ff = not geos, not cvt
+;*	curDrive - device file is on
+;* Comments:
+;****************************************
+
+
+<span align="left">;*******************************
+;* Convert
+;*
+;* Inputs:	
+;*	A2	pointer to filename of GEOS file
+;*
+;*	curDrive - device file is on
+;* Outputs:
+;*	.x	errors or msgs, if any
+;*******************************
+
+Convert:	mvw	A2,R6
+	ldb	$886e,#$ff
+	jsr	FindFile	; find the GEOS file
+	cpx	#0
+	beq	10$
+	rts
+10$:	mvw	R1,CONVdtns
+	mvw	R5,CONVdptr
+	ldy	#0
+	lda	(R5),y
+	and	#$1f
+	cmp	#3	; USR files only!
+	bne	14$
+	ldy	#$16
+	lda	(R5),y	; is GEOS file?
+	bne	15$
+14$:	ldx	#$ff	; no, so exit
+	rts
+15$:	ldy	#$01
+	lda	(R5),y
+	sta	CONVtns
+	iny
+	lda	(R5),y
+	sta	CONVtns+1
+	ldy	#$13
+	lda	(R5),y
+	sta	CONVblk
+	iny
+	lda	(R5),y
+	sta	CONVblk+1
+	jsr	CONVsigB	; build signiture block
+	jsr	CONVallB	; allocate signiture block
+	beq	20$
+19$:	rts
+20$:	jsr	CONVinfo
+	cpx	#0
+	bne	19$
+	jsr	CONVunGeo	; rebuild directory entry
+	cpx	#0
+	bne	19$
+	jsr	CONVlink
+	rts
+
+<span align="left">;*******************************
+;* i_Convert
+;*
+;* Inputs:	
+;*	.word	pointer to filename of GEOS file
+;*
+;*	curDrive - device file is on
+;* Outputs:
+;*	.x	errors or msgs, if any
+;*******************************
+<span align="left">
+i_Convert:	jsr	APIinit
+	jsr	Convert
+	ldy	#2	; a single word pointer
+	jmp	APIreturn
+
+<span align="left">;*******************************
+;* unConv
+;*
+;* Inputs:	
+;*	A2	pointer to filename of .cvtfile
+;*
+;*	curDrive - device file is on
+;* Outputs:
+;*	.x	errors or msgs, if any
+;*******************************
+
+unConv:	mvw	A2,R6
+	ldb	$886e,#$ff
+	jsr	FindFile	; find the GEOS file
+	cpx	#0
+	beq	10$
+	rts
+10$:	mvw	R1,CONVdtns
+	mvw	R5,CONVdptr
+	ldy	#0
+	lda	(R5),y
+	and	#$1f
+	cmp	#3	; REL,USR files not allowed!
+	bge	14$
+	ldy	#$16
+	lda	(R5),y	; is GEOS file?
+	beq	15$
+14$:	ldx	#$ff	; no, so exit
+	rts
+15$:	jsr	CONVisit
+	beq	20$
+	ldx	#$ff
+	rts
+20$:	jsr	CONVbldd
+	beq	30$
+	rts
+30$:	jsr	CONVulnk
+	rts
+
+<span align="left">;*******************************
+;* i_unConv
+;*
+;* Inputs:	
+;*	.word	pointer to filename of .cvt file
+;*
+;*	curDrive - device file is on
+;* Outputs:
+;;*	.x	errors or msgs, if any
+;*******************************
+
+i_unConv:	jsr	APIinit
+	jsr	unConv
+	ldy	#2	; a single word pointer
+	jmp	APIreturn
+
+<span align="left">CONVisit:	mvw	CONVdptr,R5
+	ldy	#$01
+	lda	(R5),y
+	sta	R1L
+	sta	CONVstns
+	iny
+	lda	(R5),y
+	sta	R1H
+	sta	CONVstns+1
+	ldw	R4,#CONVblk
+	jsr	GetBlock
+	cpx	#0
+	beq	11$
+10$:	rts
+11$:	lda	CONVblk+$20,x
+	cmp	CONVsigD,x
+	bne	10$
+	inx
+	cpx	#26
+	blt	11$
+	ldx	#0
+	rts
+	
+
+<span align="left">CONVbldd:	mvw	CONVdptr,R5
+	ldy	#$00
+10$:	lda	CONVblk+2,y	; copy old dir entry
+	sta	(R5),y
+	iny
+	cpy	#$1e
+	blt	10$
+	ldy	#$13	; restore info pointer
+	lda	CONVblk
+	sta	(R5),y
+	sta	R1L
+	iny
+	lda	CONVblk+1
+	sta	(R5),y	; done restoring that
+	sta	R1H
+	ldw	R4,#$8100	; now read info sector
+	jsr	GetBlock
+	cpx	#0
+	beq	20$
+19$:	rts
+20$:	mvw	CONVdptr,R5
+	ldy	#$01	; restore code pointer
+	lda	$8100
+	sta	(R5),y
+	sta	CONVvtns	; ... restore code pointer
+	iny
+	lda	$8101
+	sta	(R5),y	; ... .. restore code pointer
+	sta	CONVvtns+1
+	ldw	$8100,#$ff00
+	jsr	PutBlock	; resave info sector
+	cpx	#0
+	bne	19$
+	mvw	CONVdtns,R1
+	ldw	R4,#$8000	; resave directory!
+	jsr	PutBlock
+	cpx	#0
+	bne	19$
+	jsr	GetDirHead	; now deallocate sig block
+	mvw	CONVstns,R6
+	jsr	FreeBlock	; I hope that does it!
+	jsr	PutDirHead	; resave BAM
+	ldx	#0
+	rts
+
+<span align="left">CONVulnk:	lda	CONVblk+$17	; check if was vlir
+	bne	10$
+	ldx	#0
+	rts		; it was NOT, so done.
+10$:	mvw	CONVvtns,R1
+	ldw	R4,#$8100	; read VLIR block!
+	jsr	GetBlock
+	cpx	#0
+	bne	19$
+	mvw	$8100,CONVtns
+	ldb	CONVvlix,#$02
+11$:	ldy	CONVvlix
+	lda	$8100,y
+	bne	15$
+12$:	inc	CONVvlix	; keep looking thru chains
+	inc	CONVvlix
+	bne	11$
+	beq	50$
+15$:	sta	CONVvlis	; found, so save chain info
+	iny
+	lda	$8100,y
+	sta	CONVvlil	; and last sec size
+	ldy	CONVvlix
+	lda	CONVtns	; then fix vlir table
+	sta	$8100,y
+	lda	CONVtns+1
+	iny
+	sta	$8100,y
+18$:	mvw	CONVtns,R1
+	ldw	R4,#$8000	; read into old dir area
+	jsr	GetBlock
+	cpx	#0
+	beq	20$
+19$:	rts
+20$:	mvw	$8000,CONVtns	; loop through chain
+	dec	CONVvlis	; keep looking!
+	bne	18$
+	ldb	$8000,#$00
+	mvb	CONVvlil,$8001
+	jsr	PutBlock	; R1 and R4 are still OK
+	cpx	#0
+	bne	19$
+	beq	12$
+50$:	ldw	$8100,#$ff00	; now re-save vlir block
+	ldw	R4,#$8100
+	mvw	CONVvtns,R1
+	jsr	PutBlock
+	cpx	#0
+	rts
+
+<span align="left">CONVsigB:	mvw	CONVdptr,R5
+	ldy	#0	; build signiture block
+16$:	lda	(R5),y
+	sta	CONVblk+2,y
+	iny
+	cpy	#$1e
+	blt	16$
+	ldx	#0
+17$:	lda	CONVsigD,x	; now fill signiture
+	sta	CONVblk+2,y
+	iny
+	inx
+	cpx	#$20
+	blt	17$
+	iny
+	iny
+	lda	#0	; now fill rest of block
+18$:	sta	CONVblk,y	; with zeroes
+	iny
+	bne	18$
+	ldy	#$03
+	sta	CONVblk,y	; fill blk pointers
+	iny
+	sta	CONVblk,y
+	ldy	#$15
+	sta	CONVblk,y
+	iny
+	sta	CONVblk,y
+	rts
+
+<span align="left">CONVallB:	jsr	GetDirHead	; read BAM
+	cpx	#0
+	beq	10$
+	rts
+10$:	jsr	CalcBlksFree	; see if there is space
+	cwi	R4,#$0001
+	bge	15$
+	ldx	#3	; no, so return disk full
+	rts
+15$:	ldw	R2,#$0a
+	ldw	R6,#APITemp1	; now allocate block!
+	jsr	BlkAlloc
+	mvw	CONVdptr,R5
+	ldy	#1
+	lda	APITemp1
+	sta	(R5),y	; copy in new first block!
+	iny
+	lda	APITemp1+1
+	sta	(R5),y
+	jsr	PutDirHead	; re-save BAM
+	cpx	#0
+	beq	16$
+	rts
+16$:	ldw	R4,#CONVblk
+	mvw	APITemp1,R1	; write out header block
+	jsr	PutBlock
+	cpx	#0
+	rts
+
+<span align="left">CONVunGeo:	mvw	CONVdptr,R5
+	ldy	#0
+	lda	#129	; make SEQ
+	sta	(R5),y
+	ldy	#$13
+	lda	#0
+10$:	sta	(R5),y	; clear out geoStuff
+	iny
+	cpy	#$1c
+	blt	10$
+	ldy	#$03	; now convert filename
+11$:	ldx	#0
+12$:	lda	(R5),y	; check conversion table
+	beq	20$
+	cmp	#$a0	; see if end of filename
+	beq	20$
+	cmp	CONVtabc,x
+	beq	13$
+	inx
+	lda	CONVtabc,x	; see if end of table
+	beq	19$
+	bne	12$
+13$:	lda	CONVtabd,x	; found one, so convert
+	sta	(R5),y	; and save it back
+19$:	iny
+	cpy	#$13
+	blt	11$
+20$:	cpy	#$0f	; check fnamesize
+	blt	21$
+	ldy	#$0f
+21$:	ldx	#$00
+22$:	lda	CONVcvtx,x	; add extension
+	sta	(R5),y
+	inx
+	iny
+	cpx	#4
+	blt	22$
+	ldy	#$1c	; now increase block size
+	lda	(R5),y
+	clc
+	adc	#$01
+	sta	(R5),y
+	iny
+	lda	(R5),y
+	adc	#$00
+	sta	(R5),y	; done increasing block size
+	ldw	R4,#$8000
+	mvw	CONVdtns,R1
+	jsr	PutBlock	; now update directory!
+	rts
+
+<span align="left">CONVinfo:	mvw	CONVblk,R1
+	ldw	R4,#$8100
+	jsr	GetBlock
+	cpx	#0
+	beq	10$
+	rts
+10$:	mvw	CONVtns,$8100
+	ldw	R4,#$8100
+	mvw	CONVblk,R1
+	jsr	PutBlock
+	cpx	#0
+	rts
+
+<span align="left">CONVlink:	ldy	#$17	; check if sequential
+	lda	CONVblk,y
+	bne	10$
+	ldx	#0	; already sequential! done!
+	rts
+10$:	mvw	CONVtns,R1
+	ldw	R4,#$8000	; get VLIR block
+	jsr	GetBlock
+	cpx	#0
+	bne	39$
+	ldb	CONVvlix,#$02	; initialize loopup
+	mvw	$8002,$8000	; link vlir block, only once
+20$:	ldb	CONVvlis,#$00	; start block loop
+	ldy	CONVvlix
+	lda	$8000,y	; is this valid vlir?
+	bne	30$
+25$:	inc	CONVvlix
+	inc	CONVvlix	; keep looping
+	bne	20$
+	beq	50$	; go to write vlir block
+30$:	sta	R1L	; store for initial read
+	iny
+	lda	$8000,y	; get block start
+	sta	R1H
+35$:	ldw	R4,#$8100
+	jsr	GetBlock
+	cpx	#0
+	beq	40$
+39$:	rts
+40$:	inc	CONVvlis	; increase size
+	lda	$8100	; and does this block
+	beq	41$	; continue?
+	mvw	$8100,R1
+	bra	35$	; yes, keep looping
+41$:	ldy	CONVvlix	; no, so do some work
+	lda	CONVvlis
+	sta	$8000,y	; store info in pseudo
+	iny		; vlir block
+	lda	$8101	; get last block char size
+	sta	$8000,y	; store it too
+	bne	44$	; then skip to next vlirlook
+43$:	ldy	CONVvlix
+	lda	$8000,y	; is this valid vlir?
+	bne	45$
+44$:	inc	CONVvlix
+	inc	CONVvlix	; keep looping
+	bne	43$
+	beq	50$
+45$:	sta	$8100	; found one!
+	iny
+	lda	$8000,y
+	sta	$8101	; so store it!
+	jsr	PutBlock	; R1 and R4 are unchanged
+	cpx	#0
+	bne	39$
+	beq	20$
+50$:	mvw	CONVtns,R1
+	ldw	R4,#$8000
+	jsr	PutBlock	; store VLIR block
+	cpx	#0	; and exit!
+	rts
+
+<span align="left">CONVcvtx:	.byte	".CVT",0
+CONVtabc:	.byte	"_}{~`\|abcdefghijklmnopqrstuvwxyz",0
+CONVtabd:	.byte	"-[]+'/!ABCDEFGHIJKLMNOPQRSTUVWXYZ",0
+CONVsigD:
+	.byte $50,$52,$47,$20
+	.byte $66,$6f,$72,$6d
+	.byte $61,$74,$74,$65
+	.byte $64,$20,$47,$45
+	.byte $4f,$53,$20,$66
+	.byte $69,$6c,$65,$20
+	.byte $56,$31,$2e,$30
+	.byte $00,$00,$00,$00
+
+
+<span align="left">.ramsect
+CONVblk:	.block	256	; signiture block
+CONVtns:	.block	2	; track and sector 
+CONVdtns:	.block	2	; directory tns
+CONVdptr:	.block	2	; directory entry ptr
+CONVvlix:	.block	1	; VLIR index
+CONVvlis:	.block	1	; VLIR block size
+CONVvlil:	.block	1	; VLIR end chain char size
+CONVstns:	.block	2	; signiture block tns
+CONVvtns:	.block	2	; vlir block tns
+
+<span align="left"></pre></body></html>

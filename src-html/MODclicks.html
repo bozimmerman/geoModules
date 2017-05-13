@@ -1,0 +1,260 @@
+<!DOCTYPE html><html><head><title>Untitled</title></head><body><pre><span align="left">.noeqin
+.include	GEOSequates
+.glbl
+.eqin
+
+;****************************************
+;* MODclicks - geoProjects library (C) 1998 Bo Zimmerman
+<span align="left">;*
+;* Intro:
+;*	Remembers dimensions of 20 click areas.
+;*	Includes funcs to handle and detect clicks.
+;*
+;* Functions:
+;* SetClick	(.byte	Top of click box
+;*	.byte	Bottom of click box
+;*	.word	Left of click box
+;*	.word	Right of click box
+;*	.word	Pointer to routine
+;*	.byte	Click # to set) *
+;* WSetClick(.word  Routine to execute
+;*	.byte	Click # to set
+;*	R2L	Top of click box
+;*	R2H	Bottom of click box
+;*	R3	Left of click box
+;*	R4	Right of click box) *
+;* ChkClick(.byte	Click to check) *
+;*	.x = 0 is inside, $ff is outside
+;* DoClick	(A2L	Click to do)
+;* DoAllClicks ()
+;*
+;* Comments:
+;* 	* = includes i_version
+;* 	Null routines never executed.
+;****************************************
+.psect
+
+<span align="left">;*******************************
+;* SetClick
+;*
+;* Inputs:	
+;*	A2L	Top of click box
+;*	A2H	Bottom of click box
+;*	A3	Left of click box
+;*	A4	Right of click box
+;*	A5	Routine to execute
+;*	A6L	Click # to set
+;*	
+;* Outputs:
+;*	.a	0
+;*	.x	0
+;*******************************
+
+SetClick:	lda	A6L
+	jsr	CLIKset
+	beq	10$
+	rts		; bad bad error happened
+10$:	lda	#0
+11$:	tax
+	tay
+	lda	A2L,x	; copy all the bytes in
+	sta	(A7),y
+	iny
+	tya
+	cmp	#8
+	bne	11$
+	lda	#0	; happily done
+	tax
+	rts
+
+<span align="left">;*******************************
+;* i_SetClick
+;*
+;* Inputs:	
+;*	.byte	Top of click box
+;*	.byte	Bottom of click box
+;*	.word	Left of click box
+;*	.word	Right of click box
+;*	.word	Pointer to routine
+;*	.byte	Click # to set
+;*	
+;* Outputs:
+;*	.a	0
+;*	.x	0
+;*******************************
+
+i_SetClick:
+	jsr	APIinit
+	jsr	SetClick
+	ldy	#9	; 3 words + 3 bytes= 8 bytes
+	jmp	APIreturn
+
+
+<span align="left">;*******************************
+;* WSetClick
+;*
+;* Inputs:	
+;*	R2L	Top of click box
+;*	R2H	Bottom of click box
+;*	R3	Left of click box
+;*	R4	Right of click box
+;*	A2	Routine to execute
+;*	A3L	Click # to set
+;*	
+;* Outputs:
+;*	.a	0
+;*	.x	0
+;*******************************
+
+WSetClick:
+	mvw	A2,A5
+	mvb	A3L,A6L
+	mvw	R2,A2
+	mvw	R3,A3
+	mvw	R4,A4
+	jmp	SetClick
+
+<span align="left">;*******************************
+;* i_WSetClick
+;*
+;* Inputs:	
+;*	R2L	Top of click box
+;*	R2H	Bottom of click box
+;*	R3	Left of click box
+;*	R4	Right of click box
+;*	.word	Routine to execute
+;*	.byte	Click # to set
+;*	
+;* Outputs:
+;*	.a	0
+;*	.x	0
+;*******************************
+
+i_WSetClick:
+	jsr	APIinit
+	jsr	WSetClick
+	ldy	#3	; 1 word + 1 bytes= 3 bytes
+	jmp	APIreturn
+
+
+<span align="left">;*******************************
+;* ChkClick
+;*
+;* Inputs:	
+;*	A2L	Click to check
+;*	
+;* Outputs:
+;*	.a	0
+;*	.x	0=inside box, 1=not
+;*******************************
+
+ChkClick:
+	lda	A2L
+	jsr	CLIKset
+	beq	10$
+	rts		; bad bad error!!
+10$:	lda	#0
+11$:	tax
+	tay
+	lda	(A7),y	; copy all the coords in
+	sta	R2L,x
+	iny
+	tya
+	cmp	#6
+	bne	11$
+	jsr	IsMseInRegion		; now we can check!
+	tax
+	lda	#0	; set up for comparison
+	inx
+	rts	
+
+<span align="left">;*******************************
+;* i_ChkClick
+;*
+;* Inputs:	
+;*	.byte	Click to check
+;*	
+;* Outputs:
+;*	.a	0
+;*	.x	0=inside, 1=not inside
+;*******************************
+
+i_ChkClick:
+	jsr	APIinit
+	jsr	ChkClick
+	ldy	#1	; 1 byte= 1 byte
+	jmp	APIreturn
+
+
+<span align="left">;*******************************
+;* DoClick
+;*
+;* Inputs:	
+;*	A2L	Click to check
+;*	
+;* Outputs:
+;*	.a	0
+;*	.x	0=inside box, 1=not
+;*******************************
+
+DoClick:	lda	A2L
+	jsr	CLIKset
+	beq	10$
+	rts		; bad bad error!!
+10$:	lda	#0
+11$:	tax
+	tay
+	lda	(A7),y	; copy all the coords in
+	sta	R2L,x
+	iny
+	tya
+	cmp	#6
+	bne	11$
+	lda	(A7),y
+	sta	CLIKdont-2
+	iny
+	lda	(A7),y
+	sta	CLIKdont-1
+	jsr	IsMseInRegion		; now we can check!
+	tax
+	lda	#0	; set up for comparison
+	inx
+	bne	99$
+	lda	CLIKdont-1
+	beq	99$	
+	jsr	CLIKdont
+99$:
+CLIKdont:	rts
+
+<span align="left">;*******************************
+;* DoAllClicks
+;*
+;* Inputs:	
+;*	
+;* Outputs:
+;*	.a	0
+;*	.x	0
+;*******************************
+
+DoAllClicks:
+	ldb	A4L,#1
+10$:	lda	A4L
+	jsr	DoClick
+	inc	A4L
+	cpb	A4L,#21
+	bne	10$
+	rts
+
+<span align="left">CLIKset:	sta	A6L
+	ldw	A7,#CLIKbuf
+10$:	dec	A6L
+	beq	11$
+	avw	#8,A7
+	bra	10$
+11$:	lda	#0
+	rts
+
+<span align="left">.ramsect
+
+CLIKbuf:
+	.block	168	; 20 (20*8)+8 click settings</pre></body></html>

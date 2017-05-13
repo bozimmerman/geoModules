@@ -1,0 +1,839 @@
+<!DOCTYPE html><html><head><title>Untitled</title></head><body><pre><span align="left">.noeqin
+.include	GEOSequates
+.glbl
+.eqin
+
+;****************************************
+;* MODwin2 - geoProjects library (C) 1998 Bo Zimmerman
+<span align="left">;*
+;* Intro:
+;*	Handles creation of two movable/resizable
+;*	windows.  Creates new RecoverVector, 
+;*	appMain, and mouseFaultVec in support.
+;*
+;* Functions:
+;* Win1Mv(.byte	Window 1 top
+;*	.byte	Window 1 bottom
+;*	.word	Window 1 x position
+;*	.word	Window 1 y position
+;*	.byte	Draw now? 0=yes, 1=no)*
+;* Win2Mv( same as Win1Mv )*
+;* Win1Init	(.word	Pointer to window 1 titlebar
+;*	.word	Pointer to "close" routine
+;*	.word	Pointer to complex draw code
+;*	.byte	Enabled?  0=no, 1=yes)*
+;* Win2Init( same as Win1Init )*
+;* WindInit	(.word	Pointer to custom appMain code
+;*	.word	Pointer to custom click code
+;*	.byte	Which window active? 1 or 2?
+;*	.byte	Draw windows now? 0=no, 1=yes) *
+;* WinAct	(.byte	0=swap, 1=act 1, 2=act 2) *
+;*	.x has active window number
+;* IsOverlap() - .a - If no overlap, 0.  Overlapped, $ff
+;* DrawWin1() - unprotected redraw of window 1
+;* DrawWin2() - unprotected redraw of window 2
+;* RedyWin1() - puts win 1 dimensions in R2-R4	
+;* RedyWin2() - puts win 2 dimensions in R2-R4		
+;* RedyWinA() - puts actv win dimensions in R2-R4		
+;* DrawWinA() - unprotected redraw of active win
+;* RedyWinI() - puts inactv win dimensions in R2-R4			
+;* DrawWinI() - unprotected redraw of inactive win 
+;* GetStrWidth( R0 points to string) - returns width
+;*	 APITemp2 contains width
+;*	 APITemp2+2 contains # chars
+;*	 APITemp2+3 contains max height
+;*
+;* Comments:
+;*        * = includes a i_ version of this function
+;* 	Enabled properties not yet implemented
+;****************************************
+.psect
+
+<span align="left">;*******************************
+;* Win1Mv
+;*
+;* Inputs:	
+;*	A2L	Window 1 top
+;*	A2H	Window 1 bottom
+;*	A3	Window 1 x position
+;*	A4	Window 1 y position
+;*	A5L	Draw now? 0=yes, 1=no
+;*	
+;* Outputs:
+;*	.a	0
+;*	.x	0
+;*******************************
+
+Win1Mv:	mvw	A2,WIN1Top
+	mvw	A3,WIN1Left
+	mvw	A4,WIN1Right
+	lda	A5L
+	beq	10$
+	jsr	DrawWin1
+10$:	lda	#0
+	tax
+	rts
+
+<span align="left">;*******************************
+;* i_Win1Mv
+;*
+;* Inputs:	
+;*	.byte	Window 1 top
+;*	.byte	Window 1 bottom
+;*	.word	Window 1 x position
+;*	.word	Window 1 y position
+;*	.byte	Draw now? 0=yes, 1=no
+;*	
+;* Outputs:
+;*	.a	0
+;*	.x	0
+;*******************************
+
+i_Win1Mv:
+	jsr	APIinit
+	jsr	Win1Mv
+	ldy	#7	; 2 word ptrs + 3 bytes = 7 bytes
+	jmp	APIreturn
+
+
+<span align="left">;*******************************
+;* Win2Mv
+;*
+;* Inputs:	
+;*	A2L	Window 2 top
+;*	A2H	Window 2 bottom
+;*	A3	Window 2 x position
+;*	A4	Window 2 y position
+;*	A5L	Draw now? 0=yes, 1=no
+;*	
+;* Outputs:
+;*	.a	0
+;*	.x	0
+;*******************************
+
+Win2Mv:	mvw	A2,WIN2Top
+	mvw	A3,WIN2Left
+	mvw	A4,WIN2Right
+	lda	A5L
+	beq	10$
+	jsr	DrawWin2
+10$:	lda	#0
+	tax
+	rts
+
+<span align="left">;*******************************
+;* i_Win2Mv
+;*
+;* Inputs:	
+;*	.byte	Window 2 top
+;*	.byte	Window 2 bottom
+;*	.word	Window 2 x position
+;*	.word	Window 2 y position
+;*	.byte	Draw now? 0=yes, 1=no
+;*	
+;* Outputs:
+;*	.a	0
+;*	.x	0
+;*******************************
+
+i_Win2Mv:
+	jsr	APIinit
+	jsr	Win2Mv
+	ldy	#7	; 2 word ptrs + 3 bytes = 7 bytes
+	jmp	APIreturn
+
+
+<span align="left">;*******************************
+;* Win1Init
+;*
+;* Inputs:	
+;*	A2	Pointer to window 1 titlebar
+;*	A3	Pointer to "close" routine
+;*	A4	Pointer to complex draw code
+;*	A5L	Enabled?  0=no, 1=yes
+;*	
+;* Outputs:
+;*	.a	0
+;*	.x	0
+;*******************************
+
+Win1Init:	mvw	A2,WIN1Titl
+	mvw	A3,WIN2Clos+6
+	mvw	A4,WIN1Cplx+1
+	lda	#0
+	tax
+	rts
+
+<span align="left">;*******************************
+;* i_Win1Init
+;*
+;* Inputs:	
+;*	.word	Pointer to window 1 titlebar
+;*	.word	Pointer to "close" routine
+;*	.word	Pointer to complex draw code
+;*	.byte	Enabled?  0=no, 1=yes
+;*	
+;* Outputs:
+;*	.a	0
+;*	.x	0
+;*******************************
+i_Win1Init:
+	jsr	APIinit
+	jsr	Win1Init
+	ldy	#7	; 3 word ptrs + 1 byte = 7 bytes
+	jmp	APIreturn
+
+
+<span align="left">;*******************************
+;* Win2Init
+;*
+;* Inputs:	
+;*	A2	Pointer to window 2 titlebar
+;*	A3	Pointer to "close" routine
+;*	A4	Pointer to complex draw code
+;*	A5L	Enabled?  0=no, 1=yes
+;*	
+;* Outputs:
+;*	.a	0
+;*	.x	0
+;*******************************
+
+Win2Init:	mvw	A2,WIN2Titl
+	mvw	A3,WIN2Clos+9
+	mvw	A4,WIN2Cplx+1
+	lda	#0
+	tax
+	rts
+
+<span align="left">;*******************************
+;* i_Win2Init
+;*
+;* Inputs:	
+;*	.word	Pointer to window 2 titlebar
+;*	.word	Pointer to "close" routine
+;*	.word	Pointer to complex draw code
+;*	.byte	Enabled?  0=no, 1=yes
+;*	
+;* Outputs:
+;*	.a	0
+;*	.x	0
+;*******************************
+i_Win2Init:
+	jsr	APIinit
+	jsr	Win2Init
+	ldy	#7	; 3 word ptrs + 1 byte = 7 bytes
+	jmp	APIreturn
+
+
+<span align="left">;*******************************
+;* WindInit
+;*
+;* Inputs:	
+;*	A2	Pointer to custom appMain code
+;*	A3	Pointer to custom click code
+;*	A4L	Which window active? 1 or 2?
+;*	A4H	Draw windows now? 0=no, 1=yes
+;*	
+;* Outputs:
+;*	.a	0
+;*	.x	0
+;*******************************
+
+WindInit:	mvw	rightMargin,WIN2Rigt
+	mvw	A2,WIN2Evnt+1
+	mvw	A3,WIN2CLK+1
+	ldb	WIN2CKTP,#0
+	jsr	WIN2act1
+	dec	A4L
+	beq	10$
+	jsr	WIN2act2
+10$:	mvb	A4L, ActiveWN
+	ldb	WIN2moto,#0	
+	clc
+	jsr	StartMouseMode
+	sei
+	ldw	otherPressVec,#ClikWIN2
+	ldw	appMain,#WIN2Evnt
+	mvw	RecoverVector,WIN2Rcvr+1
+	ldw	RecoverVector,#WIN2Rcvr
+	cli
+	lda	A4H
+	beq	11$
+	ldb	dispBufferOn,#(ST_WR_FORE | ST_WR_BACK)
+	jsr	DrawWinI	
+	ldb	dispBufferOn,#(ST_WR_FORE)
+	jsr	DrawWinA
+	ldb	dispBufferOn,#(ST_WR_FORE | ST_WR_BACK)
+11$:	lda	#0
+	sta	WIN2Dbox
+	tax
+	rts
+
+<span align="left">;*******************************
+;* i_WindInit
+;*
+;* Inputs:	
+;*	.word	Pointer to custom appMain code
+;*	.word	Pointer to custom click code
+;*	.byte	Which window active? 1 or 2?
+;*	.byte	Draw windows now? 0=no, 1=yes
+;*	
+;* Outputs:
+;*	.a	0
+;*	.x	0
+;*******************************
+
+i_WindInit:
+	jsr	APIinit
+	jsr	WindInit
+	ldy	#6	; 2 word ptrs + 2 bytes = 6 bytes
+	jmp	APIreturn
+
+<span align="left">;*******************************
+;* WinAct
+;*
+;* Inputs:	
+;*	A2L	0=swap, 1=act 1, 2=act 2
+;*	
+;* Outputs:
+;*	.a	?
+;*	.x	window activated
+;*******************************
+
+WinAct:	dec	A2L
+	cpb	A2L,ActiveWN
+	bne	10$
+	jsr	DrawWinA
+	ldx	ActiveWN
+	inx
+	rts
+10$:	jsr	WIN2Swap
+	ldx	ActiveWN
+	inx
+	rts
+
+<span align="left">;*******************************
+;* i_WinAct
+;*
+;* Inputs:	
+;*	.byte	0=swap, 1=act 1, 2=act 2
+;*	
+;* Outputs:
+;*	.a	?
+;*	.x	?
+;*******************************
+
+i_WinAct:
+	jsr	APIinit
+	jsr	WinAct
+	ldy	#1	; 1 byte = 1 byte
+	jmp	APIreturn
+
+<span align="left">;*******************************
+;* IsOverlap
+;*
+;* Inputs:	NONE -- will examine window1 and window2
+;*	
+;* Outputs:
+;*	.a	If not overlapped, 0.  If overlapped, $ff
+;*	.x	0
+;*******************************
+
+IsOverlap:	cpb	WIN2Top,WIN1Bot
+	ble	11$	; passed first test!
+10$:	lda	#0	; no overlap
+	tax
+	rts
+11$:	cpb	WIN2Bot,WIN1Top
+	blt	10$
+	cpw	WIN2Left,WIN1Right
+	bgt	10$
+	cpw	WIN2Right,WIN1Left
+	blt	10$
+	ldx	#0
+	lda	#$ff	; there IS overlap
+	rts		
+
+<span align="left">;*******************************
+;* DrawWin2
+;*
+;* Inputs:	
+;*	NONE - redraws window #2
+;*	
+;* Outputs:
+;*	.a	0
+;*	.x	0
+;*******************************
+
+DrawWin2:	jsr	RedyWin2	; draw the simple version
+<span align="left">	mvb	WIN2Bot,APITemp1
+	jsr	WIN2Otln	; draw the simple version first
+	lda	WIN2moto	; should I draw complex also?
+	beq	10$
+	rts
+10$:	jsr	RedyWin2		; finish w/ the complex version
+	jsr	WIN2TbLn	; fill in the titlebar lines
+	mvw	WIN2Titl,R0
+	jsr	WIN2TbTx	; draw the titlebar text
+	jsr	RedyWin2
+	jsr	WIN2ClBx	; draw the	 close box
+WIN2Cplx:	jmp	RedyWin2	; jmp to user routine	
+
+<span align="left">;*******************************
+;* DrawWin1
+;*
+;* Inputs:	
+;*	NONE - redraws window #1
+;*	
+;* Outputs:
+;*	.a	0
+;*	.x	0
+;*******************************
+
+DrawWin1:	jsr	RedyWin1	; draw the simple version
+<span align="left">	mvb	WIN1Bot,APITemp1
+	jsr	WIN2Otln	; draw the simple version first
+	lda	WIN2moto	; should I draw complex also?
+	beq	10$
+	rts
+10$:	jsr	RedyWin1		; finish w/ the complex version
+	jsr	WIN2TbLn	; fill in the titlebar lines
+	mvw	WIN1Titl,R0
+	jsr	WIN2TbTx	; draw the titlebar text
+	jsr	RedyWin1
+	jsr	WIN2ClBx	; draw the	 close box
+WIN1Cplx:	jmp	RedyWin1	; jump to user routine
+
+<span align="left">;*******************************
+;* RedyWin1, RedyWin2
+;* RedyWinA, RedyWinI
+;* DrawWinA, DrawWinI
+;*
+;* Inputs:	NONE
+;*	
+;* Outputs: R2-R4 contain info in some cases
+;*******************************
+RedyWin1:	mvw	WIN1Top,R2
+	mvw	WIN1Left,R3
+	mvw	WIN1Right,R4
+	rts
+
+RedyWin2:	mvw	WIN2Top,R2
+	mvw	WIN2Left,R3
+	mvw	WIN2Right,R4
+	rts
+
+RedyWinA:	lda	ActiveWN
+	bne	10$
+	jsr	WIN2act1
+	jmp	WIN2RdyA
+10$:	jsr	WIN2act2
+	jmp	WIN2RdyA
+
+DrawWinA:	lda	ActiveWN
+	bne	10$
+	jsr	WIN2upd1
+	jmp	DrawWin1
+10$:	jsr	WIN2upd2
+	jmp	DrawWin2
+
+RedyWinI:	lda	ActiveWN
+	bne	10$
+	jmp	RedyWin2
+10$:	jmp	RedyWin1
+
+DrawWinI:	lda	ActiveWN
+	bne	10$
+	jmp	DrawWin2
+10$:	jmp	DrawWin1
+
+WIN2upd1:	mvw	WINATop,WIN1Top
+	mvw	WINALeft,WIN1Left
+	mvw	WINARight,WIN1Right
+	rts
+
+WIN2act1:	mvw	WIN1Top,WINATop
+	mvw	WIN1Left,WINALeft
+	mvw	WIN1Right,WINARight
+	rts
+
+WIN2upd2:	mvw	WINATop,WIN2Top
+	mvw	WINALeft,WIN2Left
+	mvw	WINARight,WIN2Right
+	rts
+
+WIN2act2:	mvw	WIN2Top,WINATop
+	mvw	WIN2Left,WINALeft
+	mvw	WIN2Right,WINARight
+	rts
+
+WIN2RdyA:	mvw	WINATop,R2
+	mvw	WINALeft,R3
+<span align="left">	mvw	WINARight,R4
+	rts
+
+<span align="left">;*******************************
+;* GetStrWidth
+;*
+;* Inputs:	R0 - string to inspect
+;*	
+;* Outputs: APITemp2 contains width
+;*	 APITemp2+2 contains # chars
+;*	 APITemp2+3 contains max height
+;*******************************
+
+GetStrWidth:
+	ldw	APITemp2,#0	; init all variables
+	sta	APITemp2+2
+	sta	APITemp2+3
+10$:	lda	APITemp2+2	; load index
+	tay
+	lda	(R0),y	; get character
+	beq	12$
+	jsr	GetRealSize	; find info on char
+	cmp	APITemp2+3	; is tallest so far?
+	blt	11$
+	sta	APITemp2+3	; yep, so save
+11$:	inc	APITemp2+2	; increment index
+	tya		; now look at width
+	clc
+	adc	APITemp2+0	; add width carefully
+	sta	APITemp2+0
+	bcc	10$
+	inc	APITemp2+1
+	bra	10$	; and go for another char
+12$:	rts	
+
+<span align="left">WIN2Otln:	lda	#0
+	jsr	SetPattern
+	jsr	Rectangle
+	lda	#255
+	jsr	FrameRectangle
+	avb	#14,R2L
+	svb	#14,R2H
+	lda	#255
+	jsr	FrameRectangle
+	mvb	APITemp1,R2H	; APITemp1 has WIN1Bot or WIN2Bot!!
+	svw	#12,R4
+	lda	#255
+	jsr	FrameRectangle
+	rts
+
+
+<span align="left">WIN2TbTx:	mvb	R2L,R1H	; write the title bar
+	avb	#3,R1H
+	mvw	R3,R11
+	avw	#2,R11
+	svw	#18,R4	; this is adjustment for close box
+	mvw	R4,WIN2Rigt
+	jsr	GetStrWidth
+	sbw	R3,R4
+	cpw	R4,APITemp2
+	ble	12$
+	lsr	R4H	; divide by two
+	ror	R4L
+	adw	R4,R11		
+	lsr	APITemp2+1
+	ror	APITemp2
+	sbw	APITemp2,R11	; divide words by two now
+12$:	jsr	PutString
+	rts
+
+
+
+<span align="left">WIN2TbLn:	mvb	R2L,R2H
+	avb	#14,R2H
+	ldb	APITemp1,#3
+11$:	avb	#2,R2L	; fill in titlebar lines
+	svb	#2,R2H
+	lda	#255
+	jsr	FrameRectangle
+	dec	APITemp1
+	bne	11$
+	rts
+
+
+
+<span align="left">WIN2Rcvr:	jsr	ImprintRectangle
+	lda	menuNumber	; returning from menu?
+	bne	10$
+	lda	WIN2Dbox	; no, so do the dbox trick
+	bne	10$	
+	inc	WIN2Dbox
+	rts
+10$:	ldb	WIN2Dbox,#0
+	jsr	RedyWinA
+	ldb	dispBufferOn,#ST_WR_FORE
+	jmp	DrawWinA
+
+<span align="left">WIN2ClBx:	mvw	R4,R3	; right into left
+	mvb	R2L,R2H	; top into bottom
+	avb	#12,R2H
+	avb	#2,R2L
+	svw	#18,R3
+	svw	#4,R4
+	jsr	Rectangle	; fill in close box
+	lda	#255
+	jsr	FrameRectangle	; outline close box
+	lda	#1
+	jsr	SetPattern	; fill in the little guy now
+	svb	#3,R2H
+	avb	#3,R2L
+	avw	#4,R3
+	svw	#4,R4
+	jsr	Rectangle
+	rts	
+
+<span align="left">WIN2Evnt:	jsr	WIN2Nada
+	lda	WIN2moto
+	bne	10$
+	rts
+10$:	cmp	#1	; File box resizing flag
+	bne	11$
+	ldb	dispBufferOn,#(ST_WR_FORE)
+	jsr	WINAResz
+	ldb	dispBufferOn,#(ST_WR_FORE | ST_WR_BACK)
+	rts
+11$:	cmp	#2	; File box moving flag
+	bne	12$
+	ldb	dispBufferOn,#(ST_WR_FORE)
+	jsr	WINAMove
+	ldb	dispBufferOn,#(ST_WR_FORE | ST_WR_BACK)
+12$:	rts
+
+<span align="left">WINAResz:
+	mvw	mouseXPos,WIN2CMsX	   ; save x and y positions
+	mvb	mouseYPos,WIN2CMsY
+	jsr	RedyWinA
+	ldb	APITemp1,#0	; prepare window and clear wk
+	cpb	WIN2CMsY, WIN2SMsY
+	bge	10$	; has mouse moved up?
+	jsr	WIN2Rcov	; yes, so possibly recover back
+	mvb	WIN2SMsY, APITemp1	; how FAR up, in APITemp1
+	sbb	WIN2CMsY, APITemp1
+	sbb	APITemp1, R2H	; its cool, so adjust y position
+	lda	#0	; skips to 'x' check
+10$:	beq	11$	; has y position changed at all?
+	jsr	WIN2Rcov	; yes, we've moved down
+	mvb	WIN2CMsY, APITemp1
+	sbb	WIN2SMsY, APITemp1	; determine HOW far down
+	adb	APITemp1, R2H	; and adjust y position
+11$:
+WIN201:	cpw	WIN2CMsX,WIN2SMsX	; check x position movement
+	bge	12$	; have we moved left?
+	jsr	WIN2Rcov	; yes, so possibly recover back
+	mvw	WIN2SMsX, APITemp1
+	sbw	WIN2CMsX, APITemp1	; how FAR left have we moved?
+	sbw	APITemp1, R4	; adjust the new right, for now
+	lda	#0
+12$:	beq	13$	; has x changed at all?
+	jsr	WIN2Rcov	; yes, we've moved right
+	mvw	WIN2CMsX, APITemp1
+	sbw	WIN2SMsX, APITemp1	; how FAR right?
+	adw	APITemp1, R4	; make the adjustment
+13$:	cpw	R4,WINARight	; has the right side changed?
+	bne	14$
+	cpb	R2H,WINABot	; how about the bottom?
+	bne	14$
+	rts		; nothing at all done. ugh
+14$:	jmp	WIN2Vrfy
+
+<span align="left">WINAMove:
+	mvw	mouseXPos,WIN2CMsX	   ; save the mouse positions
+	mvb	mouseYPos,WIN2CMsY
+	jsr	RedyWinA	; get the coords on our window
+	ldb	APITemp1,#0
+	cpb	WIN2CMsY, WIN2SMsY
+	bge	10$	; have we moved up?
+	jsr	WIN2Rcov	; yes, so find out how far...
+	mvb	WIN2SMsY, APITemp1
+	sbb	WIN2CMsY, APITemp1
+	cpb	APITemp1, R2L	; is it further than space remaining
+	bcs	11$
+	sbb	APITemp1, R2L	; no, so make the adjustment
+	sbb	APITemp1, R2H
+	lda	#0	; skips to 'x' check
+10$:	beq	11$	; has y changed at all?
+	jsr	WIN2Rcov	; yes, we've moved down
+	mvb	WIN2CMsY, APITemp1	; but how FAR down?
+	sbb	WIN2SMsY, APITemp1
+	adb	APITemp1, R2L	; don't matter, make the adjust
+	adb	APITemp1, R2H
+11$:
+WIN202:	cpw	WIN2CMsX,WIN2SMsX
+	bge	12$	; have we moved left?
+	jsr	WIN2Rcov	; yes, so find out how far left..
+	mvw	WIN2SMsX, APITemp1
+	sbw	WIN2CMsX, APITemp1
+	cpw	APITemp1, R3	; further than space allows?
+	bcs	13$
+	sbw	APITemp1, R3	; no, so make the adjustment
+	sbw	APITemp1, R4
+	lda	#0
+12$:	beq	13$	; has x changed at all?
+	jsr	WIN2Rcov	; yes, we've moved right
+	mvw	WIN2CMsX, APITemp1	; but how FAR right?
+	sbw	WIN2SMsX, APITemp1
+	adw	APITemp1, R3	; don't matter, move us anyway
+	adw	APITemp1, R4
+13$:	cpw	R3,WINALeft	; has x changed at all?
+	bne	14$
+	cpw	R2,WINATop	; how about y position?
+	bne	14$
+	rts		; nothing at all done. ugh
+14$:	jmp	WIN2Vrfy
+
+
+<span align="left">WIN2Rcov:	lda	APITemp1
+	bne	10$
+	jmp	RecoverRectangle
+10$:	rts
+
+WIN2Vrfy:	mvw	R3,APITemp1
+	avw	#72,APITemp1
+	cpw	APITemp1,R4	; is right too close to left?
+	bge	15$
+	cpw	R4,rightMargin	; is right over the edge?
+	bge	15$
+	cwi	R3,#67	; is top left covering menu?
+	bge	14$
+	cbi	R2L,#16
+	blt	15$
+14$:	mvw	WIN2CMsX,WIN2SMsX	; x is cool
+	mvw	R3,WINALeft
+	mvw	R4,WINARight
+	cbi	R2H,#199
+	bge	15$
+	mvb	R2L,APITemp1
+	avb	#45,APITemp1
+	cpb	APITemp1,R2H
+	bge	15$
+	mvb	WIN2CMsY,WIN2SMsY	; y is cool
+	mvb	R2L,WINATop
+	mvb	R2H,WINABot
+15$:	jmp	DrawWinA
+
+
+<span align="left">ClikWIN2:	lda	WIN2CKTP
+	beq	99$
+	rts
+99$:	inc	WIN2CKTP
+WIN2CLK:	jsr	WIN2Nada
+	lda	mouseData
+	beq	11$
+	lda	WIN2moto	; done with a move or sometin
+	beq	10$
+	ldb	dispBufferOn,#(ST_WR_FORE)
+	ldb	WIN2moto,#0
+	jsr	DrawWinA
+	ldb	dispBufferOn,#(ST_WR_FORE | ST_WR_BACK)
+10$:	jmp	WIN2Nada
+11$:	mvw	mouseXPos,WIN2SMsX
+	mvb	mouseYPos,WIN2SMsY
+	jsr	RedyWinA	; prepare to check close box
+	mvw	R4,R3	; right into left
+	mvb	R2L,R2H	; top into bottom
+	avb	#12,R2H
+	avb	#2,R2L
+	svw	#18,R3
+	svw	#4,R4
+	jsr	IsMseInRegion
+	cmp	#0
+	beq	12$	; not in 'close' box	
+	ldb	dispBufferOn,#(ST_WR_FORE)
+	jsr	InvertRectangle
+	ldb	dispBufferOn,#(ST_WR_FORE | ST_WR_BACK)
+	jsr	WIN2Clos
+	jmp	WIN2Nada
+12$:	jsr	RedyWinA
+	mvb	R2H,R2L	; move bottom into top
+	mvw	R4,R3	; move right into left
+	svw	#12,R3
+	svb	#14,R2L
+	jsr	IsMseInRegion
+	cmp	#0
+	beq	13$	; not in 'resize' box	
+	jsr	WIN2Eras
+	ldb	WIN2moto,#1	; signifys the filebox resizing
+	jmp	WIN2Nada
+13$:	jsr	RedyWinA
+	mvb	R2L,R2H
+	avb	#14,R2H
+	jsr	IsMseInRegion
+	cmp	#0
+	beq	14$	; not in title bar
+	jsr	WIN2Eras
+	ldb	WIN2moto,#2	; signifys the filebox moving
+14$:	jsr	RedyWinA
+	jsr	IsMseInRegion	; is it in the active window AT ALL
+	cmp	#0
+	beq	16$	; no, so skip the rts
+15$:	jmp	WIN2Nada
+16$:	jsr	RedyWinI	; how about inactive window?
+	jsr	IsMseInRegion
+	cmp	#0
+	beq	15$	; new window activation time!
+	jsr	WIN2Swap		
+WIN2Nada:	ldb	WIN2CKTP,#0
+	rts
+
+<span align="left">WIN2Eras:	ldb	dispBufferOn,#(ST_WR_FORE)
+	lda	#2
+	jsr	SetPattern	; erase the background
+	jsr	RedyWinA
+	jsr	Rectangle
+	ldb	dispBufferOn,#(ST_WR_FORE | ST_WR_BACK)
+	rts
+
+<span align="left">WIN2Swap:	lda	#2	; first lose inactive background
+	jsr	SetPattern
+	ldb	dispBufferOn,#ST_WR_BACK
+	jsr	RedyWinI
+	jsr	Rectangle
+	jsr	RedyWinA	; then imprint active window
+	jsr	ImprintRectangle
+	lda	ActiveWN
+	eor	#$01
+	sta	ActiveWN
+	ldb	dispBufferOn,#(ST_WR_FORE)
+	jsr	RedyWinA	; redraw the new active window
+	jsr	DrawWinA
+	ldb	dispBufferOn,#(ST_WR_FORE | ST_WR_BACK)
+	jmp	ClikWIN2	; retry event after activating
+
+
+<span align="left">WIN2Clos:
+	lda	ActiveWN	; 3 bytes
+	bne	10$	; 2 bytes
+	jmp	WIN2Nada	; 3 bytes + 6
+10$:	jmp	WIN2Nada	; 3 bytes + 9
+
+<span align="left">.ramsect
+
+WIN2CKTP:	.block	1
+
+ActiveWN:	.block	1
+WIN2moto:	.block	1
+WIN2SMsY:	.block	1
+WIN2SMsX:	.block	2
+WIN2CMsY:	.block	1
+WIN2CMsX:	.block	2
+WIN2Rigt:	.block	2
+
+WIN1Top:	.block	1
+WIN1Bot:	.block	1
+WIN1Left:	.block	2
+WIN1Right:	.block	2
+WIN1Titl:	.block	2
+
+WIN2Top:	.block	1
+WIN2Bot:	.block	1
+WIN2Left:	.block	2
+WIN2Right:	.block	2
+WIN2Titl:	.block	2
+
+WINATop:	.block	1
+WINABot:	.block	1
+WINALeft:	.block	2
+WINARight:	.block	2
+WIN2Dbox:	.block	1</pre></body></html>

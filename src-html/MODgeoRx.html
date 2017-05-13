@@ -1,0 +1,1317 @@
+<!DOCTYPE html><html><head><title>Untitled</title></head><body><pre><span align="left">.noeqin
+.noglbl
+.include	GEOSequates
+.glbl
+.eqin
+
+;****************************************
+;* MODgeoRx - geoProjects library (C) 1998 Bo Zimmerman
+<span align="left">;*
+;* Intro:
+;* 	This modules supports the viewing of
+;*	geoWrite files, and includes support
+;*	for pictures, fonts, styles, and rulers.
+;*
+;* Functions:
+;*	InitGeoR(	.word	 Font Table Pointer
+;*			.word	 SiZe of font buffer
+;*			.word Page Buffer Pointer
+;*			.word Size of Page Buffer
+;*			.word Card Buffer Pointer) *
+;*	OpenGeoR(
+;*			.word File name pointer
+;*			.byte Top row of window
+;*			.byte Bot row of window
+;*			.word Left col of window
+;*			.word Right col of window) *
+;*	LoadGPg	() *
+;*	ShowGPg	() *
+;*	PrevGPg	() *
+;*	NextGPg	() *
+;*
+;*	* = includes i_Function call, and returns 
+;*		status in the .x register
+;*
+;* Comments:
+;* 
+;****************************************
+.psect
+
+<span align="left">;******************************
+;* InitGeoR	InitialiZe this module
+;* Inputs:
+;*		A2	Font Buffer pointer
+;*		A3	SiZe of Font Buffer
+;*		A4	Page Buffer pointer
+;*		A5	SiZe of Page Buffer
+;*		A6	Card Buffer pointer
+;*		curDrive	drive to read from
+;* Outputs:	
+;*		.x 	status
+;*		.a	0
+;******************************
+
+InitGeoR:	mvw	A2,GEORFBUF
+	mvw	A3,GEORFSIZ
+	mvw	A4,GEORPBUF
+	mvw	A5,GEORPSIZ
+	mvw	A6,GEORCBUF
+	ldw	A6,#GEORFTAB
+	jsr	GEORRDFT	; destroys A1-A2, A5-A6
+	rts
+
+<span align="left">;******************************
+;* i_InitGeoR	InitialiZe this module
+;* Inputs:
+;*		.word	Font Buffer pointer
+;*		.word	SiZe of Font Buffer
+;*		.word	Page Buffer pointer
+;*		.word	SiZe of Page Buffer
+;*		.word	Card Buffer pointer
+;*		curDrive	drive to read from
+;* Outputs:	
+;*		.x 	status
+;*		.a	0
+;******************************
+
+i_InitGeoR:
+	jsr	APIinit
+	jsr	InitGeoR
+	ldy	#10	; five word parameter list
+	jmp	APIreturn
+
+<span align="left">;******************************
+;* OpenGeoR	InitialiZe this module
+;* Inputs:
+;*		A2	File name pointer
+;*		A3L	Top row of window
+;*		A3H	Bot row of window
+;*		A4	Left col of window
+;*		A5	Right col of window
+;*		curDrive	drive to read from
+;* Outputs:	
+;*		.x 	disk status (0=no error)
+;*		.a	0
+;******************************
+
+OpenGeoR:	mvw	A3,GEORWIND
+	mvw	A4,GEORWIND+2
+	mvw	A5,GEORWIND+4
+	mvb	curDrive,GEORDRIV
+	jsr	GEORFinit
+	cpx	#0
+	beq	10$
+	rts
+10$:	jmp	GEORNewPg
+
+<span align="left">;******************************
+;* i_OpenGeoR	InitialiZe this module
+;* Inputs:
+;*		.word	File name pointer
+;*		.byte	Top row of window
+;*		.byte	Bot row of window
+;*		.word	Left col of window
+;*		.word	Right col of window
+;*		curDrive	drive to read from
+;* Outputs:	
+;*		.x 	disk status (0=no error)
+;*		.a	0
+;******************************
+
+i_OpenGeoR:
+	jsr	APIinit
+	jsr	OpenGeoR
+	ldy	#8	; three words, two bytes
+	jmp	APIreturn
+
+<span align="left">;******************************
+;* ShowGPg	refresh current page
+;* Inputs:
+;*	none
+;* Outputs:	
+;*		.x 	status
+;*		.a	0
+;******************************
+
+ShowGPg:
+	lda	GEORDRIV
+	jsr	SetDevice
+	jmp	GEORshoP
+
+<span align="left">;******************************
+;* i_ShowGPg	Refresh current page
+;* Inputs:
+;*	none
+;* Outputs:	
+;*		.x 	status
+;*		.a	0
+;******************************
+
+i_ShowGPg:
+	jsr	APIinit
+	jsr	ShowGPg
+	ldy	#0
+	jmp	APIreturn
+
+<span align="left">;******************************
+;* LoadGPg	Reload current page
+;*		and display it in window
+;* Inputs:
+;*	none
+;* Outputs:	
+;*		.x 	status
+;*		.a	0
+;******************************
+
+LoadGPg:	lda	GEORDRIV
+	jsr	SetDevice
+	jmp	GEORNewPg
+
+<span align="left">;******************************
+;* i_LoadGPg	Reload current page
+;*		and display it in window
+;* Inputs:
+;*	none
+;* Outputs:	
+;*		.x 	status
+;*		.a	0
+;******************************
+
+i_LoadGPg:
+	jsr	APIinit
+	jsr	LoadGPg
+	ldy	#0
+	jmp	APIreturn
+
+<span align="left">;******************************
+;* NextGPg	Load and show next
+;*		page in window.
+;* Inputs:
+;*	none
+;* Outputs:	
+;*		.x 	status
+;*		.a	0
+;******************************
+
+NextGPg:	lda	GEORDRIV
+	jsr	SetDevice
+	jmp	GEORdown
+
+<span align="left">;******************************
+;* i_NextGPg	Load and show next
+;*		page in window.
+;* Inputs:
+;*	none
+;* Outputs:	
+;*		.x 	status
+;*		.a	0
+;******************************
+
+i_NextGPg:
+	jsr	APIinit
+	jsr	NextGPg
+	ldy	#0
+	jmp	APIreturn
+
+<span align="left">;******************************
+;* PrevGPg	Load and show previous
+;*		page in window.
+;* Inputs:
+;*	none
+;* Outputs:	
+;*		.x 	status
+;*		.a	0
+;******************************
+
+PrevGPg:	lda	GEORDRIV
+	jsr	SetDevice
+	jmp	GEORup
+
+<span align="left">;******************************
+;* i_PrevGPg	Load and show previous
+;*		page in window.
+;* Inputs:
+;*	none
+;* Outputs:	
+;*		.x 	status
+;*		.a	0
+;******************************
+
+i_PrevGPg:
+	jsr	APIinit
+	jsr	PrevGPg
+	ldy	#0
+	jmp	APIreturn
+
+<span align="left">; A9 points into font tab
+GEORRDFT:	cwi	A6,#GEORFTB1-2
+	blt	13$
+11$:	ldx	#0
+	lda	#0
+	tay
+	sta	(A6),y
+	rts	; no room left anyway
+13$:	ldw	R0,#256
+	mvw	GEORFBUF,R1	; initialize *TEMP* filename area
+	jsr	ClearRam
+	mvw	GEORFBUF,R6	; used for filename storage
+	ldb	R7L,#FONT
+	ldb	R7H,#8	; only 8 from each disk max
+	ldw	R10,#0	; no class pointer
+	jsr	FindFTypes
+	cpx	#0
+	bne	11$	; was a disk error
+	mvw	GEORFBUF,A5
+GEORFLP:	ldy	#0
+	lda	(A5),y
+	bne	15$	; found last font -- done
+11$:	ldx	#0
+	lda	#0	; exit
+	tay
+	sta	(A6),y
+	rts		; no room left anyway
+15$:	ldy	#$ff
+16$:	iny
+	lda	(A5),y	; copy A5->A6
+	sta	(A6),y
+	bne	16$
+	avw	#17,A5	; increment source pointer
+	mvw	A6,R6	; re-copy dest filename
+17$:	ldy	#0
+	lda	(A6),y	; make sure pointing past the end
+	pha
+	inw	A6
+	pla
+	bne	17$
+	ldb	$886e,#$ff	; search only this drive
+	jsr	FindFile	; open the font for inspection
+	cpx	#0
+	bne	11$
+	ldw	R9,#$8400	; point to dir entry
+	jsr	GetFHdrInfo
+	cpx	#0
+	bne	11$	; .x will be zero for header info
+
+<span align="left">; read font table info continued
+	ldw	A3,#$8100 + $82
+	ldw	A4,#$8100 + $60
+18$:	ldy	#0
+19$:	lda	(A3),y
+	sta	(A6),y
+	sta	APITemp1,y	; copy font info
+	iny
+	cpy	#2
+	bne	19$
+	avw	#2,A3
+	ldy	#2
+20$:	lda	(A4),y
+	sta	APITemp1+1,y	; save size info
+	ylp	20$
+	avw	#2,A4
+	cwi	APITemp1,#0
+	beq	22$	; found last font size!
+	cpw	APITemp1+2,GEORFSIZ
+	bge	22$	; this ones too big! done w/font
+	avw	#2,A6
+	bra	18$
+22$:	ldy	#0	; save 00 delimeter
+	tya
+	sta	(A6),y
+	iny
+	sta	(A6),y
+	avw	#2,A6
+	jmp	GEORFLP
+
+<span align="left">GEORFinit:	ldb	GEORPNUM,#0	; decides whether page open
+	mvw	A2,R6	; now look for file on disk
+	mvw	GEORPBUF,A2	; get ready to find filename
+	ldb	$886e,#$ff
+	jsr	FindFile	; open the file
+	txa
+	bne	12$
+	jsr	GEORICrd
+	ldy	#$16
+	lda	$8400,y	; check for geos file type	
+	cmp	#7	; 7 is application data
+	beq	13$
+11$:	ldx	#$ff	; return unknown disk error, not geos
+12$:	rts		; or could return some misc error
+13$:	ldy	#$15	; check VLIR type
+	lda	$8400,y	; VLIR data type?
+	beq	11$
+	ldw	R9,#$8400
+	jsr	GetFHdrInfo	; read the header info
+	cpx	#0
+	bne	12$
+	ldy	#$ff
+14$:	iny		; check type against GEOWRITE
+	lda	GEORWTYP,y
+	beq	15$
+	cmp	$814d,y
+	beq	14$
+	ldx	#$ff	; return unknown (non-geowrite)
+	rts
+15$:	mvw	R1,GEORFISC
+	ldw	R4,#GEORFIVB	; read the vlir sector
+	jsr	GetBlock
+	cpx	#0
+	bne	12$
+	ldb	GEORFIVB,#0
+	jsr	GEORnVPg
+	bne	12$	; if NEQ, probably no pages...
+	tya
+	tax
+	mvw	GEORCBUF,A2		; first page is current page
+	mvw	GEORCCRD,A3
+	ldy	#0
+	lda	GEORFIVB,x	; get first page track/sector?
+	sta	(A2),y	; copy track and sector over
+	iny
+	inx
+	lda	GEORFIVB,x
+	sta	(A2),y
+	jsr	GEORcpyC	; now ready to read page
+	mvw	GEORCBUF,R6	; and put it in place?
+	ldy	#2
+	lda	#1	; get right start byte
+	sta	(R6),y
+	ldb	GEORPNUM,#1	; makes it official!
+	ldx	#0
+	rts		; ready to do a "New Page" now.
+GEORWTYP:	.byte	"Write Image",0
+
+<span align="left">;* initialiZe a new card
+GEORICrd:	mvw	GEORCBUF,GEORPCRD
+	mvw	GEORCBUF,GEORCCRD
+	avw	#26,GEORCCRD
+	ldw	A2,#GEORDCRD
+	mvw	GEORCBUF,A3
+;* copy a card from A2->A3
+GEORcpyC:	ldy	#0
+10$:	lda	(A2),y	; copy page card info
+	sta	(A3),y
+	iny
+	cpy	#26
+	blt	10$	
+	rts
+
+<span align="left">;* is there a next VLIR page?
+GEORIsNV:	cbi	GEORFIVB,#122	; any more to find?
+	bge	99$	; no, so exit
+	ldy	GEORFIVB
+	iny		; load index and move forward
+10$:	iny
+	cpy	#124	; down to last record?
+	bge	99$
+	lda	GEORFIVB,y	; is track null?
+	beq	11$
+	sta	R1L	; no, so check next one
+	iny
+	lda	GEORFIVB,y
+	sta	R1H	; its good, so get sector & exit
+	dey
+	ldx	#0
+	rts
+11$:	iny		; worth checking next one...?
+	lda	GEORFIVB,y
+	bne	10$
+99$:	ldx	#$ff	; nope, so exit!
+	rts	
+
+;* is there a previous VLIR page?
+GEORIsPV:	cbi	GEORFIVB,#3	; any possible previous pages?
+	blt	99$
+	ldy	GEORFIVB
+	iny
+10$:	dey
+	dey
+	dey
+	cpy	#2	; anything previous?
+	blt	99$
+	lda	GEORFIVB,y	; is there a track?
+	beq	11$	; no.. so skip
+	sta	R1L
+	iny
+	lda	(R0),y	; get sector and exit
+	sta	R1H
+	dey
+	ldx	#0
+	rts
+11$:	iny		; are we done?
+	lda	(R0),y
+	bne	10$	; no, so keep looking...
+99$:	ldx	#$ff
+	rts	
+
+;* go to next VLIR page, if possible
+GEORnVPg:	jsr	GEORIsNV	; is there a next page?
+	bne	10$
+	sty	GEORFIVB	; save new index
+	ldx	#0
+10$:	rts
+
+;* go to previous VLIR page, if possible
+GEORpVPg:	jsr	GEORIsPV	; is there a previous page?
+	bne	10$
+	sty	GEORFIVB	; save new index
+	ldx	#0
+10$:	rts
+
+<span align="left">;* get next sector
+GEORNxtT:	jsr	GEORSetT	; read the next sector
+	mvw	R1,GEORFISC
+	jsr	GetBlock
+	txa
+	rts		; return real live disk error
+
+;* setup track sector info for this page
+GEORSetT:	ldw	R4,#GEORFIBF
+	mvw	GEORCCRD,A6	; set up a pointer to current
+	ldy	#0	; sector for this page
+	lda	(A6),y
+	sta	R1L
+	iny
+	lda	(A6),y
+	sta	R1H
+	rts
+
+<span align="left">;* get next byte from disk!	
+GEORNxtB:	mvw	GEORCCRD,A6
+	ldy	#2	; fetch byte pointer
+	lda	(A6),y
+	clc
+	adc	#1		; increment byte pointer
+	sta	(A6),y
+	bcc	90$	; overflow to next sector coming
+	lda	GEORFIBF
+	bne	12$	; handle $00,$FF pages
+	beq	10$
+90$:	tay
+	lda	GEORFIBF	; is this last sector?
+	bne	11$	; no, so get byte
+	cpy	GEORFIBF+1	; check for eof
+	ble	11$
+10$:	ldx	#11
+	rts		; end of file exit!
+11$:	ldx	#0
+	lda	GEORFIBF,y	; get the byte and exit
+	rts		
+12$:	ldy	#0
+	lda	GEORFIBF	; set up next track & sector
+	sta	(A6),y
+	iny
+	lda	GEORFIBF+1
+	sta	(A6),y
+	jsr	GEORNxtT
+	txa
+	bne	13$
+	ldy	#2
+	lda	#1
+	sta	(A6),y
+	jmp	GEORNxtB
+13$:	rts		; return a disk error!
+
+<span align="left">GEORNewPg:	
+	lda	GEORPNUM	; is a file even opened?
+	bne	11$
+10$:	ldx	#$ff	; send back un-opened error
+12$:	rts
+11$:	mvw	GEORPCRD,A2	; restore track/sector info
+	mvw	GEORCCRD,A3
+	jsr	GEORcpyC	; now ready to read page
+	jsr	GEORNxtT
+	txa
+	bne	12$	; an errorful exit reading sector
+	jsr	GEORrdyW
+	lda	#0
+	sta	GEORPMOD	; clear show mode
+	jsr	SetPattern	; clear out space for new page
+	inc	R2H
+	jsr	Rectangle
+	mvw	GEORPBUF,R1
+	mvw	GEORPSIZ,R0
+	jsr	ClearRam	; clear out this pages buffer ram
+	mvb	GEORWIND,GEORTXTY
+	mvw	GEORWIND+2,GEORTXTX
+	jsr	GEORMkPg
+99$:	; ** here is where page card stuff for fonts done
+
+
+<span align="left">GEORByL1:	mvb	GEORCHAR, GEORPCHR
+	mvb	GEORCODE, GEORPCOD
+GEORByL2:	jsr	GEORgsTB	; save char following eow
+	jsr	GEORNxtB	; get a byte
+	sta	GEORCHAR
+	stx	GEORFERR
+	cpx	#0	; yes, this line is necessary!
+	beq	20$	; evaluate errors
+	cpx	#11	; eof, so skip out
+	beq	26$
+	ldb	GEORPNUM,#0
+	jmp	GEORPgDone
+20$:	jsr	GEORxLate	; begin logic here
+	bne	25$	; non-null code gets more eval
+	lda	GEORCHAR	; force an EOW on null char
+	bne	GEORByL2	; other nulls end the fun
+25$:	jsr	GEORChkEOP
+	blt	27$	; make a quick line check
+	jmp	GEORByLx
+26$:	bra	60$	; little skip-ahead
+27$:	lda	GEORPCHR
+	beq	51$	; null char still ends the fun
+30$:	jsr	GEORaddL
+	mvw	GEORPBUF,APITemp4
+	adw	GEORPSIZ,APITemp4
+	cpw	A3,APITemp4	; if out of buff space, stop
+	blt	35$	; still space, so continue
+	ldb	GEORFERR,#11	; overflow, so fake an EOF
+35$:	lda	GEORCODE	; remaining null codes are ok
+	beq	55$	; code 0 detected (nothing?)
+	cmp	#3	; check for end of word code too
+	bge	55$	; eow code detected
+	cbi	GEORPCOD,#3
+	bge	55$	; previous was an eow
+	jmp	GEORByL1	; no eow, so loop back up
+40$:	jsr	GEORByNL	; end of line, check page
+	bge	50$	; page done, get outa here
+	jsr	GEORsTSB	; save the last CR TSB
+	bra	75$	; continue, page not done
+45$:	mvw	A2,A3	; make sure 0 goes right
+50$:	jmp	GEORByLx	; restore last word pointer & exit
+51$:	bra	75$	; another little skip-ahead
+<span align="left">55$:	cpw	A2,A3	; special case
+	bne	60$
+	jmp	GEORByL1	; no eow, so loop back up
+60$:	cbi	GEORPCOD,#4	; try an EOLN thing
+	beq	40$
+	jsr	GEORdEOW	; begin word show here!!!
+	bge	45$	; show the word NOW
+	cbi	GEORCODE,#3
+	blt	70$
+	jsr	GEORsTSB	; save char following eow
+70$:	jsr	GEORSayS
+	cbi	GEORFERR,#11
+	beq	GEORByLx	; was end of file
+75$:	mvw	A3,A2
+	sec
+	jsr	GEORescp
+	jsr	GEORChkEOP
+	bge	GEORByLx	; make a quick line check
+	jmp	GEORByL1	; go back up and get another wd	
+
+GEORByLx:	jsr	GEORlTSB	; restore last word pointer & exit
+	lda	#0
+	jsr	GEORaddL
+	ldx	#0
+	jmp	GEORPgDone
+
+<span align="left">GEORByNL:	mvw	GEORWIND+2,GEORTXTX	; next line!
+	mvb	GEORTXTY,GEORLSTY
+	adb	curHeight,GEORTXTY
+	inc	GEORTXTY	; and one more for good measure
+GEORChkEOP:	
+	cpb	GEORTXTY,GEORWIND+1
+	rts
+
+GEORrdyW:
+	mvw	GEORWIND,R2
+	mvw	GEORWIND+2,R3
+	mvw	GEORWIND+4,R4
+	rts
+
+<span align="left">GEORMkPg:	mvb	GEORWIND,GEORTXTY	; top into first line
+	mvw	GEORWIND+2,GEORTXTX	; left into X
+	mvw	GEORPBUF,A2
+	mvw	GEORPBUF,A3	; set up new page buffer
+	ldb	GEORCHAR,#0	; set up misc vars
+	sta	GEORCODE
+	sta	GEORPTOP
+	mvw	GEORPCRD,A6	; set up for new display
+	jsr	GEORnwC2
+	mvw	GEORCCRD,R0
+	ldy	#25
+	lda	(R0),y
+	jsr	GEORByNL
+	rts
+
+
+
+<span align="left">GEORdEOW:	lda	#0	; terminate the word
+	tay
+	sta	(A3),y
+	mvw	A2,R0		; got a word!
+	jsr	StngWidth
+	mvw	APITemp2,APITemp2
+	adw	GEORTXTX,APITemp2	; is word gonna fit?
+	cpw	APITemp2,GEORWIND+4
+	blt	10$	; no, so try an EOLN
+	jsr	GEORByNL	; end of page reached--bad news
+10$:	rts
+
+
+<span align="left">GEORlTSB:	jsr	GEORSetT	; load track and sector
+	ldy	#0
+20$:	lda	GEORTCKS,y	; restore last word t&s&b
+	sta	(A6),y
+	iny
+	cpy	#3
+	blt	20$
+	rts
+
+GEORsTSB:	jsr	GEORSetT	; save track and sector
+	ldy	#0
+90$:	lda	(A6),y
+	sta	GEORTCKS,y	; save t&s of end of last word
+	iny
+	cpy	#3
+	blt	90$	; and save the byte
+	rts
+
+GEORgsTB:	jsr	GEORSetT	; save graphics tracks and sector
+	ldy	#0
+90$:	lda	(A6),y
+	sta	GEORTCKS+4,y	; save t&s of end of last word
+	iny
+	cpy	#3
+	blt	90$	; and save the byte
+	rts
+
+GEORglTB:	ldy	#0	; load graphics track and sector
+20$:	lda	GEORTCKS+4,y	; restore last word t&s&b
+	sta	GEORTCKS,y
+	iny
+	cpy	#3
+	blt	20$
+	rts
+
+<span align="left">GEORgPtH:	ldb	APITemp1+1,#0	; start checking dimensions
+	sta	APITemp3+1
+	mvb	GEORWIND+1,APITemp1
+	sta	APITemp3
+	sbb	GEORTXTY,APITemp1	; get Y remaining word in APITemp1
+	sbb	GEORWIND,APITemp3	; window height in APITemp3
+	rts
+
+
+<span align="left">GEORaddL:	ldy	#0	; save the word byte
+	sta	(A3),y
+	inw	A3
+	rts
+
+GEORxLate:	ldx	GEORCHAR
+GEORcCod:	tax
+	lda	GEORCCHT,x
+	sta	GEORCODE
+	bne	10$
+	ldb	GEORCHAR,#0
+10$:	lda	GEORCHAR
+	rts
+	
+
+<span align="left">GEORPgDone:
+	txa	; save any .x errors
+	pha
+	jsr	UseSystemFont	; done on end of read/display
+	ldb	currentMode,#0
+	ldy	#0	; put a NULL on the end
+	tya
+	sta	(A3),y
+	pla
+	tax	; restore any .x errors
+	rts
+
+
+
+<span align="left">GEORnewC:	mvw	GEORCCRD,A6
+GEORnwC2:	ldy	#3
+	lda	(A6),y
+	sta	APITemp1	; font ID, part 1
+	iny
+	lda	(A6),y
+	sta	APITemp1+1	; font ID, part 2
+	iny
+	lda	(A6),y
+	sta	currentMode	; new style
+	cwi	APITemp1,#0
+	beq	10$	; null font id
+	cwi	APITemp1,(9*256)
+	beq	10$	; mixed up BSW id
+	cwi	APITemp1,#9
+	bne	11$	; correct BSW id
+10$:	jsr	UseSystemFont
+	rts
+11$:	ldw	A4,#GEORFTAB	; point to first font in table
+12$:	mvw	A4,A2
+	ldy	#0
+	lda	(A4),y
+	beq	10$	; no more fonts.. we're done!
+13$:	inw	A2
+	lda	(A2),y	; find this fonts data
+	bne	13$
+	inw	A2	; increment to ID part
+14$:	ldy	#0
+	lda	(A2),y	; first check if real font id
+	bne	16$
+	iny
+	lda	(A2),y
+	bne	16$
+	avw	#2,A2	; end of this fonts ids, so nxt fnt
+	mvw	A2,A4
+	bra	12$
+15$:	avw	#2,A2	; check next font id
+	bra	14$	
+16$:	ldy	#0
+	lda	(A2),y
+	cmp	APITemp1	; compare against desired id
+	bne	15$
+	iny
+	lda	(A2),y
+	cmp	APITemp1+1	; compare against desired 2nd id
+	bne	15$
+	jmp	GEORLdFt
+
+<span align="left">GEORLdFt:	lda	GEORDRIV
+	jsr	SetDevice	; set to file drive
+	mvw	A4,R0	; assume current drive
+	jsr	OpenRecordFile
+	cpx	#0
+	beq	12$
+11$:	jmp	UseSystemFont	; error opening record, so BSW!
+12$:	lda	APITemp1	; hopefully this is point size
+	and	#63	; mask lower 6 bits	
+	jsr	PointRecord	; go to the correct record
+	cpx	#0
+	bne	11$	; errorful exit
+	mvw	GEORFSIZ,R2
+	mvw	GEORFBUF,R7
+	jsr	ReadRecord	; read in the font!!!
+	cpx	#0
+	bne	11$
+	mvw	GEORFBUF,R0
+	jsr	LoadCharSet	; make it the font!!
+	lda	GEORTXTY
+	sub	GEORLSTY	; now consider new Y line
+	sec
+	sbc	#1	; now have old height
+	cmp	curHeight
+	bge	13$	; got smaller, so don't worry
+	mvb	GEORLSTY,GEORTXTY
+	adb	curHeight,GEORTXTY	; calculate new bottom line
+	inc	GEORTXTY
+13$:	rts
+
+
+<span align="left">GEORSayS:	mvw	GEORTXTX,R11
+	mvb	GEORTXTY,R1H
+	sta	GEORPTOP	; set NOT top of page flag
+	mvw	A2,R0
+	jsr	PutString
+	mvw	R11,GEORTXTX	; fake the move right
+	mvb	R1H,GEORTXTY
+10$:	rts
+
+
+
+<span align="left">GEORshoP:	lda	GEORPNUM
+	bne	10$
+	rts		; file/page not opened yet!
+10$:	jsr	GEORrdyW
+	ldx	#6
+11$:	lda	R2 - 1,x	; $06 is R2L
+	cmp	GEORWIND - 1,x
+	beq	12$
+	jmp	GEORNewPg
+12$:	dex		; has window changed shape?
+	bne	11$
+13$:	lda	#0
+	jsr	SetPattern	; clear out space for new page
+	inc	R2H
+	jsr	Rectangle
+	jsr	GEORMkPg
+	inc	GEORPMOD	; set show page mode
+	dew	A3	; so lookaheads are possible
+GEORslp1:	mvb	GEORCHAR, GEORPCHR	; begin the re-show
+	mvb	GEORCODE, GEORPCOD
+	ldy	#1
+15$:	lda	(A3),y	; get a new character
+	sta	GEORCHAR
+	jsr	GEORcCod	; encode it
+	inw	A3
+	lda	GEORPCOD
+	beq	25$	; if last char undoable, loop
+	lda	GEORCODE
+	beq	16$
+	cmp	#3
+	bge	16$
+	cbi	GEORPCOD,#3
+	blt	GEORslp1
+16$:	cpw	A2,A3
+	beq	GEORslp1
+	cbi	GEORPCOD,#4	; if going to show an end, do it
+	beq	23$
+	jsr	GEORdEOW	; otherwise, try to end the word
+	blt	17$
+	ldx	#0	; return no error
+	jmp	GEORPgDone		; unexpected end of page!
+17$:	jsr	GEORSayS	; print it out now!
+	lda	GEORCHAR
+	ldy	#0
+	sta	(A3),y	; restore last character
+22$:	lda	GEORCHAR
+	beq	24$	; another end of page
+25$:	mvw	A3,A2
+	clc
+	jsr	GEORescp	; check for escape chars
+	bne	26$
+	dew	A3
+26$:	jsr	GEORChkEOP
+	bge	24$	; make a quick line check
+	jmp	GEORslp1	; go back up and get another wd
+23$:	jsr	GEORByNL	; yes, so end line--check page
+	blt	22$
+	jsr	GEORByNL	; end line--check page
+24$:	ldx	#0
+	jmp	GEORPgDone		; unexpected end of page!
+
+<span align="left">GEORescp:	php
+	cbi	GEORCODE,#5	; was this code an escape code?
+	beq	12$
+10$:	plp
+	ldx	#$ff	; the nothing happened return
+	rts
+12$:	cbi	GEORCHAR,#9	; was it a tab?
+	bne	13$
+	plp
+	jsr	GEORtabs	; yes, so do a tab
+	jsr	GEORescX
+	bra	98$
+13$:	cmp	#16	; was it a graphics escape?
+	bne	14$
+	plp
+	jsr	GEORgfxE	; yes, so do a graphic pic
+	bra	GEORescX
+14$:	cmp	#23	; was it a newcardset?
+	bne	15$
+	plp
+	jsr	GEORCrds	; yes, so do a new cardset
+	bra	GEORescX
+15$:	cmp	#17	; was it a ruler escape
+	bne	16$
+	plp
+	jsr	GEORrulr	; yes, so do a new ruler
+	bra	GEORescX
+16$:
+98$:	ldx	#$ff	; the nothing happened flag
+	rts
+GEORescX:	ldb	GEORCHAR,#0	; we'll process it laters...
+	ldb	GEORCODE,#0
+	mvw	A3,A2
+	ldx	#0	; the something happened flag!
+	rts
+
+<span align="left">GEORtabs:	bcc	10$	; eval a tab character
+	lda	#9
+	jsr	GEORaddL
+10$:	mvw	GEORCCRD,A5
+	ldy	#6
+11$:	lda	(A5),y	; look for non-null tabs
+	bne	13$
+	iny
+	lda	(A5),y
+	bne	12$
+	iny
+	cpy	#22	; have we checked ALL tabs?
+	blt	11$
+	mvw	GEORTXTX,APITemp2		; no tabs, so generate one!
+	avw	#8,APITemp2	; add a reasonable amount
+	bra	14$
+12$:	dey		; since it was a second-tab thing
+13$:	lda	(A5),y	; found a non-null tab
+	sta	APITemp2	; found one!
+	iny
+	lda	(A5),y
+	and	#$7f	; filter the decimal alignment
+	sta	APITemp2+1
+	iny
+	adw	GEORWIND+2,APITemp2
+	cpw	APITemp2,GEORTXTX	; is tab is too far left?
+	ble	11$
+14$:	cpw	APITemp2,GEORWIND+4	; is tab too far right?
+	bge	15$
+	mvw	APITemp2,GEORTXTX	; make the new tab!
+15$:	rts		; and exit	
+
+
+<span align="left">GEORrulr:	bcc	11$	; does rest need to be read?
+	lda	GEORCHAR
+	jsr	GEORaddL	; add the escape to the pile
+	ldb	APITemp2,#0
+10$:	jsr	GEORNxtB
+	cpx	#0
+	bne	99$
+	jsr	GEORaddL
+	inc	APITemp2
+	cbi	APITemp2,#26
+	blt	10$
+11$:	mvw	A2,A3	; make sure pointing to end!
+	avw	#27,A3
+	mvw	GEORCCRD,A5
+	avw	#1,A5
+	ldy	#5
+12$:	lda	(A2),y	; copy data into current card
+	sta	(A5),y
+	iny
+	cpy	#24	; 24+1=the end
+	blt	12$
+99$:	rts	
+
+<span align="left">GEORCrds:	bcc	11$	; does rest need to be read?
+	lda	GEORCHAR
+	jsr	GEORaddL	; add the escape to the pile
+	ldb	APITemp2,#0
+10$:	jsr	GEORNxtB
+	cpx	#0
+	bne	99$
+	jsr	GEORaddL
+	inc	APITemp2
+	cbi	APITemp2,#3
+	blt	10$
+11$:	mvw	A2,A3	; make sure pointing to end!
+	avw	#4,A3
+	mvw	GEORCCRD,A5
+	avw	#2,A5	; so points to right place
+	ldy	#1
+12$:	lda	(A2),y	; copy data into current card
+	sta	(A5),y
+	iny
+	cpy	#4
+	blt	12$
+	jsr	GEORnewC
+99$:	rts
+
+<span align="left">GEORgfxE:	bcc	GEORgfx1	; does rest need to be read?
+	lda	GEORCHAR
+	jsr	GEORaddL	; add the escape to the pile
+	ldb	APITemp2,#0
+10$:	jsr	GEORNxtB
+	cpx	#0
+	beq	99$
+	rts
+99$:	jsr	GEORaddL
+	inc	APITemp2
+	cbi	APITemp2,#4
+	blt	10$
+GEORgfx1:	mvw	A2,A3	; make sure pointing to end!
+	avw	#5,A3
+	lda	GEORPTOP
+	beq	12$
+	jsr	GEORByNL
+	blt	12$
+	ldb	GEORTXTY,#$f0	; fake a bottoming out
+	jsr	GEORglTB
+	rts
+12$:	jsr	GEORgPtH
+	ldy	#2
+	lda	(A2),y
+	sta	R2H
+	sta	APITemp2	; get the image height word
+	iny
+	lda	(A2),y
+	sta	APITemp2+1	; image height in APITemp2
+	cpb	curHeight,APITemp3	; char taller than whole window?
+	bge	14$	; can we handle first CR?
+	sbb	curHeight,APITemp3	; cut total height by one char 
+	cpw	APITemp2,APITemp3	; can fit in total space?
+	blt	15$
+13$:	lda	GEORPTOP	; should we wait for next page?
+	bne	16$	; answer is yes.
+	mvb	APITemp3,R2H
+	bne	GEORgfx2
+14$:	rts
+15$:	cpw	APITemp2,APITemp1	; picture bigger than remaining?
+	blt	GEORgfx2
+16$:	ldb	GEORTXTY,#$f0	; fake a bottoming out
+	jsr	GEORglTB
+	rts
+
+<span align="left">	;* display a graphics clip from geoWrite
+GEORgfx2:	jsr	GEORsTSB	; make sure picture not shown 2ce
+	ldy	#4
+	lda	(A2),y	; get the record number
+	clc
+	adc	#1	; add one for the blank spot
+	asl	a	; now have index into GEORFIVB
+	tax
+	lda	GEORFIVB,x	; get the picture track/sector
+	bne	10$
+	jmp	GEORByNL		; escape on error	
+10$:	sta	R1L
+	inx
+	lda	GEORFIVB,x
+	sta	R1H	; now have the T&S of picture
+GEORgfx3:	ldw	R4,#$8000
+	ldw	R5,#0
+	ldw	A4,#APITemp3+10	; save registers for GEORclpR
+	jsr	GEORsvRg
+	ldw	R0,#GEORBBUF	; got buf pointer
+	jsr	GEORclpR
+	ldy	#0
+	lda	(R0),y	; got your width
+	sta	R2L			; got your height before?
+	jsr	GEORclpR	; get garbage bytes
+	ldy	#0
+	lda	(R0),y	; get low height
+	cmp	R2H
+	bge	13$	; its ok, so continue
+	sta	R2H	; adjust image height down
+13$:	jsr	GEORclpR
+	mvw	GEORWIND+2,R1
+	ldy	#3
+14$:	lsr	R1H	; divide by eight
+	ror	R1L
+	ylp	14$
+	inc	R1L	; got your start x
+	mvb	GEORTXTY,R1H	; got your start y
+	lda	#0
+	sta	R11L	; got your left buf
+	sta	R11H
+	sta	R12L	; got your scanlines to skip
+	sta	R12H
+	mvw	GEORWIND+4,APITemp1	; find window width
+	sbw	GEORWIND+2,APITemp1
+	ldy	#3
+15$:	lsr	APITemp1+1	; divide by eight
+	ror	APITemp1
+	ylp	15$	; divide by eight
+	;dec	APITemp1
+	lda	R2L	; get your width
+	cmp	APITemp1
+	blt	16$
+	sec
+	sbc	APITemp1
+	sta	R11H	; got your right boundry!
+	mvb	APITemp1,R2L
+16$:	ldw	R13,#GEORclpR
+	ldw	R14,#GEORclip
+	jsr	BitOtherClip	; good stinkin luck!
+	ldy	#2
+	lda	(A2),y
+	add	GEORTXTY
+	sta	GEORTXTY
+	jmp	GEORByNL
+
+<span align="left">GEORclip:	ldw	R0,#GEORBBUF	; these routines necessary
+	rts		; for bitotherclip
+GEORclpR:	ldw	A4,#APITemp3	; see geos prg ref guide for 
+	jsr	GEORsvRg	; details
+	ldw	A4,#APITemp3+10
+	jsr	GEORldRg
+	jsr	ReadByte	; read next byte for photo scrap
+	ldy	#0
+	sta	(R0),y
+	jsr	GEORsvRg
+	ldw	A4,#APITemp3
+	jsr	GEORldRg
+	rts
+
+
+
+<span align="left">GEORldRg:	ldy	#0	; restore registers from A0
+	ldx	#0
+10$:	lda	(A4),y
+	sta	R1L,x
+	inx
+	iny
+	cpy	#10
+	blt	10$
+	rts
+GEORsvRg:	ldy	#0	; save registers to A0
+	ldx	#0
+10$:	lda	R1L,x
+	sta	(A4),y
+	inx
+	iny
+	cpy	#10
+	blt	10$
+	rts
+
+<span align="left">GEORdown:	ldb	APITemp1,#0	; save a next VLIR flag
+	cbi	GEORPNUM,#255	; run out of pages?
+	bgt	11$
+	lda	GEORFERR
+	beq	10$	; any more pages down?
+	cmp	#11
+	bne	11$	; was it an EOF?
+	jsr	GEORIsNV
+	bne	11$	; are there any more pages?
+	inc	APITemp1	; increment next VLIR flag
+10$:	cbi	GEORPNUM,#1
+	bge	12$
+11$:	rts
+12$:	inc	GEORPNUM
+	mvw	GEORCCRD,GEORPCRD
+	avw	#26,GEORCCRD
+	lda	APITemp1	; check next VLIR flag
+	beq	13$
+	jsr	GEORnVPg	; find next track and sector
+	mvw	GEORPCRD,R0
+	ldy	#0
+	lda	R1L	; save track into next currcard
+	sta	(R0),y
+	iny
+	lda	R1H	; save sec into next currcard
+	sta	(R0),y
+	iny
+	lda	#1	; save new byte into nxt currcard
+	sta	(R0),y	; and now we're ready!
+13$:	jsr	GEORNewPg
+	rts
+
+
+
+<span align="left">GEORup:	lda	GEORPNUM	; are we at first page?
+	cmp	#1
+	bgt	10$
+	ldx	#$ff
+	rts
+10$:	dec	GEORPNUM
+	mvw	GEORPCRD,R0
+	ldx	GEORFIVB	; set-up old page pointers
+	ldy	#0
+	lda	(R0),y	; is the track as a new page?
+	cmp	GEORFIVB,x
+	bne	12$
+	inx
+	iny
+	lda	(R0),y	; is the sector as a new page?
+	cmp	GEORFIVB,x
+	bne	12$
+	iny
+	lda	#1	; get proper start byte
+	cmp	(R0),y
+	bne	12$	; is the byte as a new page?
+	jsr	GEORIsPV
+	bne	12$	; is there a previous VLIR page?
+	jsr	GEORpVPg	; YES! So decrement VLIR pointer!
+12$:	mvw	GEORPCRD,GEORCCRD
+	svw	#26,GEORPCRD
+	jsr	GEORNewPg
+	rts
+
+<span align="left">;*******************************
+;* StngWidth
+;*
+;* Inputs:	R0 - string to inspect
+;*	
+;* Outputs: APITemp2 contains width
+;*	 APITemp2+2 contains # chars
+;*	 APITemp2+3 contains max height
+;*******************************
+
+StngWidth:
+	ldw	APITemp2,#0	; init all variables
+	sta	APITemp2+2
+	sta	APITemp2+3
+10$:	lda	APITemp2+2	; load index
+	tay
+	lda	(R0),y	; get character
+	beq	12$
+	jsr	GetRealSize	; find info on char
+	cmp	APITemp2+3	; is tallest so far?
+	blt	11$
+	sta	APITemp2+3	; yep, so save
+11$:	inc	APITemp2+2	; increment index
+	tya		; now look at width
+	clc
+	adc	APITemp2+0	; add width carefully
+	sta	APITemp2+0
+	bcc	10$
+	inc	APITemp2+1
+	bra	10$	; and go for another char
+12$:	rts	
+
+<span align="left">;** lex code translation table.
+;** 0=do not use, 1=alpha, 2=word term char, 3=num, 4=end, 5=escape
+;** 6=word term code
+GEORCCHT:
+	.byte	0,4,0,0,0,0,0,0,0,5	; 0-9
+	.byte	0,0,4,4,0,6,5,5,6,6	; 10-19
+	.byte	0,0,0,5,6,6,6,6,0,0	; 20-29
+	.byte	0,0,3,3,3,3,3,3,3,3	; 30-39
+	.byte	3,3,3,3,3,3,3,3,2,2	; 40-49
+	.byte	2,2,2,2,2,2,2,2,3,3	; 50-59
+	.byte	3,3,3,3,3,1,1,1,1,1	; 60-69
+	.byte	1,1,1,1,1,1,1,1,1,1	; 70-79
+	.byte	1,1,1,1,1,1,1,1,1,1	; 80-89
+	.byte	1,3,3,3,3,3,3,1,1,1	; 90-99
+	.byte	1,1,1,1,1,1,1,1,1,1	; 100-109
+	.byte	1,1,1,1,1,1,1,1,1,1	; 110-119
+	.byte	1,1,1,3,3,3,3,0,0,0	; 120-129
+	.byte	0,0,0,0,0,0,0,0,0,0	; 130-139
+	.byte	0,0,0,0,0,0,0,0,0,0	; 140-149
+	.byte	0,0,0,0,0,0,0,0,0,0	; 150-159
+	.byte	0,0,0,0,0,0,0,0,0,0	; 160-169
+	.byte	0,0,0,0,0,0,0,0,0,0	; 170-179
+	.byte	0,0,0,0,0,0,0,0,0,0	; 180-189
+	.byte	0,0,0,0,0,0,0,0,0,0	; 190-199
+	.byte	0,0,0,0,0,0,0,0,0,0	; 200-209
+	.byte	0,0,0,0,0,0,0,0,0,0	; 210-219
+	.byte	0,0,0,0,0,0,0,0,0,0	; 220-229
+	.byte	0,0,0,0,0,0,0,0,0,0	; 230-239
+	.byte	0,0,0,0,0,0,0,0,0,0	; 240-249
+	.byte	0,0,0,0,0,0	; 250-255
+
+<span align="left">; ** default card
+GEORDCRD:	.byte	0	; track
+	.byte	0	; sector
+	.byte	1	; byte
+	.byte	$00,$09	; font id
+	.byte	$01	; plain text
+	.byte	0,0	; tab 1
+	.byte	0,0	; tab 2
+	.byte	0,0	; tab 3
+	.byte	0,0	; tab 4
+	.byte	0,0	; tab 5
+	.byte	0,0	; tab 6
+	.byte	0,0	; tab 7
+	.byte	0,0	; tab 8
+	.word	0	; paragraph margin
+	.byte	%00000000	; left-single justification
+	.byte	0	; default HTMLmode
+
+
+<span align="left">.ramsect
+
+GEORFTAB:	.block	500	; names of found fonts
+GEORFTB1:	.block	2	; pointor into FontTab to 2nd set
+GEORFBUF:	.block	2	; pointer to actual font buffer
+GEORFSIZ:	.block	2	; siZe of font buffer
+
+GEORPBUF:	.block	2	; pointer to page buffer
+GEORPSIZ:	.block	2	; siZe of page buffer
+GEORPNUM:	.block	1	; page number
+GEORPMOD:	.block	1	; page show mode 0=no, 1=yes
+GEORPTOP:	.block	1	; at top of page flag
+
+GEORCBUF:	.block	2	; pointer to card buffer
+GEORCCRD:	.block	2	; current card (font/style info)
+GEORPCRD:	.block	2	; pointer to current page card
+
+GEORFIBF:	.block	260	; current sector buffer
+GEORFISC:	.block	2	; last track/sector read
+GEORFIVB:	.block	260	; VLIR link buffer
+GEORTCKS:	.block	20	; saving track/sec/byte info
+GEORDRIV:	.block	1	; drive file was opened on
+
+GEORBBUF:	.block	135	; bitmap clip buffer
+
+GEORCHAR:	.block	1	; character being examined
+GEORCODE:	.block	1	; parse code for GEORCHAR
+GEORFERR:	.block	1	; disk errors from GEORCHAR
+GEORPCHR:	.block	1	; previous char examined
+GEORPCOD:	.block	1	; parse code for GEORPCHR
+
+GEORWIND:	.block	6	; bytes for window information
+GEORTXTY:	.block	1	; saved PrintString Y
+GEORTXTX:	.block	2	; saved PrintString X
+GEORLSTY:	.block	1	; above line variable</pre></body></html>

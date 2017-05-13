@@ -1,0 +1,548 @@
+<!DOCTYPE html><html><head><title>Untitled</title></head><body><pre><span align="left">.noeqin
+.include	GEOSequates
+.glbl
+.eqin
+;****************************************
+;* MODstring- geoProjects library (C) 1998 Bo Zimmerman
+<span align="left">;*
+;* Intro:
+;*	This module handles all facets of string
+;*	manipulation.
+;*
+;* Functions:
+;*	AppStr(	.word	Pointer to dest str
+;*		.word	Pointer to source str) *
+;*	StrLen(	.word	Pointer to string) *
+;*	RevStr(	.word	Pointer to string) *
+;*	ToUpper(	.word	Pointer to string) *
+;*	ToLower(	.word	Pointer to string) *
+;*	ToPETSKII(	.word	Pointer to string) *
+;*	ToASCII(	.word	Pointer to string) *
+;*	InStr(	.word	Pointer to string to search
+;*		.word	Pointer to string to find) *
+;*	CmpStr(	.word	Pointer to string
+;*		.word   Pointer to string) *
+;*	CpyStr(	.word	Pointer to source string
+;*		.word   Pointer to destination) *
+;*
+;*	* = Includes a i_Function. Also most of these
+;*		(but not all!), return the str length.
+;*
+;* Comments:
+;*	An InsertStr, Mid, Left, Right, are not included!
+;*	You can get GetStrWidth from MODwin2
+;****************************************
+
+<span align="left">.psect
+
+<span align="left">;*******************************
+;* AppStr
+;*
+;* Inputs:	
+;*	A2	Pointer to null-terminated
+;*		string to append to.
+;*	A3	Pointer to null-terminated
+;*		string to append.
+;* Outputs:
+;*	.a	High byte of new string length
+;*	.x	Low byte of new string length
+;*******************************
+
+AppStr:
+	jsr	StrLen
+	tay
+	txa
+	clc
+	adc	A2L	; point to proper place...
+	sta	A4L
+	tya
+	adc	A2H
+	sta	A4H	;... and copy pointer to A4
+	ldy	#0
+10$:	lda	(A3),y	; get byte of appendable string
+	sta	(A4),y
+	beq	11$	; end reached, we are done!
+	iny
+	bne	10$	; appendable str len < 255!!!
+11$:	jmp StrLen	; fullfill the return parameters
+
+<span align="left">;*******************************
+;* i_AppStr
+;*
+;* Inputs:	
+;*	.word	Pointer to a null-terminated
+;*		string to append to.
+;*	.word	Pointer to a null terminated 
+;*		string to append.
+;* Outputs:
+;*	.a	High byte of new string length
+;*	.x	Low byte of new string length
+;*******************************
+
+i_AppStr:
+	jsr	APIinit
+	jsr	AppStr
+	ldy	#4	; 2 word pointers = 4 bytes
+	jmp	APIreturn
+
+
+<span align="left">;*******************************
+;* StrLen
+;*
+;* Inputs:	
+;*	A2	Pointer to a null-terminated
+;*		string.
+;* Outputs:
+;*	.a	string length (high byte)
+;*	.x	string length (low byte)
+;*******************************
+
+StrLen:
+	ldx	#0
+	ldb	A5L,#0	; clear length counters
+	mvw	A2,A4	; prepare work pointer
+	ldy	#0
+10$:	lda	(A4),y	; check a byte
+	beq	12$	; if zero found, exit
+	inx		; otherwise, add 1
+	bne	11$	; if this flips over 255...
+	inc	A5L	; add one to the high byte
+11$:	inc	A4L	; now increment work pointer
+	bne	10$	; if this does not flip, get next char
+	inc	A4H	; otherwise increment high byte
+	bne	10$	; if this does not flip, get next char
+12$:	lda	A5L	; get high byte into .a
+	rts		; and exit!
+
+<span align="left">;*******************************
+;* i_StrLen
+;*
+;* Inputs:	
+;*	.word	Pointer to a null-terminated
+;*		string.
+;* Outputs:
+;*	.a	string length (high byte)
+;*	.x	string length (low byte)
+;*******************************
+<span align="left">
+i_StrLen:
+	jsr	APIinit
+	jsr	StrLen
+	ldy	#2	; 1 word pointers = 2 bytes
+	jmp	APIreturn
+
+
+<span align="left">;*******************************
+;* RevStr
+;*
+;* Inputs:	
+;*	A2	Pointer to null-terminated
+;*		string to reverse.
+;* Outputs:
+;*	.a	NULL
+;*	.x	NULL
+;*******************************
+
+RevStr:
+	mvw	A2,A4	; save it for the fun ofit
+	jsr	StrLen	; get length of A2 
+	clc
+	adc	A2H	; add hb length to A2 -> A3
+	sta	A3H
+	txa
+	adc	A2L	; add lb length to A2 -> A3
+	sta	A3L
+	cpw	A2,A3	; was the length zero?
+	bne	11$
+10$:	mvw	A4,A2	; restore original pointer
+	lda	#0
+	ldx	#0
+	rts		; yes! so done.
+11$:	ldy	#0	; A3 should start off pointing to NULL
+	dew	A3
+	lda	(A2),y	; get front byte of src
+	sta	APITemp1	; save it!
+	lda	(A3),y	; get hind byte of src
+	sta	(A2),y	; save it to front of dest
+	lda	APITemp1	; now restore front byte of src
+	sta	(A3),y	; save it to hind end of dest
+	cpw	A2,A3	; did we copy the same byte?
+	beq	10$	; yes, so we're done!
+	inw	A2
+	cpw	A2,A3	; are front/hind now the same?
+	beq	10$	; yes, so we're done
+	bne	11$	; no, so decrement hind and do over
+	; the end!
+
+<span align="left">;*******************************
+;* i_RevStr
+;*
+;* Inputs:	
+;*	.word	Pointer to null-terminated
+;*		string to reverse.
+;* Outputs:
+;*	.a	NULL
+;*	.x	NULL
+;*******************************
+
+i_RevStr:
+	jsr	APIinit
+	jsr	RevStr
+	ldy	#2	; 1 word pointers = 2 bytes
+	jmp	APIreturn
+
+
+<span align="left">;*******************************
+;* ToUpper
+;*
+;* Inputs:	
+;*	A2	Pointer to null-terminated
+<span align="left">;*		string to convert to uppercase.
+;* Outputs:
+<span align="left">;*	.a	NULL
+;*	.x	NULL
+;*******************************
+
+ToUpper:
+	mvw	A2,A4	; save it for the fun of it
+	ldy	#0
+10$:	lda	(A4),y
+	beq	12$
+	cmp	#'a'
+	blt	11$
+	cmp	#'z'
+	bgt	11$
+	sec
+	sbc	#'a' - 'A'
+	sta	(A4),y
+11$:	inw	A4
+	bra	10$
+12$:	lda	#0
+	ldx	#0
+	rts	
+
+<span align="left">;*******************************
+;* i_ToUpper
+;*
+;* Inputs:	
+;*	.word	Pointer to null-terminated
+<span align="left">;*		string to convert to uppercase.
+;* Outputs:
+;*	.a	NULL
+;*	.x	NULL
+;*******************************
+
+i_ToUpper:
+	jsr	APIinit
+	jsr	ToUpper
+	ldy	#2	; 1 word pointers = 2 bytes
+	jmp	APIreturn
+
+
+<span align="left">;*******************************
+;* ToLower
+;*
+;* Inputs:	
+;*	A2	Pointer to null-terminated
+;*		string to convert to lowercase.
+;* Outputs:
+<span align="left">;*	.a	NULL
+;*	.x	NULL
+;*******************************
+
+ToLower:
+	mvw	A2,A4	; save it for the fun of it
+	ldy	#0
+10$:	lda	(A4),y
+	beq	12$
+	cmp	#'A'
+	blt	11$
+	cmp	#'Z'
+	bgt	11$
+	clc
+	adc	#'a' - 'A'
+	sta	(A4),y
+11$:	inw	A4
+	bra	10$
+12$:	lda	#0
+	ldx	#0
+	rts	
+
+
+<span align="left">;*******************************
+;* i_ToLower
+;*
+;*	.word	Pointer to null-terminated
+;*		string to convert to lowercase.
+;* Outputs:
+<span align="left">;*	.a	NULL
+;*	.x	NULL
+;*******************************
+
+i_ToLower:
+	jsr	APIinit
+	jsr	ToLower
+	ldy	#2	; 1 word pointers = 2 bytes
+	jmp	APIreturn
+
+
+<span align="left">;*******************************
+;* ToPETSKII
+;*
+;* Inputs:	
+;*	A2	Pointer to null-terminated
+;*		string to convert to PETSKII.
+;* Outputs:
+<span align="left">;*	.a	NULL
+;*	.x	NULL
+;*******************************
+
+ToPETSKII:
+	mvw	A2,A4	; save it for the fun of it
+	ldy	#0
+10$:	lda	(A4),y
+	beq	16$	; the end is found!
+	cmp	#13
+	beq	15$	; CR is only good code
+	cmp	#8
+	bne	11$
+	lda	#20	; convert delete to backspace
+	bra	14$
+11$:	cmp	#32	; below the space is bad news
+	blt	13$
+	cmp	#65	; check below 'a'
+	blt	15$	; those are ok
+	cmp	#90	; check below 'z'
+	bgt	12$
+	clc
+	adc	#128
+	bra	14$
+12$:	cmp	#97	; this is ascii 'a'
+	blt	15$
+	cmp	#126
+	bgt	13$
+	sec
+	sbc	#32	; converts to petskii 'a'	
+	bra	14$
+13$:	lda	#$00
+14$:	sta	(A4),y
+15$:	inw	A4
+	bra	10$
+16$:	lda	#0
+	ldx	#0
+	rts	
+
+<span align="left">;*******************************
+;* i_ToPETSKII
+;*
+;* Inputs:	
+;*	.word	Pointer to null-terminated
+<span align="left">;*		string to convert to PETSKII.
+;* Outputs:
+;*	.a	NULL
+;*	.x	NULL
+;*******************************
+
+i_ToPETSKII:
+	jsr	APIinit
+	jsr	ToPETSKII
+	ldy	#2	; 1 word pointers = 2 bytes
+	jmp	APIreturn
+
+
+<span align="left">;*******************************
+;* ToASCII
+;*
+;* Inputs:	
+;*	A2	Pointer to null-terminated
+;*		string to convert to ASCII.
+;* Outputs:
+;*	.a	NULL
+;*	.x	NULL
+;*******************************
+
+ToASCII:
+	mvw	A2,A4	; save it for the fun of it
+	ldy	#0
+10$:	lda	(A4),y
+	beq	16$	; the end is found!
+	cmp	#13
+	beq	15$	; CR is only good code
+	cmp	#20
+	bne	11$
+	lda	#8	; convert delete to backspace
+	bra	14$
+11$:	cmp	#32	; below the space is bad news
+	blt	13$
+	cmp	#65	; check below 'a'
+	blt	15$	; those are ok
+	cmp	#90	; check below 'z'
+	bgt	12$
+	clc
+	adc	#32
+	bra	14$
+12$:	cmp	#96	; this is petskii chars
+	blt	15$
+	cmp	#192
+	blt	13$
+	cmp	#217
+	bgt	13$
+	sec
+	sbc	#128	; converts to ascii 'A'	
+	bra	14$
+13$:	lda	#'.'
+14$:	sta	(A4),y
+15$:	inw	A4
+	bra	10$
+16$:	lda	#0
+	ldx	#0
+	rts	
+
+<span align="left">;*******************************
+;* i_ToASCII
+;*
+;* Inputs:	
+;*	.word	Pointer to null-terminated
+<span align="left">;*		string to convert to ASCII.
+;* Outputs:
+;*	.a	NULL
+;*	.x	NULL
+;*******************************
+
+i_ToASCII:
+	jsr	APIinit
+	jsr	ToASCII
+	ldy	#2	; 1 word pointers = 2 bytes
+	jmp	APIreturn
+
+
+<span align="left">;*******************************
+;* InStr
+;*
+;* Inputs:	
+;*	A2	Pointer to null-terminated
+;*		string to search.
+;*	A3	Pointer to null-terminated
+;*		string to search for.
+;* Outputs:
+;*	.a	high byte of found index
+;*	.x	low byte of found index + 1
+;*******************************
+
+InStr:
+	mvw	A2,A4	; copied just for the fun of it
+	ldw	A5,#1	; the future .a and .x
+10$:	ldy	#0
+11$:	lda	(A3),y	; get first char of search string
+	beq	13$	; done, or found I guess
+	cmp	(A4),y	; compare it to searched string
+	bne	12$	; nope, so increment and move on
+	iny		; yep, so increment y and try next
+	bne	11$	; search string < 255 chars!!
+12$:	inw	A4
+	inw	A5	; increment index and searched str
+	ldy	#0
+	lda	(A4),y	; are we done with searched string?
+	bne	10$	; no, so continue w/ next char
+	lda	#0	; not found, exit!
+	ldx	#0
+	rts
+13$:	lda	A5H	; found, so we can exit!
+	ldx	A5L	; fill .x last!
+	rts
+			
+
+<span align="left">;*******************************
+;* i_InStr
+;*
+;* Inputs:	
+;*	.word	Pointer to null-terminated
+;*		string to search.
+;*	.word	Pointer to null-terminated
+;*		string to search for.
+;* Outputs:
+;*	.a	high byte of found index
+;*	.x	low byte of found index + 1
+;*******************************
+
+i_InStr:
+	jsr	APIinit
+	jsr	InStr
+	ldy	#4	; 2 word pointers = 4 bytes
+	jmp	APIreturn
+
+
+<span align="left">;*******************************
+;* CpyStr
+;*
+;* Inputs:	
+;*	A2	Pointer to null-terminated
+;*		string to copy.
+;*	A3	Pointer to destination.
+;* Outputs:
+;*	.a	high byte of string length
+;*	.x	low byte of string length
+;*******************************
+CpyStr:
+	ldx	#A2
+	ldy	#A3
+	jsr	CopyString	; use the kernel! (not safe though!)
+	jmp	StrLen	; get this for free
+
+
+<span align="left">;*******************************
+;* i_CpyStr
+;*
+;* Inputs:	
+;*	.word	Pointer to null-terminated
+;*		string to copy.
+;*	.word	Pointer to destination.
+;* Outputs:
+;*	.a	high byte of string length
+;*	.x	low byte of string length
+;*******************************
+
+i_CpyStr:
+	jsr	APIinit
+	jsr	CpyStr
+	ldy	#4	; 2 word pointers = 4 bytes
+	jmp	APIreturn
+
+<span align="left">;*******************************
+;* CmpStr
+;*
+;* Inputs:	
+;*	A2	Pointer to null-terminated
+;*		string to compare.
+;*	A3	Pointer to null-terminated.
+;*		string to compare
+;* Outputs:
+;*	.a	?
+;*	.x	?
+;*******************************
+CmpStr:
+	ldx	#A2
+	ldy	#A3
+	jmp	CmpString	; use the kernel! (not safe though!)
+
+<span align="left">;*******************************
+;* i_CmpStr
+;*
+;* Inputs:	
+;*	.word	Pointer to null-terminated
+;*		string to compare.
+;*	.word	Pointer to null-terminated.
+;*		string to compare
+;* Outputs:
+;*	.a	?
+;*	.x	?
+;*******************************
+
+i_CmpStr:
+	jsr	APIinit
+	jsr	CmpStr
+	tsx		; the status must be preserved!
+	stx	APIRegBuf+3
+	ldy	#4	; 2 word pointers = 4 bytes
+	jmp	APIreturn
+</pre></body></html>

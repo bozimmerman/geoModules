@@ -1,0 +1,182 @@
+<!DOCTYPE html><html><head><title>Untitled</title></head><body><pre><span align="left">.noeqin
+<span align="left">.include	GEOSequates
+.glbl
+.eqin
+
+;****************************************
+;* MODseqRx - geoProjects library (C) 1998 Bo Zimmerman
+<span align="left">;*
+;* Intro:
+;* 	This modules supports advanced C= seq/prg file
+;* 	reading.  It allows multiple files to be opened,
+;* 	and allows a characters to be "un-read".
+;*
+;* Functions:
+;*
+;* Comments:
+;****************************************
+
+
+<span align="left">;******************************
+;* OpenSF	Open a file for reading
+;* Inputs:
+;*		A2	name of file to open
+;*		A3L	file number to open (1, 2, 3...)
+;*		A3H	flag byte for open (0=both, X=1)
+;*		curDrive	drive file created on
+;* Outputs:	
+;*		.x 	status
+;*		.a	?
+;******************************
+
+OpenSF:	jsr	SIORMyBuf	; get pointer to my work buffers
+	mvw	A2,R6	; put filename into position
+	mvb	A3H,$886e	; which drive to search
+	jsr	FindFile
+	cpx	#0
+	beq	10$
+	rts		; some sort of disk error, exit!
+10$:	ldy	#0
+	lda	#1
+	sta	(A6),y	; clear out my TnS list pointer
+	lda	$8401	; track of first sector
+	iny
+	sta	(A6),y	; store track on list
+	lda	$8402	; sector of first sector
+	iny
+	sta	(A6),y	; store sector on list
+	jmp	SIORNwTS	; this routine gets current track
+			; from A6, reads it into buffer, 
+			; copies A5's next TS to list
+			; (cycling sectors if necessary),
+			; and prepares sector for reading.
+
+<span align="left">;******************************
+;* i_OpenSF	Open a file for reading
+;* Inputs:
+;*		.word	name of file to open
+;*		.byte	file number to open (1, 2, 3...)
+;*		.byte	flag byte for open (0=both, X=1)
+;*		curDrive	drive file created on
+;* Outputs:	
+;*		.x 	status
+;*		.a	?
+;******************************
+
+i_OpenSF:
+	jsr	APIinit
+	jsr	OpenSF
+	ldy	#4	; 1 word and 2 bytes = 4 bytes
+	jmp	APIreturn
+
+<span align="left">;******************************
+;* ReadSB	Read a byte from an open file
+;* Inputs:
+;*		A2L	file number to read from (1, 2, 3...)
+;*		curDrive	drive file created on
+;* Outputs:	
+;*		.x 	status
+;*		.a	byte returned
+;******************************
+ReadSB:
+	mvb	A2L,A3L
+	jsr	SIORMyBuf	; get A5 and A6 buffers
+	ldy	#0
+	lda	(A5),y	; get current index into read buf
+	tay
+	lda	(A5),y	; now get the character
+	sta	A4L	; store it temporarily
+	iny		; increment the pointer
+	beq	14$	; if it rolled over, new sector
+	sty	A4H	; store THAT temporarily
+	ldy	#0
+	lda	(A6),y	; get the track thing
+	bne	11$	; its ordinary, so treat it so
+	cmp	A4H	; have we reached the last byte?
+	beq	13$	; yes, so do an EOF and exit
+11$:	ldx	#0	; ord. read, set a clear status
+12$:	lda	A4H	; get the saved index pointer
+	sta	(A5),y	; save the next index pointer
+	lda	A4L	; restore saved character
+	cpx	#0
+	rts	
+13$:	ldx	#11	; signify an EOF status
+	bra	12$
+14$:	ldy	#0		; time for new sector, yea!!!
+	lda	(A6),y	; get TS pointer
+	tay
+	iny		; get it pointed to the next track
+	iny
+	tya
+	ldy	#0
+	sta	(A6),y	; store it for use in a second
+	jmp	SIORNwTS	; this routine gets current track
+			; from A6, reads it into buffer, 
+			; copies A5's next TS to list
+			; (cycling sectors if necessary),
+			; and prepares sector for reading.
+
+<span align="left">SIORNwTS:	ldy	#0	; A5 = buf, A6 = TS list (w/new sec!)
+	lda	(A6),y	; get track & sec index
+	sta	APITemp1
+	tay
+	lda	(A6),y	; now get the track number
+	sta	R1L
+	iny
+	lda	(A6),y	; now get the sector
+	sta	R1H
+	mvw	A5,R4	; but block pointer in place
+	jsr	GetBlock	; the block is now MINE!!!
+	ldy	APITemp1	; start to put next block on the list
+	cpy	#9	; can't go beyond nine
+	blt	12$
+	ldy	#3	;copy TnS List backwards here
+11$:	lda	(A6),y	; get a track or sector
+	dey
+	dey		; scoot back two bytes
+	sta	(A6),y	; and save it!
+	iny
+	iny		; then scoot to "next" byte
+	iny
+	cpy	#11	; if we're still in range
+	blt	12$	; ...head back up and copy next byte 
+	ldy	#7	; this will allow new end to come
+12$:	iny		; point to next TS spot
+	iny
+	tya
+	ldy	#0
+	sta	APITemp1	; store the next sector pointer
+	ldy	#0
+	lda	(A5),y
+	sta	APITemp1+1	; copy next track to temp pointer
+	lda	#2	; reset char pointer while were here
+	sta	(A5),y	; char pointer for this sec starts 2
+	iny
+	lda	(A5),y
+	sta	APITemp1+2	; store the next sector temporarily
+	ldy	APITemp1	; now re-get next TS sec pointer
+	lda	APITemp1+1
+	sta	(A6),y	; save new track permanently
+	iny
+	lda	APITemp1+2
+	sta	(A6),y	; save new sector permanently
+	cpx	#0	; final drive status check
+	rts
+
+
+<span align="left">SIORMyBuf:
+	ldw	A5,#SIORBuf
+	ldw	A6,#SIORSec
+10$:	dec	A3L
+	beq	11$
+	avw	#256,A5
+	avw	#11,A6
+	bra	10$
+11$:	rts	
+
+
+<span align="left">.ramsect
+
+SIORBuf:	.block	256 * 1	; want to support multiple open files
+SIORTnS:	.block	11 * 1	; first byte is index to rest
+</pre></body></html>

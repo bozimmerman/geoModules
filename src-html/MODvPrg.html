@@ -1,0 +1,217 @@
+<!DOCTYPE html><html><head><title>Untitled</title></head><body><pre><span align="left">.noeqin
+.include	GEOSequates
+.glbl
+.eqin
+;****************************************
+;* MODvPrg - geoProjects library (C) 1998 Bo Zimmerman
+<span align="left">;*
+;* Intro:
+;*	This module provides minimal support to the
+;*	creation of VLIR applications.  It must be 
+;*	the last main module, as the code "swap"
+;*	area is set at the end of the ramsect here.
+;*
+;* Functions:
+;*	InitVPrg(.word app perm name), x=errors
+;*	i_InitVPrg(.word app perm name), x=errors
+;*	LdMod(.byte module # 1..2..3..), x=errors
+;*	i_LdMod(.byte module # 1..2..3..), x=errors
+;*	VJump(.byte [module, ]VPRGBase offset), x=errors
+;*
+;* Comments:
+;****************************************
+
+.psect
+
+<span align="left">;*******************************
+;* InitVPrg
+;*
+;* Inputs:	
+;*	A2	pointer to app perm name
+;*	curDrive - must be right
+;* Outputs:
+;*	.x	errors if any, 0 = ok
+;*******************************
+InitVPrg:	jsr	OpenDisk
+	ldx	#A3L	; fetch disk name
+	jsr	GetPtrCurDkNm
+	ldy	#0
+10$:	lda	(A3),y	; copy disk name
+	sta	VPRGdNam,y
+	lda	(A2),y
+	sta	VPRGcNam,y
+	iny
+	cpy	#16
+	blt	10$
+	ldw	R6,#VPRGaNam	; prepare to save app name
+	mvb	curDrive,VPRGdriv  ; store app device
+	mvw	A2,R10
+	ldb	R7L,#APPLICATION
+	ldb	R7H,#1	; find the app by type
+	jsr	FindFTypes
+	cpx	#0
+	beq	12$
+11$:	rts
+12$:	ldw	R0,#VPRGaNam	; now open the app by name
+	jsr	OpenRecordFile
+	cpx	#0
+	bne	11$
+	mvw	R1,VPRGtns
+	ldw	R0,#fileHeader+4	; copy the t&s table
+	ldw	R1,#VPRGtabl
+	ldw	R2,#128	; half the links only!
+	jsr	MoveData
+	jsr	CloseRecordFile
+	ldb	VPRGcurr,#$ff	; set curr module to nothing
+	ldx	#0
+	rts
+
+<span align="left">;*******************************
+;* i_InitVPrg
+;*
+;* Inputs:	
+;*	.word pointer to app perm name
+;*	curDrive - must be right
+;* Outputs:
+;*	.x	errors if any	
+;*******************************
+
+i_InitVPrg:
+	jsr	APIinit
+	jsr	InitVPrg
+	ldy	#2	; 1 word pointer = 2 bytes
+	jmp	APIreturn
+
+
+<span align="left">;*******************************
+;* LdMod
+;*
+;* Inputs:	
+;*	A2L	module # to load
+;* Outputs:
+;*	.x	errors if any, 0 = ok
+;*******************************
+LdMod:	mvb	curDrive,A2H	; save current device
+	lda	A2L
+	cmp	VPRGcurr	; are we already in this module?
+	bne	10$
+	ldx	#0	; yes so exit w/o error
+	rts
+10$:	lda	VPRGdriv	; set back to app drive
+	jsr	VPRGdev
+	jsr	VPRGok
+	cpx	#0
+	beq	11$
+	stx	A3L
+	bne	13$
+11$:	lda	A2L	; now prepare to
+	sta	VPRGcurr	; forgot to store it!!
+	sec
+	sbc	#1	; get t&s from table
+	asl	a
+	tay
+	lda	VPRGtabl,y
+	sta	R1L	; get t&s from table
+	lda	VPRGtabl+1,y
+	sta	R1H
+	ldw	R7,#VPRGbase
+	ldw	R2,#$ffff
+	jsr	ReadFile	; read the module in
+	stx	A3L	; save errors
+13$:	lda	A2H
+	jsr	VPRGdev	; restore incoming curDevice
+	ldx	A3L	; restore x for errors and exit
+	rts
+
+VPRGdev:	cmp	curDrive	; change drives if necessary
+	beq	10$
+	jsr	SetDevice
+10$:	jmp	OpenDisk
+
+<span align="left">;*******************************
+;* i_LdMod
+;*
+;* Inputs:	
+;*	.byte	module # to load
+;* Outputs:
+;*	.x	errors if any	
+;*******************************
+
+i_LdMod:
+	jsr	APIinit
+	jsr	LdMod
+	ldy	#1	; 1 byte = 1 byte
+	jmp	APIreturn
+
+<span align="left">;*******************************
+;* VJump
+;*
+;* Inputs:	
+;*	A2L	[module, ]VPRGBase offset
+;* Outputs:
+;*	.x	errors if any, 0 = ok
+;*******************************
+VJump:	lda	A2L
+	sta	A4L
+	lsr	a
+	lsr	a
+	lsr	a
+	lsr	a
+	sta	A2L
+	jsr	LdMod
+	lda	A4L
+	sta	A2L
+	cpx	#0
+	beq	10$
+	rts
+10$:	and	#$0f
+	add	#[VPRGbase
+	sta	VPRGjmpt+1
+	lda	#0
+	adc	#]VPRGbase
+	sta	VPRGjmpt+2
+	pla
+	pla		; pull the olde return address
+VPRGjmpt:	jmp	VPRGbase
+
+<span align="left">VPRGok:	ldx	#A3L	; now get this disks name
+	jsr	GetPtrCurDkNm
+	ldy	#0	; now see if disk is ok...
+11$:	lda	(A3),y
+	cmp	VPRGdNam,y	; comparing...
+	bne	12$
+	iny		; otherwise, continue
+	cpy	#16
+	blt	11$
+	ldx	#0
+	rts
+12$:	mvw	A2,APITemp2
+	mvw	VPRGtns,R1
+	ldw	R4,#fileHeader
+	jsr	GetBlock
+	cpx	#0
+	bne	14$
+	ldw	R0,#fileHeader+4	; copy the t&s table
+	ldw	R1,#VPRGtabl
+	ldy	#127
+13$:	lda	(R0),y	; see if we are still on save drive
+	cmp	(R1),y
+	bne	14$
+	dey
+	bne	13$
+	ldx	#0	; verified again
+	rts
+14$:	ldw	A2,#VPRGcNam
+	jsr	InitVPRG
+	mvw	APITemp2,A2
+	rts
+
+<span align="left">.ramsect
+VPRGtabl:	.block	130
+VPRGcurr:	.block	2
+VPRGdriv:	.block	1
+VPRGtns:	.block	1; track and sector of vlir block
+VPRGaNam:	.block	20	; application name storage
+VPRGdNam:	.block	20; application disk name
+VPRGcNam:	.block	20; application class name
+VPRGbase:</pre></body></html>

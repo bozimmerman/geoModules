@@ -1,0 +1,235 @@
+<!DOCTYPE html><html><head><title>Untitled</title></head><body><pre><span align="left">.noeqin
+.noglbl
+.include	GEOSequates
+.glbl
+.eqin
+
+;****************************************
+;* MODdemo - geoProjects library (C) 1998 Bo Zimmerman
+<span align="left">;*
+;* Intro:
+;* 	Helps limit the number of times a
+;*	program is executed.
+;*
+;* Functions:
+;* SetDemo 	(.word Name of executable
+;*		.byte Application offset($bd-$dc)
+;*		.byte Max times to run)*
+;*		.x status(0=continue, $ff=abort app)
+;*
+;*	* = includes i_Function call, and returns 
+;*		status in the .x register
+;*
+;* Comments:
+;*	Requires curDrive drive to work on
+;* 
+;****************************************
+.psect
+
+<span align="left">;******************************
+;* SetDemo 	initialiZe set boot disk
+;* Inputs:
+;*		A2	Name of executable
+;*		A3L	Application offset($bd-$dc)
+;*		A3H	Max times to run
+;*		curDrive	drive to work on
+;* Outputs:	
+;*		.x 	status(0=continue, $ff=abort app)
+;*		.a	0
+;******************************
+
+SetDemo:	jsr	DEMINITS
+	jsr	OpenDisk
+	mvw	R1,DEMBAML
+	jsr	DEMOPF	; try to open the application, get hdr
+	bne	97$
+10$:	lda	$8190	; now check run times from Header
+	sta	DEMNUMH
+	cmp	DEMNUM
+	blt	11$
+	inc	DEMBADF
+11$:	inc	DEMNUMH	; still ok, so increment and update
+	jsr	DEMUPH	; update the file header
+	beq	12$
+97$:	ldx	#$ff	; exit with an error
+	rts
+12$:	mvw	DEMBAML,R1
+	ldw	R4,#$8000	; hopefully get FirstDirBlock
+	jsr	GetBlock
+	ldx	DEMAPPC
+	lda	$8000,x	; check in one of those free bytes
+	sta	DEMNUMD
+	cmp	DEMNUM	; exceeded max on THIS end?
+	blt	13$
+	inc	DEMBADF
+13$:	cmp	DEMNUMH	; if FILEH is more run than disk,
+	bge	19$	; borrow number from FILEH
+	mvb	DEMNUMH,DEMNUMD
+	jsr	DEMUPD
+	bne	15$
+	bra	20$	; finish up!
+19$:	beq	20$	; one off is not worth it
+	inc	DEMNUMD	; increment the heavy disk counter
+	jsr	DEMUPD	; then update the disk
+	beq	16$
+15$:	ldx	#$ff	; exit with an error
+	rts
+16$:	jsr	DEMOPF	; try to re-open the application
+	bne	15$
+	mvb	DEMNUMD,DEMNUMH
+	jsr	DEMUPH	; re-update the file
+	bne	15$
+20$:	lda	DEMBADF
+	beq	21$
+	ldw	A2,#DEMDONE
+	jsr	DEMCNCL
+	ldx	#$ff
+	rts
+21$:	mvb	DEMNUM,APITemp1
+	sbb	DEMNUMH,APITemp1	 ; now have remaining runs
+	jsr	DEMOK
+	ldx	#$00
+	rts
+
+<span align="left">;******************************
+;* i_SetDemo 	initialiZe set boot disk
+;* Inputs:
+;*		.word	Name of executable
+;*		.byte	Application offset($20,$21,$40,$41,...)
+;*		.byte	Max times to run
+;*		curDrive	drive to work on
+;* Outputs:	
+;*		.x 	status(0=continue, $ff=abort app)
+;*		.a	0
+;******************************
+
+<span align="left">i_SetDemo:
+	jsr	APIinit
+	jsr	SetDemo
+	ldy	#4	; 2 word parameter list
+	jmp	APIreturn
+
+<span align="left">DEMINITS:
+	mvb	A3L,DEMAPPC
+	mvb	A3H,DEMNUM
+	ldb	DEMBADF,#0
+	mvb	curDrive,DEMDRIVE
+
+	ldw	A4,#DEMNOEXE+12
+	mvw	A2,A6
+	ldx	#A6
+	ldy	#A4
+	jsr	CopyString
+
+	mvw	A2,A6
+	ldw	A4,#DEMNOOP+12
+	ldx	#A6
+	ldy	#A5
+	jsr	CopyString
+	rts
+
+<span align="left">DEMUPH:	ldx	#$90
+	lda	DEMNUMH
+	sta	$8100,x
+	mvw	$8300,R1
+	ldw	R4,#$8100
+	jsr	PutBlock
+	cpx	#$00
+	bne	96$
+	rts
+96$:	ldw	A2,#DEMNOW
+	jsr	DEMCNCL
+	ldx	#$ff
+	rts
+
+DEMUPD:	ldx	DEMAPPC
+	lda	DEMNUMD
+	sta	$8000,x
+	mvw	DEMBAML,R1	
+	ldw	R4,#$8000	; hopefully putting FirstDirBlock
+	jsr	PutBlock
+	cpx	#$00
+	bne	96$
+	rts
+96$:	ldw	A2,#DEMNOW
+	jsr	DEMCNCL
+	ldx	#$ff
+	rts
+
+DEMOPF:	mvw	A2,R6
+	ldb	$886e,#$00	; first, find this application
+	jsr	FindFile
+	cpx	#0
+	bne	96$
+	ldw	R9,#$8400
+	jsr	GetFHdrInfo	; now get file header info
+	cpx	#$00
+	bne	95$
+	rts
+95$:	ldw	A2,#DEMNOOP
+	jsr	DEMCNCL
+	bra	97$
+96$:	ldw	A2,#DEMNOEXE
+	jsr	DEMCNCL
+97$:	ldx	#$ff
+	rts
+
+
+
+<span align="left">DEMOKEE:	.byte	"Demo executions left: ",0,0,".",27,0
+
+DEMNOW:	.byte	$18,"Cannot write to disk!",27,0
+DEMDONE:	.byte	"Order from www.loadstar.com!",27,0
+DEMNOEXE:	.byte	$18,"Can't open "
+	.block	20
+DEMNOOP:	.byte	$18,"Can't find "
+	.block	20
+DEMNADA:	.byte	27,0
+
+DEMCNCL:	ldw	R0,#DEMCNBOX
+	jmp	DoDlgBox
+
+DEMCNBOX:	.byte	$80 | $01
+	.byte	12
+	.byte	$10,$1b
+	.byte	A2
+	.byte	11
+	.byte	$10,$1b
+	.word	DEMNADA
+	.byte	$02,$0f,$40
+	.byte	0
+
+DEMOK:	lda	#48
+	sta	DEMOKEE+22
+10$:	lda	APITemp1
+	cmp	#$0a
+	blt	11$
+	svb	#$0a,APITemp1
+	inc	DEMOKEE+22
+	bra	10$
+11$:	avb	#48,APITemp1
+	mvb	APITemp1,DEMOKEE+23
+	ldw	R0,#DEMOKBOX
+	jmp	DoDlgBox
+		
+	
+DEMOKBOX:
+	.byte	$80 | $01
+	.byte	11
+	.byte	$10,$1b
+	.word	DEMOKEE
+	.byte	11
+	.byte	$10,$1b
+	.word	DEMNADA
+	.byte	$01,$0f,$40
+	.byte	0
+
+<span align="left">.ramsect
+
+DEMAPPC:	.block	1
+DEMBAML:	.block	2
+DEMDRIVE:	.block	1
+DEMNUM:	.block	1
+DEMNUMH:	.block	1
+DEMNUMD:	.block	1
+DEMBADF:	.block	1</pre></body></html>

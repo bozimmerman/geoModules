@@ -1,0 +1,375 @@
+<!DOCTYPE html><html><head><title>Untitled</title></head><body><pre><span align="left">.noeqin
+<span align="left">.include	GEOSequates
+.glbl
+.eqin
+
+<span align="left">;****************************************
+;* MODsecIO - geoProjects library (C) 1998 Bo Zimmerman
+<span align="left">;*
+;* Intro:
+;* 	This modules supports reading and writing
+;* 	to a single disks sectors in clumps.
+;*
+;* Functions:
+;*	SecIOinit(	.a	Byte to write out) *
+;*	PutWTrk(	.word	Buffer pointer
+;*			TRACK	set) *
+;*	ReadWTrk(	.word	Buffer pointer
+;*			.word	Buffer end byte ptr
+;*			TRACK	set ) *
+;*	ReadSecs(	.word	Buffer pointer
+;*			.word	Buffer end byte ptr
+;*			TRACK	set 
+;*			SECTOR	set) *
+;*	WriteSecs(	.word	Buffer pointer
+;*			.word	Buffer end byte ptr
+;*			TRACK	set 
+;*			SECTOR	set) *
+;*
+;*	* = includes i_Function call, and returns 
+;*		status in the .x register
+;*
+;* Comments:  a multi-drive version is probably
+;* forthcoming, but geoBEAP II didn't need it, so...
+;****************************************
+.psect
+
+<span align="left">;******************************
+;* SecIOinit	InitialiZe a drive for sector IO
+;* Inputs:
+;*		.a	drive to set
+;* Outputs:	
+;*		.x 	status - CMD
+;*		.a	?
+;******************************
+
+SecIOinit:	sta	SCIOdrv
+	tay
+	lda	driveType-8,y
+	and	#%00001111
+	asl	a
+	tay
+	lda	SCIOtab,y
+	sta	SCIOdptr
+	iny
+	lda	SCIOtab,y
+	sta	SCIOdptr+1
+	mvw	SCIOdptr,A2
+	cpw	SCIOdptr,SCIOCMD
+	bne	10$
+	jmp	SCIOcmdi
+10$:	ldy	#0
+	lda	(A2),y
+	sta	TRKeaDSK	; now have tracks/disk
+	inw	SCIOdptr	; to point to sectors only
+	ldx	#0
+	rts
+SCIOtab:	.word	SCIO1541	; 0,no Zero type
+	.word	SCIO1541	; 1,proper 1541 type
+	.word	SCIO1571	; 2,proper 1571 type
+	.word	SCIO1581	; 3,proper 1581 type
+	.word	SCIOCMD	; 4,CMDtype?!?!
+SCIO1541:	.byte	35,20,18,18,25,17,31,16,36,$ff,$ff
+SCIO1571:	.byte	70,20,18,18,25,17,31,16,36,20,53,18,60,17,66,16,71,$ff,$ff
+SCIO1581:	.byte	80,39,81,$ff,$ff
+SCIOCMD:	.byte	255,255,255,255,255,$ff,$ff
+
+
+<span align="left">;******************************
+;* i_SecIOinit	InitialiZe a drive for sector IO
+;* Inputs:
+;*		.byte	drive to set
+;* Outputs:	
+;*		.x 	status - CMD
+;*		.a	?
+;******************************
+i_SecIOinit:
+	jsr	APIinit
+	lda	A2L
+	jsr	SecIOinit
+	ldy	#1	; 1 byte
+	jmp	APIreturn
+
+<span align="left">;******************************
+;* PutWTrk	Writes in an entire track, if possible
+;* Inputs:
+;*		TRACK	track to write, sectors will be 0
+;*		A2	pointer to data buffer
+;*			drive must be module initialiZed
+;* Outputs:	
+;*		.x 	status (0=ok)
+;*		.a	?
+;******************************
+
+PutWTrk:
+	ldb	SECTOR,#0	; start from sector 0
+	jsr	SCIOsetT
+	bne	12$
+	mvw	TRACK,R1L	; save one sector in
+10$:	mvb	SECTOR,R1H
+	mvw	A2,R4	; official block cache buf
+	jsr	PutBlock	;  on track to disk
+	cpx	#0
+	bne	12$
+	inc	A2H
+	mvw	A2,SCIObufp
+	inc	SECTOR
+	beq	11$
+	cpb	SECTOR,SECeaTRK	; write all sectors
+	ble	10$
+11$:	ldx	#0
+12$:	rts
+
+<span align="left">;******************************
+;* i_PutWTrk	Writes in an entire track, if possible
+;* Inputs:
+;*		TRACK	track to write, sectors will be 0
+;*		.word	pointer to data buffer
+;*			drive must be module initialiZed
+;* Outputs:	
+;*		.x 	status
+;*		.a	?
+;******************************
+
+i_PutWTrk:
+<span align="left">	jsr	APIinit
+	jsr	PutWTrk
+	ldy	#2	; 1 word = 2 bytes
+	jmp	APIreturn
+
+<span align="left">;******************************
+;* ReadWTrk	Reads in an entire track, if possible
+;* Inputs:
+;*		TRACK	track to read, sectors will be 0
+;*		A2	pointer to destination buffer
+;*		A3	pointer to end of dest buffer
+;*			drive must be module initialiZed
+;* Outputs:	
+;*		.x 	status (0=whole, $ff=got part, err)
+;*		.a	?
+;******************************
+
+ReadWTrk:
+	ldb	SECTOR,#0	; start from sector 0
+	jsr	SCIOsetT
+	bne	13$
+	mvb	TRACK,R1L	; reload track & sector
+10$:	mvb	SECTOR,R1H
+	mvw	A2,R4	; official block cache buf
+	jsr	GetBlock
+	cpx	#0	; no errors allowed.
+	bne	13$
+	inc	A2H
+	mvw	A2,SCIObufp
+	cpw	A2,A3	; out of buffer space?
+	blt	11$
+	ldx	#$ff	; denote end of buffer
+	rts
+11$:	inc	SECTOR
+	beq	12$
+	cpb	SECTOR,SECeaTRK	; get all sectors to limit
+	ble	10$
+12$:	ldx	#0
+13$:	rts
+
+<span align="left">;******************************
+;* i_ReadWTrk	Reads in an entire track, if possible
+;* Inputs:
+;*		TRACK	track to read, sectors will be 0
+;*		.word	pointer to destination buffer
+;*		.word	pointer to end of dest buffer
+;*			drive must be module initialiZed
+;* Outputs:	
+;*		.x 	status
+;*		.a	?
+;******************************
+
+i_ReadWTrk:
+<span align="left">	jsr	APIinit
+	jsr	ReadWTrk
+	ldy	#4	; 2 words = 4 bytes
+	jmp	APIreturn
+
+<span align="left">;******************************
+;* ReadSecs:	Reads in as many sectors as possible
+;* Inputs:
+;*		TRACK	track to read
+;*		SECTOR	sector to start from
+;*		A2	pointer to destination buffer
+;*		A3	pointer to end of dest buffer
+;*			drive must be module initialiZed
+;* Outputs:	
+;*		.x 	status (0=got some, $ff=the end, err)
+;*		.a	?
+;******************************
+
+ReadSecs:
+	jsr	SCIOsetT
+	bne	13$
+	cpb	TRACK,TRKeaDSK
+	bgt	11$
+10$:	mvb	TRACK,R1L	; reload track & sector
+	mvb	SECTOR,R1H
+	mvw	A2,R4	; official block cache buf
+	jsr	GetBlock
+	cpx	#0	; no errors allowed.
+	bne	13$
+	inc	A2H
+	mvw	A2,SCIObufp
+	inc	SECTOR
+	beq	14$
+	cpb	SECTOR,SECeaTRK	; get all sectors to limit
+	ble	12$
+14$:	ldb	SECTOR,#0
+	inc	TRACK	; if still bufferable, get a track
+	beq	11$	; a flip over is very very bad
+	cpb	TRACK,TRKeaDSK
+	bgt	11$
+	jsr	SCIOresT
+	beq	12$
+11$:	ldx	#$ff	; denote end of disk!!
+	rts
+12$:	cpw	A2,A3	; out of buffer space?
+	blt	10$
+	ldx	#0
+13$:	rts
+
+<span align="left">;******************************
+;* i_ReadSecs	Reads as many sectors as possible
+;* Inputs:
+;*		TRACK	track to read, sectors will be 0
+;*		SECTOR	sector to start from
+;*		.word	pointer to destination buffer
+<span align="left">;*		.word	pointer to end of dest buffer
+;*			drive must be module initialiZed
+;* Outputs:	
+;*		.x 	status (0=got some, $ff=the end, err)
+;*		.a	?
+;******************************
+
+i_ReadSecs:
+	jsr	APIinit
+	jsr	ReadSecs
+	ldy	#4	; 2 words = 4 bytes
+	jmp	APIreturn
+
+<span align="left">;******************************
+;* WriteSecs:	Writes all sectors given
+;* Inputs:
+;*		TRACK	track to start writing from
+;*		SECTOR	sector to start from
+;*		A2	pointer to source buffer
+;*		A3	pointer to end of source buffer
+;*			drive must be module initialiZed
+;* Outputs:	
+;*		.x 	status (0=wrote all,  err)
+;*		.a	?
+;******************************
+
+WriteSecs:
+	jsr	SCIOsetT
+	bne	13$
+	cpb	TRACK,TRKeaDSK
+	bgt	11$
+10$:	mvb	TRACK,R1L	; reload track & sector
+	mvb	SECTOR,R1H
+	mvw	A2,R4	; official block cache buf
+	jsr	PutBlock
+	cpx	#0	; no errors allowed.
+	bne	13$
+	inc	SECTOR
+	beq	14$
+	cpb	SECTOR,SECeaTRK	; get all sectors to limit
+	ble	12$
+14$:	ldb	SECTOR,#0
+	inc	TRACK	; if still bufferable, get a track
+	beq	11$	; a flip over is very very bad
+	cpb	TRACK,TRKeaDSK
+	bgt	11$
+	jsr	SCIOresT
+	beq	12$
+11$:	ldx	#$ff	; denote end of disk!!
+	rts
+12$:	inc	A2H
+	mvw	A2,SCIObufp
+	cpw	A2,A3	; out of buffer space?
+	blt	10$
+	ldx	#0
+13$:	rts
+
+<span align="left">;******************************
+;* i_WriteSecs	Writes all sectors given
+;* Inputs:
+;*		TRACK	track to read, sectors will be 0
+;*		.word	pointer to destination buffer
+;*		.word	pointer to end of dest buffer
+;*			drive must be module initialiZed
+;* Outputs:	
+;*		.x 	status (0=wrote all,  err)
+;*		.a	?
+;******************************
+
+i_WriteSecs:
+	jsr	APIinit
+	jsr	WriteSecs
+	ldy	#4	; 2 words = 4 bytes
+	jmp	APIreturn
+
+<span align="left">SCIOcmdi:
+	cpb	SCIOdrv,curDrive
+	beq	10$
+	lda	SCIOdrv	; set the device for read/write
+	jsr	SetDevice
+10$:	ldb	R1L,#1
+	ldb	R1H,#0
+	jsr	NewDisk	; and move the head to position
+	cpx	#0
+	bne	99$
+	jsr	OpenDisk
+	cpx	#0
+	bne	99$
+	lda	$8208	; will be last availbale track
+	sta	TRKeaDSK
+	clc
+	adc	#1
+	sta	SCIOCMD
+<span align="left">	sta	SCIOCMD+2
+	inw	SCIOdptr	; to point to sectors only
+99$:	rts
+	
+
+<span align="left">SCIOsetT:	cpb	SCIOdrv,curDrive
+	beq	10$
+	lda	SCIOdrv	; set the device for read/write
+	jsr	SetDevice
+10$:	mvb	TRACK,R1L
+	mvb	SECTOR,R1H
+	jsr	NewDisk	; and move the head to position
+	cpx	#0
+	beq	11$
+	ldx	#$ff
+	rts
+11$:	nop
+SCIOresT:	mvw	SCIOdptr,A4
+	ldy	#0
+10$:	lda	(A4),y
+	sta	SECeaTRK	; set an initial sectors/tracj
+	iny
+	lda	(A4),y
+	cmp	TRACK
+	bgt	11$	; if trk mark > track, then done
+	iny
+	bne	10$
+11$:	ldx	#0
+	rts
+
+
+<span align="left">.ramsect
+
+TRACK:	.block	1	; current read or write track
+SECTOR:	.block	1	; current read or write sector
+TRKeaDSK:	.block	1	; current tracks per disk
+SECeaTRK:	.block	1	; current sectors per current track
+SCIOdptr:	.block	2	; sectors per track buffer pointer
+SCIOdrv:	.block	1	; flag for whether drive inited
+SCIObufp:	.block	2	; last buffer byte read, written</pre></body></html>

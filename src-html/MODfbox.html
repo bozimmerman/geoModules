@@ -1,0 +1,426 @@
+<!DOCTYPE html><html><head><title>Untitled</title></head><body><pre><span align="left">.noeqin
+.include	GEOSequates
+.glbl
+.eqin
+;****************************************
+;* MODfbox - geoProjects library (C) 1998 Bo Zimmerman
+<span align="left">;*
+;* Intro:
+;* This is a fantastic module that handles the entire
+;* opening screens for a typical application, from
+;* create to open to exit
+;*
+;* Functions:
+;* FileBox(A2	pointer to intro graphics routine or 0
+;*	A3	pointer to clear intro graphics or 0
+;*	A4	perm data name to use
+;*	A5	pointer to dest filename only
+;*	curDrive - a bad place for DISK icons):
+;*	.x	errors if any, 0 = ok
+;*	curDrive - device file is on
+;*	sysDBData - 0=create, $ff=open
+;*
+;* Comments:
+;****************************************
+
+
+<span align="left">;*******************************
+;* FileBox
+;*
+;* Inputs:	
+;*	A2	pointer to intro graphics routine or 0
+;*	A3	pointer to clear intro graphics or 0
+;*	A4	perm data name to use
+;*	A5	pointer to dest filename only
+;*
+;*	curDrive - a bad place for DISK icons
+;* Outputs:
+;*	.x	errors if any, 0 = ok
+;*	curDrive - device file is on
+;*	sysDBData - 0=create, $ff=open
+;*	A5 - points to the destination filename
+;*******************************
+
+FileBox:	lda	numDrives
+	cmp	#1	; only one drive?
+	bne	10$
+	ldb	FBOXnod1,#0	; clear out drive/disk possibility
+	ldb	FBOXnoo1,#0	; and on open box
+10$:	lda	curDrive
+	sta	FBOXddrv
+	lda	A2H
+	beq	11$
+	mvw	A2,FBOXdo+1	; set up any intro routine
+	lda	A3H
+	beq	11$
+	mvw	A3,FBOX2+1	; set up any clear intro routine
+11$:	jmp	FBOXdo
+	
+
+
+<span align="left">FBOXdo:	jsr	FBOXnada	;draw any intro type stuff
+	ldw	R0,#FBOXfbox	;open create/open/quit box
+	jsr	DoDlgBox
+FBOX2:	jsr	FBOXnada	;clear any intro type stuff
+	lda	sysDBData
+	bne 	11$
+	lda	FBOXddrv	;restore initial drive
+	jsr	SetDevice
+	jmp	EnterDeskTop	;quit click box
+11$:	cmp	#$0f
+	bne	12$
+	jmp	FBOXcrdo	;do create routine
+12$:	jmp	FBOXopdo	;do open routines
+
+
+
+<span align="left">FBOXopdo:	ldb	FBOXnoo2,#$06	; reset disk icon
+	cpb	curDrive,FBOXddrv
+	bne	10$
+	ldb	FBOXnoo2,#0	; clear out disk icon
+<span align="left">10$:	ldw	$885b,#$ff00
+<span align="left">55$:	jsr	FBOXmvnm
+	mvw	A4,R10	;permanent filename
+	mvw	A5,R5	;filename location
+	ldb	R7L,#APPL_DATA	;type of file
+	ldw	R0,#FBOXobox	;opening box
+	jsr	DoDlgBox
+	cbi	sysDBData,$00	;was any click hit?
+	beq	55$
+	cmp	#$02	;was cancel hit?
+	bne	22$
+21$:	jmp	FBOXdo
+22$:	cmp	#$06	;change disks?
+	bne	23$
+	ldw	$885b,#$ff00	;reclear selection
+	jsr	FBOXchgd
+	bne	21$	;a change disk error?
+	bra	55$
+23$:	cmp	#$05	;miscellaneous click boxes?
+	bne	FBOXopdo
+	ldy	#0
+	lda	(A5),y	;non-null filename
+	beq	21$
+	jsr	FBOXopen
+<span align="left">	ldb	sysDBData,#$ff	;denote an open and exit
+44$:	rts
+
+<span align="left">FBOXsele:	;This routine handles clicks in the filename box
+	lda	mouseData	;was button pressed?
+	bmi	94$
+	jsr	FBOXckch	;check all filenames for click
+	cmp	#$ff
+	beq	94$	;no filename was selected
+	clc
+	adc	$885b
+	sta	APITemp2	;save new filename index
+	lda	$885c
+	cmp	#$ff	;anything clicked before?
+	beq	93$	;yes, so exit!
+	sec
+	sbc	$885b	;find old screen index
+	tax
+	lda	ClkCht,x	;calculate old screen index
+	sta	R2L
+	clc
+	adc	#$0c
+	sta	R2H
+	jsr	InvertRectangle	;un-invert old choice
+93$:	mvb	APITemp2,$885c	;save new index
+94$:	rts
+
+
+FBOXckch:	;This routine finds which filename is clicked on
+	ldb	A6L,#$00	;set temporary index
+92$:	ldx	A6L
+	lda	ClkCht,x	;calculate filename box dimen.
+	sta	R2L	;top
+	clc
+	adc	#$0c
+	sta	R2H	;bottom
+	ldw	R3,#$0047	;now set left
+	ldw	R4,#$00c1	;  and right
+	jsr	IsMseInRegion
+	cmp	#$ff	;click was not on that filename
+	bne	93$
+	jsr	InvertRectangle	;if it was, invert the filename
+	lda	A6L	;here is your new index?
+	rts		;and exit
+93$:	inc	A6L
+	lda	A6L
+	cbi	A6L,#$05	;otherwise go back and check
+	bne	92$	;  the rest.
+	lda	#$ff
+	rts
+
+ClkCht:	.byte	$24,$32,$40,$4e,$5c,$6a
+	;chart for calculating the top and bottom scanlines
+
+<span align="left">FBOXobox:	.byte	$80 | $01
+	.byte	16	;getFiles
+	.byte	$06,$03	;XOffset, YOffset
+	.byte	11
+	.byte	$84,$09
+	.word	FBOXtxt4
+	.byte	12
+	.byte	$84,$13
+	.byte	A6
+	.byte	17	;Routine on Click
+	.word	FBOXsele	;routine to execute on otherPress
+	.byte	$05,$11,$16	;OPEN icon
+	.byte	$02,$11,$4c	;Cancel icon
+FBOXnoo1:	.byte	18	;drive icon
+	.byte	$11,$28
+	.word	FBOXdcon
+FBOXnoo2:	.byte	$06,$11,$3a	;DISK icon
+	.byte	0	;end of defintion
+FBOXdcon:
+	.word	FBOXdmag	;graphic location
+	.word	0	;leave this at 0
+	.byte	FBOXdwid	;width
+	.byte	FBOXdhit	;height
+	.word	FBOXswdv	;location of action routine
+FBOXdmag:
+<img src="00065.png" />	FBOXdwid	=picW
+	FBOXdhit	=picH
+
+
+<span align="left">FBOXopen:	ldw	A6,#$8300	;Set start of filename grid
+	ldx	$885c	;Find filename index
+	bne	12$	;If first filename, your done!
+	beq	13$
+12$:	avw	#$11,A6	;Otherwise go to next filename
+	dex
+	bne	12$	;Keep on to fname index 
+13$:	ldy 	#$00		;Now move filename 
+14$:	lda	(A6),y	;   onto valid position
+	sta	(A5),y
+	iny
+	cpy	#$11	;Up to max 17 characters
+	bne	14$
+	lda	#$00	;Then set EOL character as last
+	sta	(A5),y
+	rts
+
+
+<span align="left">FBOXcrdo:	ldb	FBOXnod2,#$06	; reset disk icon
+	cpb	curDrive,FBOXddrv
+	bne	10$
+	ldb	FBOXnod2,#0	; clear out disk icon
+<span align="left">10$:	jsr	FBOXmvnm
+<span align="left">	ldw	R0,#FBOXcbox	;now perform actual dialog box
+	ldw	A6,#FBOXdnam
+	jsr	DoDlgBox
+	cbi	sysDBData,#$02	;was cancel hit?
+	bne	15$
+14$:	jmp	FBOXdo	;back to start
+15$:	cmp	#$06	;change disks
+	bne	16$
+	jsr	FBOXchgd
+	bne	14$	;a change disk error?
+	jmp	FBOXcrdo
+16$:	cmp	#$f0	;if other than filename, repeat
+<span align="left">	beq	FBOXcrdo
+	ldy	#0
+	lda	(A5),y	;non-null filename
+	beq	14$
+	jsr	FBOXcrve
+	cpx	#0
+	bne	FBOXcrdo
+	ldb	sysDBData,#$00	;denote a create and exit
+	rts
+
+<span align="left">FBOXswdv:	jsr	FBOXswd2
+	cpx	#$00	;check for error!
+	beq	21$
+	jsr	FBOXswd2
+	ldb	sysDBData,#$02	;error detected, return abort!
+	jmp	RstrFrmDialog
+21$:	ldb	sysDBData,#$f0	;denoted Drive icon
+	jmp	RstrFrmDialog	;no error, jump back
+
+FBOXswd2:	ldy	curDrive
+	iny
+	cpy	#11
+	bne	11$
+	ldy	#8
+11$:	tya
+	pha
+<span align="left">	jsr	SetDevice
+	pla
+	cmp	curDrive
+	beq	12$
+	sta	curDrive
+	bra	FBOXswd2
+<span align="left">12$:	jsr	OpenDisk
+	cpx	#0
+	bne	FBOXswd2
+	rts
+
+<span align="left">FBOXchgd:
+10$:	ldw	R0,#FBOXcdbx	;handle swap disk box
+	jsr	DoDlgBox
+	jsr	OpenDisk	;open new disk
+	cpx	#0
+	bne	10$
+	rts
+
+FBOXcdbx:
+	.byte	$80 | $01
+	.byte	11	;add text
+	.byte	$0e,$12
+	.word	FBOXtxt7
+	.byte	$01,$0f,$42	;OK icon
+	.byte	0	;end of defintion
+
+<span align="left">FBOXmvnm:
+	ldx	#A6	;discover the current drives
+	jsr	GetPtrCurDkNm	;name. should this be a routine?
+	ldy	#$00
+17$:	lda	(A6),y	;copy disk name to buffer...
+	cmp	#$a0	;so that a 0 can be added
+	beq	18$	;and thus be readable by
+	sta	FBOXdnam,y	;the dialog box routines
+	iny		
+	cmp	#$a0	
+	beq	18$
+	cpy	#18
+	bne	17$
+18$:	lda	#0	;now add rol to end
+	sta	FBOXdnam,y
+	rts
+
+
+<span align="left">FBOXcrve:
+	jsr	GetDirHead	;get BAM into memory
+	cpx	#0
+	bne	99$	; exit on disk error
+	ldw	R5,#$8200	;point to BAM
+	jsr	CalcBlksFree	
+	lda	R4H
+	bne	11$
+	lda	R4L
+	cmp	#$14	;20 blocks minimum
+	bcs	11$
+	ldw	A6,#FBOXtxt9	;not enough blocks
+10$:	ldw	R0,#FBOXnbox
+	jsr	DoDlgBox	;whine and exit
+	ldx	#$ff
+99$:	rts
+11$:	ldb	$886e,#$ff	;check for file existance
+	mvw	A5,R6
+	jsr	FindFile
+	cpx	#$05	;this or that error?
+	beq	13$
+	cpx	#$00
+	bne	12$
+	ldw	A6,#FBOXtxt8
+	bra	10$
+12$:	ldw	A6,#FBOXtxtA	;other errors
+	bra	10$
+13$:	ldx	#$00
+	rts		;enough blocks
+
+FBOXnbox:
+	.byte	$80 | $01
+	.byte	12	;add text
+	.byte	$20,$1b
+	.byte	A6
+	.byte	$02,$0f,$40	;cancel icon
+	.byte	0	;end of defintion
+
+<span align="left">FBOXcbox:	.byte	$80 | $01
+	.byte	11	;add text
+	.byte	$16,$11
+	.word	FBOXtxt4
+	.byte	12
+	.byte	$43,$11
+	.byte	A6
+	.byte	11	;add text
+	.byte	$16,$22
+	.word	FBOXtxt5
+	.byte	13	;GetString
+	.byte	$16,$33	;XOffset.Yalso
+	.byte	A5	
+	.byte	18	;maximum # of chars to accept.
+	.byte	$02,$10,$47	;Cancel icon
+FBOXnod1:	.byte	18	;drive icon
+	.byte	$09,$47
+	.word	FBOXdcn2
+FBOXnod2:	.byte	$06,$02,$47	;DISK icon
+	.byte	0	;end of defintion
+FBOXdcn2:
+	.word	FBOXdmag	;graphic location
+	.word	0	;leave this at 0
+	.byte	FBOXdwid	;width, set below
+	.byte	FBOXdhit	;height, set below
+	.word	FBOXswdv	;location of action routine
+
+
+<span align="left">FBOXfbox:	.byte	$80 | $01
+	.byte	11	;add text
+	.byte	$16,$13
+	.word	FBOXtxt0
+	.byte	$05,$02,$32	;OPEN icon
+	.byte	18	;user icon
+	.byte	$02,$1c
+	.word	FBOXccon
+	.byte	18	;user icon
+	.byte	$02,$49
+	.word	FBOXqcon
+	.byte	11	;add text
+	.byte	$46,$26
+	.word	FBOXtxt1
+	.byte	11	;add text
+	.byte	$46,$3e
+	.word	FBOXtxt2
+	.byte	11	;add text
+	.byte	$46,$53
+	.word	FBOXtxt3
+	.byte	0	;end of defintion
+FBOXccon:
+	.word	FBOXcmag	;graphic location
+	.word	0	;leave this at 0
+	.byte	FBOXcwid	;width, set below
+	.byte	FBOXchit	;height, set below
+	.word	FBOXcrea	;location of action routine
+FBOXcmag:
+	FBOXcwid	=picW
+	FBOXchit	=picH
+FBOXqcon:
+	.word	FBOXqmag	;graphic location
+	.word	0	;leave this at 0
+	.byte	FBOXqwid	;width, set below
+	.byte	FBOXqhit	;height, set below
+	.word	FBOXquit	;location of action routine
+FBOXqmag:
+<img src="00066.png" />	FBOXqwid	=picW
+	FBOXqhit	=picH
+
+<span align="left">
+FBOXquit:	ldb	sysDBData,#$00	;clear response, exit
+	jmp	RstrFrmDialogue
+
+FBOXcrea:	ldb	sysDBData,#$0f	;create response, exit
+	jmp	RstrFrmDialogue
+
+FBOXnada:	rts
+
+<span align="left">FBOXtxt0:	.byte	$18,"Please select an option:",27,0
+FBOXtxt1:	.byte	$18,"new work file",27,0
+<span align="left">FBOXtxt2:	  .byte	$18,"existing file",27,0
+FBOXtxt3:	  .byte	$18,"to deskTop",27,0
+FBOXtxt4:  .byte	$18,"On Disk:",27,0
+FBOXtxt5:	  .byte	$18,"Please enter new filename:",27,0
+FBOXtxt6:  .byte	$18,"Enter new file name:",27,0		
+FBOXtxt7:  .byte	$18,"Insert new disk into disk drive.",27,0
+FBOXtxt8:  .byte	$18,"ERROR: File exists!",27,0
+FBOXtxt9:  .byte	$18,"ERROR: Disk full!",27,0
+FBOXtxtA:  .byte	$18,"ERROR: Cannot create!",27,0
+
+
+<span align="left">.ramsect
+FBOXdnam:	.block	20
+FBOXddrv:	.block	1
+
+</pre></body></html>

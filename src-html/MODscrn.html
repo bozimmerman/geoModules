@@ -1,0 +1,218 @@
+<!DOCTYPE html><html><head><title>Untitled</title></head><body><pre><span align="left">.noeqin
+.include	GEOSequates
+.glbl
+.eqin
+
+;****************************************
+;* MODscrn - geoProjects library (C) 1998 Bo Zimmerman
+<span align="left">;*
+;* Intro:
+;*	Will someday include a myriad of screen
+;*	control functions for very general use.
+;*
+;* Functions:
+;* ClrScrn	() - clears the whole screen
+;* OKBox	(.word	Pointer to ok string) *
+;* CNCLBox(.word	 Pointer to cancel string) *
+;* OKCANBox(.word Pointer to string) *
+;* YNBox (.word Pointer to Yes/No String) *
+;*
+;* Comments:
+;*	* = includes i_version
+;****************************************
+.psect
+
+
+<span align="left">;*******************************
+;* ClrScrn
+;*
+;* Inputs:
+;*	NONE
+;*	
+;* Outputs:
+;*	.a	?
+;*	.x	?
+;*******************************
+
+ClrScrn:	mvw	rightMargin,SCRNclr+7
+	ldw	R0,#SCRNclr
+	jmp	GraphicsString
+
+SCRNclr:	.byte	NEWPATTERN,2
+	.byte	MOVEPENTO
+	.word	0
+	.byte	0
+	.byte	RECTANGLETO
+	.word	319
+	.byte	199
+	.byte	0
+
+<span align="left">;*******************************
+;* OKCANBox
+;*
+;* Inputs:
+;*	A2	Pointer to ok/cancel string
+;*	
+;* Outputs:
+;*	.a	0
+;*	.x	0
+;*******************************
+
+OKCANBox:	
+	ldw	R0,#SCRNokc
+	jmp	DoDlgBox
+SCRNokc:	.byte	$80 | $01
+	.byte	12
+	.byte	$10,$1b
+	.byte	A2
+	.byte	$01,$01,$47	;OK icon
+	.byte	$02,$0f,$47	;CANCEL icon
+	.byte	0	;end of defintion
+
+
+<span align="left">;*******************************
+;* i_OKCANBox
+;*
+;* Inputs:
+;*	.word	Pointer to ok/cancel string
+;*	
+;* Outputs:
+;*	.a	0
+;*	.x	0
+;*******************************
+
+i_OKCANBox:
+	jsr	APIinit
+	jsr	OKCANBox
+	ldy	#2	; 1 words = 1 bytes
+	jmp	APIreturn
+
+
+<span align="left">;*******************************
+;* YNBox
+;*
+;* Inputs:
+;*	A2	Pointer to yes/no string
+;*	
+;* Outputs:
+;*	.a	0
+;*	.x	0
+;*******************************
+
+YNBox:	ldw	R0,#SCRNyn
+	jmp	DoDlgBox
+SCRNyn:	.byte	$80 | $01
+	.byte	12
+	.byte	$10,$1b
+	.byte	A2
+	.byte	$03,$01,$47	;Yes icon
+	.byte	$04,$0f,$47	;No icon
+	.byte	0	;end of defintion
+
+
+<span align="left">;*******************************
+;* i_YNBox
+;*
+;* Inputs:
+;*	.word	Pointer to yes/no string
+;*	
+;* Outputs:
+;*	.a	0
+;*	.x	0
+;*******************************
+
+i_YNBox:
+	jsr	APIinit
+	jsr	YNBox
+	ldy	#2	; 1 words = 1 bytes
+	jmp	APIreturn
+
+
+<span align="left">;*******************************
+;* OKBox
+;*
+;* Inputs:
+;*	A2	Pointer to ok string
+;*	
+;* Outputs:
+;*	.a	0
+;*	.x	0
+;*******************************
+
+OKBox:	ldw	R0,#SCRNok
+	jmp	DoDlgBox
+
+SCRNok:	.byte	$80 | $01
+	.byte	12
+	.byte	$10,$1b
+	.byte	A2
+	.byte	$01,$0f,$40
+	.byte	0
+
+<span align="left">;*******************************
+;* i_OKBox
+;*
+;* Inputs:
+;*	.word	Pointer to ok string
+;*	
+;* Outputs:
+;*	.a	0
+;*	.x	0
+;*******************************
+
+i_OKBox:
+	jsr	APIinit
+	jsr	OKBox
+	ldy	#2	; 1 words = 1 bytes
+	jmp	APIreturn
+
+
+
+
+
+
+<span align="left">;*******************************
+;* CNCLBox
+;*
+;* Inputs:
+;*	A2	Pointer to cancel string
+;*	
+;* Outputs:
+;*	.a	0
+;*	.x	0
+;*******************************
+
+CNCLBox:	ldw	R0,#SCRNcncl
+	jmp	DoDlgBox
+
+SCRNcncl:	.byte	$80 | $01
+	.byte	12
+	.byte	$10,$1b
+	.byte	A2
+	.byte	$02,$0f,$40
+	.byte	0
+
+<span align="left">;*******************************
+;* i_CNCLBox
+;*
+;* Inputs:
+;*	.word	Pointer to cancel string
+;*	
+;* Outputs:
+;*	.a	0
+;*	.x	0
+;*******************************
+
+i_CNCLBox:
+	jsr	APIinit
+	jsr	CNCLBox
+	ldy	#2	; 1 words = 1 bytes
+	jmp	APIreturn
+
+
+<span align="left">.ramsect
+
+
+
+
+</pre></body></html>

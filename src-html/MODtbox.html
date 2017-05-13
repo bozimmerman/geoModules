@@ -1,0 +1,299 @@
+<!DOCTYPE html><html><head><title>Untitled</title></head><body><pre><span align="left">.noeqin
+.if Pass1
+.include GEOSequates
+.endif
+.eqin
+
+;****************************************
+;* MODtbox - geoProjects library (C) 1998 Bo Zimmerman
+<span align="left">;*
+;* Intro:
+;* 	Implements a multi-line input box that
+;*	also allows character limit enforcement.
+;*
+;* Functions:
+;* OpenTBox	(.word pointer to text area
+;*		.byte max lines
+;*		.byte max chars
+;* 		R2-R4H box dimensions) *
+;* PrintTBox	(.word pointer to text area
+;*		.byte max lines
+;*		.byte max chars
+;* 		R2-R4H box dimensions) *
+;* TBoxClose () Closes the open text box
+;* TBoxResume () Resumes an open text box
+;*
+;*	* = includes i_Function call, and returns 
+;*		status in the .x register
+;*
+;* Comments:
+;* 
+;****************************************
+.psect
+
+<span align="left">;******************************
+;* i_OpenTBox
+;* Inputs:		R2-R4H	box dimensoins
+;*		.word	pointer to text area
+;*		.byte	max lines
+;*		.byte	max chars
+;*		
+;* Outputs:	
+;*		.x 	status
+;*		.a	0
+;******************************
+
+i_OpenTBox:
+	jsr	APIinit
+	jsr	OpenTBox
+	ldy	#4
+	jmp	APIreturn
+
+<span align="left">;******************************
+;* i_PrintTBox
+;* Inputs:		R2-R4H	box dimensoins
+;*		.word	pointer to text area
+;*		.byte	max lines
+;*		.byte	max chars
+;*		
+;* Outputs:	
+;*		.x 	status
+;*		.a	0
+;******************************
+
+i_PrintTBox:
+	jsr	APIinit
+	jsr	PrintTBox
+	ldy	#4
+	jmp	APIreturn
+
+<span align="left">
+PrintTBox:	mvw	keyVector,TBOXVec
+	ldw	keyVector,#0
+	jsr	TBOXinit
+	ldb	TBOXflag,#1
+	ldy	#0
+	lda	(A2),y
+	bne	10$
+10$:	jsr	TBOXlp
+	mvw	TBOXVec,keyVector
+	rts
+
+OpenTBox:	mvw	keyVector,TBOXVec
+	ldw	keyVector,#TBOXgo
+	jsr	TBOXinit
+	ldb	TBOXflag,#1
+	ldy	#0
+	lda	(A2),y
+	beq	10$
+	jsr	TBOXlp
+10$:	jmp	TBOXpmpt
+
+TBoxClose:	mvw	TBOXVec,keyVector
+	sei
+	jsr	PromptOff
+	cli
+	lda	#$7f
+	and	alphaFlag
+	sta	alphaFlag
+	rts
+
+TBoxResume:	mvw	keyVector,TBOXVec
+	ldw	keyVector,#TBOXgo
+	jmp	TBOXpmpt
+
+
+
+<span align="left">TBOXgo:	mvw	TBOXBuf,A2
+	lda	keyData
+
+TBOXlp:	cmp	#$0d
+	bne	11$
+	lda	TBOXflag
+	bne	10$
+	jmp	TBOXClose
+10$:	jmp	TBOXlp3
+11$:	cmp	#8	; is DEL?
+	bne	13$
+12$:	jmp	TBOXdel
+13$	cmp	#$1d	; IS DEL???
+	beq	12$
+	cmp	#$20	; is < a space
+	bge	15$
+14$:	jmp	TBOXends
+15$:	cmp	#$7f
+	bge	14$
+
+20$:	ldy	TBOXdex	; save char
+	cpy	TBOXmaxC
+	bge	14$	; enforce max chars
+	sta	(A2),y
+
+	lda	(A2),y
+	jsr	TBOXisln	; will it wrap?
+	blt	21$
+
+	lda	(A2),y
+	jsr	TBOXnxln	; yes, so wrap!
+	bne	TBOXlp2
+
+21$:	mvb	TBOXxy+2,R1H	; now display char
+	mvw	TBOXxy,R11
+	ldy	TBOXdex
+	lda	(A2),y
+	jsr	Putchar
+	mvw	R11,TBOXxy	; save new x
+	inc	TBOXdex
+
+TBOXlp2:	lda	TBOXflag
+	bne	TBOXlp3
+	jsr	TBOXpmpt
+
+TBOXlp3:	jsr	TBOXnxtc	; and get next char
+	cmp	#0
+	beq	TBOXends
+	jmp	TBOXlp
+
+TBOXends:	lda	#0	; its the END (for now)
+	ldy	TBOXdex
+	sta	(A2),y
+	sta	TBOXflag
+	rts
+
+<span align="left">TBOXisln:	ldx	currentMode
+	jsr	GetRealSize
+	mvw	TBOXxy,APITemp1
+	tya
+	add	APITemp1
+	sta	APITemp1
+	lda	#0
+	add	APITemp1+1
+	sta	APITemp1+1
+10$:	cpw	APITemp1,TBOXWinX+2
+	rts
+
+<span align="left">TBOXgetX:	lda	TBOXLine
+	asl	a
+	tax
+	rts
+	
+TBOXnxtc:	lda	TBOXflag
+	bne	10$
+	jmp	GetNextChar
+10$:	ldy	TBOXflag
+	inc	TBOXflag
+	lda	(A2),y
+	rts
+
+<span align="left">TBOXnxln:	cpb	TBOXLine,TBOXmaxL
+	bge	10$
+	mvb	TBOXxy+2,APITemp1
+	avb	#$0a,APITemp1
+	cpb	APITemp1,TBOXWinY+1
+	blt	20$
+10$:	ldx	#$ff
+	rts
+20$:	jsr	TBOXgetX	; save x
+	lda	TBOXxy
+	sta	TBOXRtLx,x
+	lda	TBOXxy+1
+	sta	TBOXRtLx+1,x
+	ldx	TBOXLine	; and y
+	lda	TBOXxy+2
+	sta	TBOXRtLy,x
+
+	inc	TBOXLine
+
+	lda	#67	; a random char
+	ldx	currentMode
+	jsr	GetRealSize
+	txa
+	clc
+	adc	TBOXxy+2	; for getting the .y
+	;adc	#2
+	sta	TBOXxy+2
+	mvw	TBOXWinX,TBOXxy	; you KNOW the x
+	ldx	#0
+	rts
+
+<span align="left">TBOXpmpt:	mvw	TBOXxy,stringX	; move cursor
+	lda	TBOXxy+2
+	sub	#7
+	sta	stringY
+	jmp	PromptOn
+
+
+
+<span align="left">TBOXinit:	mvw	R3,TBOXWinX
+	mvw	R4,TBOXWinX+2
+	mvw	R2,TBOXWinY
+	mvw	A2,TBOXBuf
+	mvb	A3L,TBOXmaxL
+	mvb	A3H,TBOXmaxC
+	jsr	UseSystemFont
+	mvw	TBOXWinX,TBOXxy
+	mvb	TBOXWinY,TBOXxy+2
+	ldb	TBOXdex,#0
+	ldb	TBOXLine,#0
+	lda	#9
+	jsr	InitTextPrompt
+	mvw	TBOXBuf,A2
+	rts
+
+<span align="left">TBOXdel:	lda	TBOXdex
+	bne	10$
+	jmp	TBOXlp2
+
+10$:	dec	TBOXdex
+	cpw	TBOXxy,TBOXWinX
+	bgt	20$
+
+	lda	TBOXLine
+	bne	11$
+	inc	TBOXdex
+	jmp	TBOXlp2
+11$:	dec	TBOXLine
+	jsr	TBOXgetX
+	lda	TBOXRtLx,x
+	sta	TBOXxy
+	lda	TBOXRtLx+1,x
+	sta	TBOXxy+1
+	ldx	TBOXLine
+	lda	TBOXRtLy,x
+	sta	TBOXxy+2
+
+20$:	mvb	TBOXxy+2,R1H
+	mvw	TBOXxy,R11
+	ldy	TBOXdex
+	lda	(A2),y
+	ldx	currentMode
+	jsr	GetRealSize
+	sty	$8807
+	sty	APITemp1
+	ldb	APITemp1+1,#0
+	sbw	APITemp1,TBOXxy
+	lda	#8
+	jsr	PutChar
+	jmp	TBOXlp2
+
+<span align="left">.ramsect
+
+TBOXWinX:	.block 6
+TBOXWinY:	.block 2
+TBOXxy:	.block 3
+
+TBOXflag:	.block 1
+
+TBOXBuf:	.block 2
+TBOXdex:	.block 1
+
+TBOXRtLx:	.block 32
+TBOXRtLy:	.block 32
+TBOXRtDx:	.block 32
+TBOXLine:	.block 1
+TBOXmaxL:	.block 1	; max lines
+TBOXmaxC:	.block 1	; max chars
+
+TBOXVec:	.block 2
+; that's all folks!
+</pre></body></html>
