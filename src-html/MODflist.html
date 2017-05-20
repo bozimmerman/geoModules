@@ -1,11 +1,12 @@
-<!DOCTYPE html><html><head><title>Untitled</title></head><body><pre><span align="left">.noeqin
+<!DOCTYPE html><html><head><title>Untitled</title></head><body><pre>
+.noeqin
 .include	GEOSequates
 .glbl
 .eqin
 
 ;****************************************
 ;* MODflist - geoProjects library (C) 1998 Bo Zimmerman
-<span align="left">;*
+;*
 ;* Intro:
 ;*	Retreives list of filenames (all), includes
 ;*	all manner of list traversal/display funcs.
@@ -47,7 +48,7 @@
 ;****************************************
 .psect
 
-<span align="left">;*******************************
+;*******************************
 ;* FileList
 ;*
 ;* Inputs:	
@@ -62,7 +63,7 @@
 FileList:	ldw	A4,#0
 	jmp	File2List
 
-<span align="left">;*******************************
+;*******************************
 ;* i_FileList
 ;*
 ;* Inputs:	
@@ -81,7 +82,7 @@ i_FileList:
 	jmp	APIreturn
 
 
-<span align="left">;*******************************
+;*******************************
 ;* File2List
 ;*
 ;* Inputs:	
@@ -102,7 +103,7 @@ File2List:	ldb	A5L,#1
 10$:	dec	A5H
 	lda	A5H
 	rts		; disk error!!
-<span align="left">11$:	svw	#3,A2
+11$:	svw	#3,A2
 	jsr	Get1stDirEntry
 12$:	txa
 	bne	10$	; check for error (and eof?)
@@ -140,7 +141,7 @@ File2List:	ldb	A5L,#1
 	lda	A5H
 	rts	
 
-<span align="left">;*******************************
+;*******************************
 ;* i_File2List
 ;*
 ;* Inputs:	
@@ -161,7 +162,7 @@ i_File2List:
 	jmp	APIreturn
 
 
-<span align="left">;*******************************
+;*******************************
 ;* CopyFnam
 ;*
 ;* Inputs:	
@@ -188,7 +189,7 @@ CopyFnam:
 12$:	tax	
 	rts
 
-<span align="left">;*******************************
+;*******************************
 ;* i_CopyFnam
 ;*
 ;* Inputs:	
@@ -207,7 +208,7 @@ i_CopyFnam:
 	jmp	APIreturn
 
 
-<span align="left">;*******************************
+;*******************************
 ;* PrntList
 ;*
 ;* Inputs:	
@@ -244,7 +245,7 @@ PrntList:	jsr	UseSystemFont		; save old margin first
 	ldb	A4L,#0	; init the highlight flag
 
 
-<span align="left">;*******************************
+;*******************************
 ;* PrntList
 ;*
 ;* Continued
@@ -297,7 +298,7 @@ PrntList:	jsr	UseSystemFont		; save old margin first
 	rts			
 
 
-<span align="left">;*******************************
+;*******************************
 ;* i_PrntList
 ;*
 ;* Inputs:	
@@ -318,7 +319,7 @@ i_PrntList:
 	ldy	#3	; 1 word ptrs + 1 byte = 3 bytes
 	jmp	APIreturn
 
-<span align="left">;*******************************
+;*******************************
 ;* DownList
 ;*
 ;* Inputs:	
@@ -349,7 +350,7 @@ DownList:
 	rts
 14$:	ldy	#0	; start the search loop
 	lda	A2L	; found. so update ptr, exit
-<span align="left">	sta	(A3),y
+	sta	(A3),y
 	iny
 	lda	A2H
 	sta	(A3),y
@@ -357,7 +358,7 @@ DownList:
 	rts	
 
 
-<span align="left">;*******************************
+;*******************************
 ;* i_DownList
 ;*
 ;* Inputs:	
@@ -371,12 +372,12 @@ DownList:
 ;*******************************
 
 i_DownList:
-<span align="left">	jsr	APIinit
+	jsr	APIinit
 	jsr	DownList
 	ldy	#5	; 2 word ptrs + 1 byte = 5 bytes
 	jmp	APIreturn
 
-<span align="left">;*******************************
+;*******************************
 ;* UpList
 ;*
 ;* Inputs:	
@@ -410,7 +411,7 @@ UpList:
 11$:	ldx	#0
 12$:	ldy	#0	; start the search loop
 	lda	A2L
-<span align="left">	sta	(A4),y
+	sta	(A4),y
 	iny
 	lda	A2H
 	sta	(A4),y
@@ -422,7 +423,7 @@ UpList:
 	ldx	#1	; no, so abort
 	bne	12$
 
-<span align="left">;*******************************
+;*******************************
 ;* i_UpList
 ;*
 ;* Inputs:	
@@ -442,7 +443,7 @@ i_UpList:
 	ldy	#7	; 3 word ptrs + 1 byte = 7 bytes
 	jmp	APIreturn
 
-<span align="left">;*******************************
+;*******************************
 ;* ClkList
 ;*
 ;* Inputs:	
@@ -481,7 +482,7 @@ ClkList:	ldb	A5L,#0	; which one flag
 	bra	12$	; move down and check next
 	rts
 
-<span align="left">;*******************************
+;*******************************
 ;* PikList
 ;*
 ;* Inputs:	A2L	Which to affect
@@ -515,7 +516,7 @@ PikList:	ldb	A5L,#0	; which one flag
 	beq	11$	; report success!
 	rts
 
-<span align="left">;*******************************
+;*******************************
 ;* i_PikList
 ;*
 ;* Inputs:	.byte	Which to affect
@@ -529,12 +530,12 @@ PikList:	ldb	A5L,#0	; which one flag
 ;*	.x	0=ok, 1=not done
 ;*******************************
 i_PikList:
-<span align="left">	jsr	APIinit
+	jsr	APIinit
 	jsr	PikList
 	ldy	#1	; 1 byte = 1 byte
 	jmp	APIreturn
 
-<span align="left">FLSTdecA:	dec	A2L
+FLSTdecA:	dec	A2L
 	cbi	A2L,#$ff
 	bne	10$
 	dec	A2H
@@ -559,4 +560,5 @@ FLSTok:	lda	A4L
 	inc	A5H
 12$:	clc
 	rts
+
 </pre></body></html>

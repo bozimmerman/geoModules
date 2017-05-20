@@ -1,10 +1,11 @@
-<!DOCTYPE html><html><head><title>Untitled</title></head><body><pre><span align="left">.noeqin
+<!DOCTYPE html><html><head><title>Untitled</title></head><body><pre>
+.noeqin
 .include	GEOSequates
 .glbl
 .eqin
 ;****************************************
 ;* MODvPrg - geoProjects library (C) 1998 Bo Zimmerman
-<span align="left">;*
+;*
 ;* Intro:
 ;*	This module provides minimal support to the
 ;*	creation of VLIR applications.  It must be 
@@ -23,7 +24,7 @@
 
 .psect
 
-<span align="left">;*******************************
+;*******************************
 ;* InitVPrg
 ;*
 ;* Inputs:	
@@ -66,7 +67,7 @@ InitVPrg:	jsr	OpenDisk
 	ldx	#0
 	rts
 
-<span align="left">;*******************************
+;*******************************
 ;* i_InitVPrg
 ;*
 ;* Inputs:	
@@ -83,7 +84,7 @@ i_InitVPrg:
 	jmp	APIreturn
 
 
-<span align="left">;*******************************
+;*******************************
 ;* LdMod
 ;*
 ;* Inputs:	
@@ -128,7 +129,7 @@ VPRGdev:	cmp	curDrive	; change drives if necessary
 	jsr	SetDevice
 10$:	jmp	OpenDisk
 
-<span align="left">;*******************************
+;*******************************
 ;* i_LdMod
 ;*
 ;* Inputs:	
@@ -143,7 +144,7 @@ i_LdMod:
 	ldy	#1	; 1 byte = 1 byte
 	jmp	APIreturn
 
-<span align="left">;*******************************
+;*******************************
 ;* VJump
 ;*
 ;* Inputs:	
@@ -174,7 +175,7 @@ VJump:	lda	A2L
 	pla		; pull the olde return address
 VPRGjmpt:	jmp	VPRGbase
 
-<span align="left">VPRGok:	ldx	#A3L	; now get this disks name
+VPRGok:	ldx	#A3L	; now get this disks name
 	jsr	GetPtrCurDkNm
 	ldy	#0	; now see if disk is ok...
 11$:	lda	(A3),y
@@ -206,7 +207,7 @@ VPRGjmpt:	jmp	VPRGbase
 	mvw	APITemp2,A2
 	rts
 
-<span align="left">.ramsect
+.ramsect
 VPRGtabl:	.block	130
 VPRGcurr:	.block	2
 VPRGdriv:	.block	1
@@ -214,4 +215,5 @@ VPRGtns:	.block	1; track and sector of vlir block
 VPRGaNam:	.block	20	; application name storage
 VPRGdNam:	.block	20; application disk name
 VPRGcNam:	.block	20; application class name
-VPRGbase:</pre></body></html>
+VPRGbase:
+</pre></body></html>

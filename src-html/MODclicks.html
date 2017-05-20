@@ -1,11 +1,12 @@
-<!DOCTYPE html><html><head><title>Untitled</title></head><body><pre><span align="left">.noeqin
+<!DOCTYPE html><html><head><title>Untitled</title></head><body><pre>
+.noeqin
 .include	GEOSequates
 .glbl
 .eqin
 
 ;****************************************
 ;* MODclicks - geoProjects library (C) 1998 Bo Zimmerman
-<span align="left">;*
+;*
 ;* Intro:
 ;*	Remembers dimensions of 20 click areas.
 ;*	Includes funcs to handle and detect clicks.
@@ -34,7 +35,7 @@
 ;****************************************
 .psect
 
-<span align="left">;*******************************
+;*******************************
 ;* SetClick
 ;*
 ;* Inputs:	
@@ -67,7 +68,7 @@ SetClick:	lda	A6L
 	tax
 	rts
 
-<span align="left">;*******************************
+;*******************************
 ;* i_SetClick
 ;*
 ;* Inputs:	
@@ -90,7 +91,7 @@ i_SetClick:
 	jmp	APIreturn
 
 
-<span align="left">;*******************************
+;*******************************
 ;* WSetClick
 ;*
 ;* Inputs:	
@@ -114,7 +115,7 @@ WSetClick:
 	mvw	R4,A4
 	jmp	SetClick
 
-<span align="left">;*******************************
+;*******************************
 ;* i_WSetClick
 ;*
 ;* Inputs:	
@@ -137,7 +138,7 @@ i_WSetClick:
 	jmp	APIreturn
 
 
-<span align="left">;*******************************
+;*******************************
 ;* ChkClick
 ;*
 ;* Inputs:	
@@ -168,7 +169,7 @@ ChkClick:
 	inx
 	rts	
 
-<span align="left">;*******************************
+;*******************************
 ;* i_ChkClick
 ;*
 ;* Inputs:	
@@ -186,7 +187,7 @@ i_ChkClick:
 	jmp	APIreturn
 
 
-<span align="left">;*******************************
+;*******************************
 ;* DoClick
 ;*
 ;* Inputs:	
@@ -226,7 +227,7 @@ DoClick:	lda	A2L
 99$:
 CLIKdont:	rts
 
-<span align="left">;*******************************
+;*******************************
 ;* DoAllClicks
 ;*
 ;* Inputs:	
@@ -245,7 +246,7 @@ DoAllClicks:
 	bne	10$
 	rts
 
-<span align="left">CLIKset:	sta	A6L
+CLIKset:	sta	A6L
 	ldw	A7,#CLIKbuf
 10$:	dec	A6L
 	beq	11$
@@ -254,7 +255,8 @@ DoAllClicks:
 11$:	lda	#0
 	rts
 
-<span align="left">.ramsect
+.ramsect
 
 CLIKbuf:
-	.block	168	; 20 (20*8)+8 click settings</pre></body></html>
+	.block	168	; 20 (20*8)+8 click settings
+</pre></body></html>

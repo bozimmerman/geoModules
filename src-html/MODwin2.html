@@ -1,11 +1,12 @@
-<!DOCTYPE html><html><head><title>Untitled</title></head><body><pre><span align="left">.noeqin
+<!DOCTYPE html><html><head><title>Untitled</title></head><body><pre>
+.noeqin
 .include	GEOSequates
 .glbl
 .eqin
 
 ;****************************************
 ;* MODwin2 - geoProjects library (C) 1998 Bo Zimmerman
-<span align="left">;*
+;*
 ;* Intro:
 ;*	Handles creation of two movable/resizable
 ;*	windows.  Creates new RecoverVector, 
@@ -49,7 +50,7 @@
 ;****************************************
 .psect
 
-<span align="left">;*******************************
+;*******************************
 ;* Win1Mv
 ;*
 ;* Inputs:	
@@ -74,7 +75,7 @@ Win1Mv:	mvw	A2,WIN1Top
 	tax
 	rts
 
-<span align="left">;*******************************
+;*******************************
 ;* i_Win1Mv
 ;*
 ;* Inputs:	
@@ -96,7 +97,7 @@ i_Win1Mv:
 	jmp	APIreturn
 
 
-<span align="left">;*******************************
+;*******************************
 ;* Win2Mv
 ;*
 ;* Inputs:	
@@ -121,7 +122,7 @@ Win2Mv:	mvw	A2,WIN2Top
 	tax
 	rts
 
-<span align="left">;*******************************
+;*******************************
 ;* i_Win2Mv
 ;*
 ;* Inputs:	
@@ -143,7 +144,7 @@ i_Win2Mv:
 	jmp	APIreturn
 
 
-<span align="left">;*******************************
+;*******************************
 ;* Win1Init
 ;*
 ;* Inputs:	
@@ -164,7 +165,7 @@ Win1Init:	mvw	A2,WIN1Titl
 	tax
 	rts
 
-<span align="left">;*******************************
+;*******************************
 ;* i_Win1Init
 ;*
 ;* Inputs:	
@@ -184,7 +185,7 @@ i_Win1Init:
 	jmp	APIreturn
 
 
-<span align="left">;*******************************
+;*******************************
 ;* Win2Init
 ;*
 ;* Inputs:	
@@ -205,7 +206,7 @@ Win2Init:	mvw	A2,WIN2Titl
 	tax
 	rts
 
-<span align="left">;*******************************
+;*******************************
 ;* i_Win2Init
 ;*
 ;* Inputs:	
@@ -225,7 +226,7 @@ i_Win2Init:
 	jmp	APIreturn
 
 
-<span align="left">;*******************************
+;*******************************
 ;* WindInit
 ;*
 ;* Inputs:	
@@ -269,7 +270,7 @@ WindInit:	mvw	rightMargin,WIN2Rigt
 	tax
 	rts
 
-<span align="left">;*******************************
+;*******************************
 ;* i_WindInit
 ;*
 ;* Inputs:	
@@ -289,7 +290,7 @@ i_WindInit:
 	ldy	#6	; 2 word ptrs + 2 bytes = 6 bytes
 	jmp	APIreturn
 
-<span align="left">;*******************************
+;*******************************
 ;* WinAct
 ;*
 ;* Inputs:	
@@ -312,7 +313,7 @@ WinAct:	dec	A2L
 	inx
 	rts
 
-<span align="left">;*******************************
+;*******************************
 ;* i_WinAct
 ;*
 ;* Inputs:	
@@ -329,7 +330,7 @@ i_WinAct:
 	ldy	#1	; 1 byte = 1 byte
 	jmp	APIreturn
 
-<span align="left">;*******************************
+;*******************************
 ;* IsOverlap
 ;*
 ;* Inputs:	NONE -- will examine window1 and window2
@@ -354,7 +355,7 @@ IsOverlap:	cpb	WIN2Top,WIN1Bot
 	lda	#$ff	; there IS overlap
 	rts		
 
-<span align="left">;*******************************
+;*******************************
 ;* DrawWin2
 ;*
 ;* Inputs:	
@@ -366,7 +367,7 @@ IsOverlap:	cpb	WIN2Top,WIN1Bot
 ;*******************************
 
 DrawWin2:	jsr	RedyWin2	; draw the simple version
-<span align="left">	mvb	WIN2Bot,APITemp1
+	mvb	WIN2Bot,APITemp1
 	jsr	WIN2Otln	; draw the simple version first
 	lda	WIN2moto	; should I draw complex also?
 	beq	10$
@@ -379,7 +380,7 @@ DrawWin2:	jsr	RedyWin2	; draw the simple version
 	jsr	WIN2ClBx	; draw the	 close box
 WIN2Cplx:	jmp	RedyWin2	; jmp to user routine	
 
-<span align="left">;*******************************
+;*******************************
 ;* DrawWin1
 ;*
 ;* Inputs:	
@@ -391,7 +392,7 @@ WIN2Cplx:	jmp	RedyWin2	; jmp to user routine
 ;*******************************
 
 DrawWin1:	jsr	RedyWin1	; draw the simple version
-<span align="left">	mvb	WIN1Bot,APITemp1
+	mvb	WIN1Bot,APITemp1
 	jsr	WIN2Otln	; draw the simple version first
 	lda	WIN2moto	; should I draw complex also?
 	beq	10$
@@ -404,7 +405,7 @@ DrawWin1:	jsr	RedyWin1	; draw the simple version
 	jsr	WIN2ClBx	; draw the	 close box
 WIN1Cplx:	jmp	RedyWin1	; jump to user routine
 
-<span align="left">;*******************************
+;*******************************
 ;* RedyWin1, RedyWin2
 ;* RedyWinA, RedyWinI
 ;* DrawWinA, DrawWinI
@@ -469,10 +470,10 @@ WIN2act2:	mvw	WIN2Top,WINATop
 
 WIN2RdyA:	mvw	WINATop,R2
 	mvw	WINALeft,R3
-<span align="left">	mvw	WINARight,R4
+	mvw	WINARight,R4
 	rts
 
-<span align="left">;*******************************
+;*******************************
 ;* GetStrWidth
 ;*
 ;* Inputs:	R0 - string to inspect
@@ -504,7 +505,7 @@ GetStrWidth:
 	bra	10$	; and go for another char
 12$:	rts	
 
-<span align="left">WIN2Otln:	lda	#0
+WIN2Otln:	lda	#0
 	jsr	SetPattern
 	jsr	Rectangle
 	lda	#255
@@ -520,7 +521,7 @@ GetStrWidth:
 	rts
 
 
-<span align="left">WIN2TbTx:	mvb	R2L,R1H	; write the title bar
+WIN2TbTx:	mvb	R2L,R1H	; write the title bar
 	avb	#3,R1H
 	mvw	R3,R11
 	avw	#2,R11
@@ -541,7 +542,7 @@ GetStrWidth:
 
 
 
-<span align="left">WIN2TbLn:	mvb	R2L,R2H
+WIN2TbLn:	mvb	R2L,R2H
 	avb	#14,R2H
 	ldb	APITemp1,#3
 11$:	avb	#2,R2L	; fill in titlebar lines
@@ -554,7 +555,7 @@ GetStrWidth:
 
 
 
-<span align="left">WIN2Rcvr:	jsr	ImprintRectangle
+WIN2Rcvr:	jsr	ImprintRectangle
 	lda	menuNumber	; returning from menu?
 	bne	10$
 	lda	WIN2Dbox	; no, so do the dbox trick
@@ -566,7 +567,7 @@ GetStrWidth:
 	ldb	dispBufferOn,#ST_WR_FORE
 	jmp	DrawWinA
 
-<span align="left">WIN2ClBx:	mvw	R4,R3	; right into left
+WIN2ClBx:	mvw	R4,R3	; right into left
 	mvb	R2L,R2H	; top into bottom
 	avb	#12,R2H
 	avb	#2,R2L
@@ -584,7 +585,7 @@ GetStrWidth:
 	jsr	Rectangle
 	rts	
 
-<span align="left">WIN2Evnt:	jsr	WIN2Nada
+WIN2Evnt:	jsr	WIN2Nada
 	lda	WIN2moto
 	bne	10$
 	rts
@@ -601,7 +602,7 @@ GetStrWidth:
 	ldb	dispBufferOn,#(ST_WR_FORE | ST_WR_BACK)
 12$:	rts
 
-<span align="left">WINAResz:
+WINAResz:
 	mvw	mouseXPos,WIN2CMsX	   ; save x and y positions
 	mvb	mouseYPos,WIN2CMsY
 	jsr	RedyWinA
@@ -638,7 +639,7 @@ WIN201:	cpw	WIN2CMsX,WIN2SMsX	; check x position movement
 	rts		; nothing at all done. ugh
 14$:	jmp	WIN2Vrfy
 
-<span align="left">WINAMove:
+WINAMove:
 	mvw	mouseXPos,WIN2CMsX	   ; save the mouse positions
 	mvb	mouseYPos,WIN2CMsY
 	jsr	RedyWinA	; get the coords on our window
@@ -684,7 +685,7 @@ WIN202:	cpw	WIN2CMsX,WIN2SMsX
 14$:	jmp	WIN2Vrfy
 
 
-<span align="left">WIN2Rcov:	lda	APITemp1
+WIN2Rcov:	lda	APITemp1
 	bne	10$
 	jmp	RecoverRectangle
 10$:	rts
@@ -714,7 +715,7 @@ WIN2Vrfy:	mvw	R3,APITemp1
 15$:	jmp	DrawWinA
 
 
-<span align="left">ClikWIN2:	lda	WIN2CKTP
+ClikWIN2:	lda	WIN2CKTP
 	beq	99$
 	rts
 99$:	inc	WIN2CKTP
@@ -777,7 +778,7 @@ WIN2CLK:	jsr	WIN2Nada
 WIN2Nada:	ldb	WIN2CKTP,#0
 	rts
 
-<span align="left">WIN2Eras:	ldb	dispBufferOn,#(ST_WR_FORE)
+WIN2Eras:	ldb	dispBufferOn,#(ST_WR_FORE)
 	lda	#2
 	jsr	SetPattern	; erase the background
 	jsr	RedyWinA
@@ -785,7 +786,7 @@ WIN2Nada:	ldb	WIN2CKTP,#0
 	ldb	dispBufferOn,#(ST_WR_FORE | ST_WR_BACK)
 	rts
 
-<span align="left">WIN2Swap:	lda	#2	; first lose inactive background
+WIN2Swap:	lda	#2	; first lose inactive background
 	jsr	SetPattern
 	ldb	dispBufferOn,#ST_WR_BACK
 	jsr	RedyWinI
@@ -802,13 +803,13 @@ WIN2Nada:	ldb	WIN2CKTP,#0
 	jmp	ClikWIN2	; retry event after activating
 
 
-<span align="left">WIN2Clos:
+WIN2Clos:
 	lda	ActiveWN	; 3 bytes
 	bne	10$	; 2 bytes
 	jmp	WIN2Nada	; 3 bytes + 6
 10$:	jmp	WIN2Nada	; 3 bytes + 9
 
-<span align="left">.ramsect
+.ramsect
 
 WIN2CKTP:	.block	1
 
@@ -836,4 +837,5 @@ WINATop:	.block	1
 WINABot:	.block	1
 WINALeft:	.block	2
 WINARight:	.block	2
-WIN2Dbox:	.block	1</pre></body></html>
+WIN2Dbox:	.block	1
+</pre></body></html>

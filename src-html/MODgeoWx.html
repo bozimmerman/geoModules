@@ -1,5 +1,6 @@
-<!DOCTYPE html><html><head><title>Untitled</title></head><body><pre><span align="left">.noeqin
-<span align="left">.include	GEOSequates
+<!DOCTYPE html><html><head><title>Untitled</title></head><body><pre>
+.noeqin
+.include	GEOSequates
 GEOWLBuf = $8100	; fileHeader is our Links buffer
 GEOWLTnS = $7ffe	; Links TNS ($8873)
 GEOWPTnS = $7ffc	; Page TNS ($886f)
@@ -11,9 +12,9 @@ GEOWCBuf = $8300
 .glbl
 .eqin
 
-<span align="left">;****************************************
+;****************************************
 ;* MODgeoWx - geoProjects library (C) 1998 Bo Zimmerman
-<span align="left">;*
+;*
 ;* Intro:
 ;* 	This modules supports the creation of
 ;*	geoWrite files, and includes support
@@ -46,7 +47,7 @@ GEOWCBuf = $8300
 ;****************************************
 .psect
 
-<span align="left">;******************************
+;******************************
 ;* CreatWF	Create a new geoWrite file
 ;* Inputs:
 ;*		A2	pointer to a file name
@@ -110,7 +111,7 @@ CreatWF:	jsr	OpenDisk
 	ldb	curRecord,#64	; current picture record, thanks.
 	jmp	GEOWfstP	; set up the first page
 
-<span align="left">;******************************
+;******************************
 ;* i_CreatWF	Create a new c= geowrite file
 ;* Inputs:
 ;*		.word	pointer to a file name
@@ -126,7 +127,7 @@ i_CreatWF:
 	ldy	#2	; two byte parameter list
 	jmp	APIreturn
 
-<span align="left">;******************************
+;******************************
 ;* PutWByte	Output a byte to a geowrite file
 ;* Inputs:
 ;*		.a	byte to write out
@@ -150,7 +151,7 @@ PutWByte:
 	ldx	#0	; return no error
 	rts
 
-<span align="left">;******************************
+;******************************
 ;* i_PutWByte	Output a byte to a geowrite file
 ;* Inputs:
 ;*		.byte	byte to write out
@@ -169,7 +170,7 @@ i_PutWByte:
 	cpx	#0
 	jmp	APIreturn
 
-<span align="left">;******************************
+;******************************
 ;* PutWString	Output a string to a geowrite file
 ;* Inputs:
 ;*		A2	pointer to $ to write out
@@ -199,7 +200,7 @@ PutWString:
 	beq	PutWString	; loop back up to keep going...
 13$:	rts
 
-<span align="left">;******************************
+;******************************
 ;* i_PutWString	Output a string to a geowrite file
 ;* Inputs:
 ;*		.word	pointer to $ to write out
@@ -216,7 +217,7 @@ i_PutWString:
 	cpx	#0
 	jmp	APIreturn
 
-<span align="left">;******************************
+;******************************
 ;* PutWBuf	Output a buffer to a geowrite file
 ;* Inputs:
 ;*		A2	pointer to buffer
@@ -239,7 +240,7 @@ PutWBuf:	ldy	#0
 	bne	PutWBuf
 10$:	rts
 
-<span align="left">;******************************
+;******************************
 ;* i_PutWBuf	Output a buffer to geowrite file
 ;* Inputs:
 ;*		.word	pointer to buffer
@@ -258,7 +259,7 @@ i_PutWBuf:
 	cpx	#0
 	jmp	APIreturn
 
-<span align="left">;******************************
+;******************************
 ;* PutWMem	Output a block of memory to a geowrite file
 ;* Inputs:
 ;*		A2	pointer to start location
@@ -281,7 +282,7 @@ PutWMem:
 	bne	PutWMem
 10$:	rts
 
-<span align="left">;******************************
+;******************************
 ;* i_PutWMem	Output a picture to geowrite file
 ;* Inputs:
 ;*		.word	pointer to a photo scrap
@@ -300,7 +301,7 @@ i_PutWMem:
 	cpx	#0
 	jmp	APIreturn
 
-<span align="left">;******************************
+;******************************
 ;* PutWPic	Output a picture to a geowrite file
 ;* Inputs:
 ;*		A2	pointer to photo scrap
@@ -362,7 +363,7 @@ PutWPic:	lda	#$10	; put gfx escape
 	ldx	#0	; and return with happiness
 	rts
 
-<span align="left">;******************************
+;******************************
 ;* i_PutWPic	Output a picture to geowrite file
 ;* Inputs:
 ;*		.word	pointer to a photo scrap
@@ -380,7 +381,7 @@ i_PutWPic:
 	cpx	#0
 	jmp	APIreturn
 
-<span align="left">;******************************
+;******************************
 ;* CloseWF	Close a file opened with CreatWF
 ;* Inputs:	A2	file name to close
 ;*		curDrive	drive file created on
@@ -398,7 +399,7 @@ CloseWF:	lda	#0
 	iny
 	bne	11$
 	jsr	PutDirHead	; write 18,0 -- experiment with no
-<span align="left">	cpx	#0
+	cpx	#0
 	bne	10$
 	mvw	A2,R6
 	ldb	$886e,#$ff
@@ -429,7 +430,7 @@ GEOWClo2:
 	cpx	#0
 11$:	rts
 
-<span align="left">;******************************
+;******************************
 ;* i_CloseWF	Close a file opened with CreatWF
 ;* Inputs:	.word	file name to close
 ;*		curDrive	drive file created on
@@ -445,7 +446,7 @@ i_CloseWF:
 	cpx	#0
 	jmp	APIreturn
 
-<span align="left">;******************************
+;******************************
 ;* GWPage	Close this page and move to next
 ;* Inputs:
 ;*		curDrive	drive file created on
@@ -463,7 +464,7 @@ GWPage:
 	jsr	GEOWnewP	; start the next one...
 11$:	rts
 
-<span align="left">GEOWnewP:	inw	GEOWLptr	; increment links for next page
+GEOWnewP:	inw	GEOWLptr	; increment links for next page
 	inw	GEOWLptr	; twice
 	jsr	GEOWaloc	; get our first page sector
 	beq	10$
@@ -491,7 +492,7 @@ GEOWfstP:	mvw	APITemp2,GEOWPTnS ; and save it
 	ldx	#0
 	rts		; and we're done!
 
-<span align="left">GEOWnxtB:	jsr	GEOWaloc	; save this allocated block
+GEOWnxtB:	jsr	GEOWaloc	; save this allocated block
 	beq	12$
 10$:	cpx	#0
 11$:	rts		; return an error!
@@ -528,7 +529,7 @@ GEOWaloc:	ldy	#0
 	cpx	#0	; reestablish the .x factor
 11$:	rts
 
-<span align="left">GEOWputP:	ldy	#0	; now start on the picture itself
+GEOWputP:	ldy	#0	; now start on the picture itself
 	lda	(A2),y	; put the width
 	jsr	GEOWppB
 	ldy	#1
@@ -560,10 +561,10 @@ GEOWppB:	sta	R10L	; save the byte for a sec
 12$:	rts		; return an error!
 13$:	mvw	APITemøˇˇˇÄpÄpˇp
 ˇQΩü„ˇè√ˇè◊ˇè«ˇèCyÜ
-}ÑˇÇ˝Å«ôÉÁ¡ÉÁ¡É„ãÅ¡áÅÅGÅˇˇˇÉˇgeoWAR      V1.0Lysle E. Shields    Play the game of world domination !<span align="left">GEOWHead:
-<span align="left">	.word	$0000
+}ÑˇÇ˝Å«ôÉÁ¡ÉÁ¡É„ãÅ¡áÅÅGÅˇˇˇÉˇgeoWAR      V1.0Lysle E. Shields    Play the game of world domination !GEOWHead:
+	.word	$0000
 	.byte	$03,$15,$bf
-<span align="left">	.byte	$ff,$ff,$ff,$80,$00,$01,$8f,$ff
+	.byte	$ff,$ff,$ff,$80,$00,$01,$8f,$ff
 	.byte	$01,$88,$01,$01,$8b,$ff,$c1,$8a
 	.byte	$00,$41,$8a,$ff,$f1,$8a,$80,$11
 	.byte	$8a,$8e,$11,$8a,$80,$11,$8a,$bf
@@ -572,7 +573,7 @@ GEOWppB:	sta	R10L	; save the byte for a sec
 	.byte	$82,$bf,$91,$83,$80,$11,$80,$80
 	.byte	$11,$80,$ff,$f1,$ff,$ff,$ff
 	.byte	$83
-<span align="left">	.byte	APPL_DATA
+	.byte	APPL_DATA
 	.byte	VLIR
 	.word	0
 	.word	$00f0
@@ -584,13 +585,14 @@ GEOWppB:	sta	R10L	; save the byte for a sec
 	.byte	$02,$20,$12,$0e,$20,$b7,$c1,$cc
 	.block	144-117
 
-<span align="left">GEOWPtop:	.byte	$00,$21	; number of bytes (temp link) = 33
+GEOWPtop:	.byte	$00,$21	; number of bytes (temp link) = 33
 	.byte	$11,$00,$00,$df,$01,$38,$00,$50
 	.byte	$00,$b0,$00,$df,$01,$df,$01,$df
 	.byte	$01,$df,$01,$df,$01,$00,$00,$30
 	.byte	$00,$00,$00,$17,$09,$00,$00
 
 
-<span align="left">.ramsect
+.ramsect
 BAM3HEAD:	.block	256
+
 </pre></body></html>

@@ -1,4 +1,5 @@
-<!DOCTYPE html><html><head><title>Untitled</title></head><body><pre><span align="left">R0	== $0002
+<!DOCTYPE html><html><head><title>Untitled</title></head><body><pre>
+R0	== $0002
 R0H	== $03
 R0L	== $02
 R1	== $0004
@@ -66,7 +67,7 @@ A5L	== $76
 A5H	== $77
 A6	== $78
 A6L	== $78
-<span align="left">A6H	== $79
+A6H	== $79
 A7	== $7a
 A7L	== $7a
 A7H	== $7b
@@ -77,7 +78,7 @@ A9	== $7e
 A9L	== $7e
 A9H	== $7f
 
-<span align="left">BACK_SCR_BASE	== $6000
+BACK_SCR_BASE	== $6000
 APP_VAR	== $7F40
 SPRITE_PICS	== $8A00
 COLOR_MATRIX	== $8C00
@@ -145,7 +146,7 @@ mouseTop	== $84b8
 mouseBottom	== $84b9
 mouseLeft	== $84ba
 mouseRight	== $84bc
-<span align="left">stringX	== $84be
+stringX	== $84be
 stringY	== $84c0
 mousePicData	== $84c1
 maxMouseSpeed	== $8501
@@ -176,7 +177,7 @@ DrCCurDkNm	== $88dc
 DrDCurDkNm	== $88ee
 dir2Head	== $8900
 
-<span align="left">InitForPrint	== $7900
+InitForPrint	== $7900
 StartPrint	== $7903
 PrintBuffer	== $7906
 StopPrint	== $7909
@@ -245,7 +246,7 @@ Sleep	== $c199
 ClearMouseMode	== $c19c
 i_Rectangle	== $c19f
 
-<span align="left">i_FrameRectangle	== $c1a2
+i_FrameRectangle	== $c1a2
 i_RecoverRectangle	== $c1a5
 i_GraphicsString	== $c1a8
 i_BitmapUp	== $c1ab
@@ -276,7 +277,7 @@ BldGDirEntry	== $c1f3
 GetFreeDirBlk	== $c1f6
 
 
-<span align="left">WriteFile	== $c1f9
+WriteFile	== $c1f9
 BlkAlloc	== $c1fc
 ReadFile	== $c1ff
 SmallPutChar	== $c202
@@ -329,7 +330,7 @@ ReadRecord	== $c28c
 WriteRecord	== $c28f
 
 
-<span align="left">SetNextFree	== $c292
+SetNextFree	== $c292
 UpdateRecordFile	== $c295
 GetPtrCurDkNm	== $c298
 PromptOn	== $c29b
@@ -362,7 +363,7 @@ SetMouse	== $fe89	;address of SetMouse entry (128 only!)
 
 
 
-<span align="left">NOT_GEOS	= 0
+NOT_GEOS	= 0
 BASIC	= 1
 ASSEMBLY	= 2
 DATA	= 3
@@ -381,7 +382,7 @@ INPUT_128	= 15
 SEQUENTIAL	= 0
 VLIR	= 1
 
-<span align="left">HORIZONTAL	= %00000000
+HORIZONTAL	= %00000000
 VERTICAL	= %10000000
 CONSTRAINED	= %01000000
 UN_CONSTRAINED	= %00000000
@@ -411,7 +412,7 @@ SET_RIGHTJUST	= %00000000
 SET_SUPRESS	= %01000000
 SET_NOSUPRESS	= %00000000
 
-<span align="left">.macro ldb dest,value		;ldb DEST with VALUE
+.macro ldb dest,value		;ldb DEST with VALUE
  lda #value
  sta dest
 .endm
@@ -478,8 +479,8 @@ noInc:
  adc dest+1
  sta dest+1
 .endif
-<span align="left">.endm
-<span align="left">
+.endm
+
 .macro sub source		;sub SOURCE
  sec
  sbc source
@@ -547,7 +548,7 @@ done:
 .macro cwi source,immed	;cwi SOURCe to IMMED
  lda source+1
  cmp #](immed)
-<span align="left"> bne done
+ bne done
  lda source+0
  cmp #[(immed)
 done:
@@ -562,14 +563,14 @@ done:
  lda source+1
  pha
  lda source+0
-<span align="left"> pha
+ pha
 .endm
 
 .macro plb dest		;plb DEST
  pla
  sta dest
 .endm
-<span align="left">
+
 .macro plw dest		;plw DEST
  pla
  sta dest+0
@@ -614,12 +615,13 @@ done:
 .endm
 
 .macro dew source
-<span align="left">  dec source+0
-<span align="left">  lda source+0
+  dec source+0
+  lda source+0
   cmp #255
   bne done
   dec source+1
 done:
 .endm
+
 
 </pre></body></html>

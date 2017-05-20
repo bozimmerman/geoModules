@@ -1,11 +1,12 @@
-<!DOCTYPE html><html><head><title>Untitled</title></head><body><pre><span align="left">.noeqin
-<span align="left">.include	GEOSequates
+<!DOCTYPE html><html><head><title>Untitled</title></head><body><pre>
+.noeqin
+.include	GEOSequates
 .glbl
 .eqin
 
-<span align="left">;****************************************
+;****************************************
 ;* MODsecIO - geoProjects library (C) 1998 Bo Zimmerman
-<span align="left">;*
+;*
 ;* Intro:
 ;* 	This modules supports reading and writing
 ;* 	to a single disks sectors in clumps.
@@ -34,7 +35,7 @@
 ;****************************************
 .psect
 
-<span align="left">;******************************
+;******************************
 ;* SecIOinit	InitialiZe a drive for sector IO
 ;* Inputs:
 ;*		.a	drive to set
@@ -75,7 +76,7 @@ SCIO1581:	.byte	80,39,81,$ff,$ff
 SCIOCMD:	.byte	255,255,255,255,255,$ff,$ff
 
 
-<span align="left">;******************************
+;******************************
 ;* i_SecIOinit	InitialiZe a drive for sector IO
 ;* Inputs:
 ;*		.byte	drive to set
@@ -90,7 +91,7 @@ i_SecIOinit:
 	ldy	#1	; 1 byte
 	jmp	APIreturn
 
-<span align="left">;******************************
+;******************************
 ;* PutWTrk	Writes in an entire track, if possible
 ;* Inputs:
 ;*		TRACK	track to write, sectors will be 0
@@ -120,7 +121,7 @@ PutWTrk:
 11$:	ldx	#0
 12$:	rts
 
-<span align="left">;******************************
+;******************************
 ;* i_PutWTrk	Writes in an entire track, if possible
 ;* Inputs:
 ;*		TRACK	track to write, sectors will be 0
@@ -132,12 +133,12 @@ PutWTrk:
 ;******************************
 
 i_PutWTrk:
-<span align="left">	jsr	APIinit
+	jsr	APIinit
 	jsr	PutWTrk
 	ldy	#2	; 1 word = 2 bytes
 	jmp	APIreturn
 
-<span align="left">;******************************
+;******************************
 ;* ReadWTrk	Reads in an entire track, if possible
 ;* Inputs:
 ;*		TRACK	track to read, sectors will be 0
@@ -172,7 +173,7 @@ ReadWTrk:
 12$:	ldx	#0
 13$:	rts
 
-<span align="left">;******************************
+;******************************
 ;* i_ReadWTrk	Reads in an entire track, if possible
 ;* Inputs:
 ;*		TRACK	track to read, sectors will be 0
@@ -185,12 +186,12 @@ ReadWTrk:
 ;******************************
 
 i_ReadWTrk:
-<span align="left">	jsr	APIinit
+	jsr	APIinit
 	jsr	ReadWTrk
 	ldy	#4	; 2 words = 4 bytes
 	jmp	APIreturn
 
-<span align="left">;******************************
+;******************************
 ;* ReadSecs:	Reads in as many sectors as possible
 ;* Inputs:
 ;*		TRACK	track to read
@@ -234,13 +235,13 @@ ReadSecs:
 	ldx	#0
 13$:	rts
 
-<span align="left">;******************************
+;******************************
 ;* i_ReadSecs	Reads as many sectors as possible
 ;* Inputs:
 ;*		TRACK	track to read, sectors will be 0
 ;*		SECTOR	sector to start from
 ;*		.word	pointer to destination buffer
-<span align="left">;*		.word	pointer to end of dest buffer
+;*		.word	pointer to end of dest buffer
 ;*			drive must be module initialiZed
 ;* Outputs:	
 ;*		.x 	status (0=got some, $ff=the end, err)
@@ -253,7 +254,7 @@ i_ReadSecs:
 	ldy	#4	; 2 words = 4 bytes
 	jmp	APIreturn
 
-<span align="left">;******************************
+;******************************
 ;* WriteSecs:	Writes all sectors given
 ;* Inputs:
 ;*		TRACK	track to start writing from
@@ -297,7 +298,7 @@ WriteSecs:
 	ldx	#0
 13$:	rts
 
-<span align="left">;******************************
+;******************************
 ;* i_WriteSecs	Writes all sectors given
 ;* Inputs:
 ;*		TRACK	track to read, sectors will be 0
@@ -315,7 +316,7 @@ i_WriteSecs:
 	ldy	#4	; 2 words = 4 bytes
 	jmp	APIreturn
 
-<span align="left">SCIOcmdi:
+SCIOcmdi:
 	cpb	SCIOdrv,curDrive
 	beq	10$
 	lda	SCIOdrv	; set the device for read/write
@@ -333,12 +334,12 @@ i_WriteSecs:
 	clc
 	adc	#1
 	sta	SCIOCMD
-<span align="left">	sta	SCIOCMD+2
+	sta	SCIOCMD+2
 	inw	SCIOdptr	; to point to sectors only
 99$:	rts
 	
 
-<span align="left">SCIOsetT:	cpb	SCIOdrv,curDrive
+SCIOsetT:	cpb	SCIOdrv,curDrive
 	beq	10$
 	lda	SCIOdrv	; set the device for read/write
 	jsr	SetDevice
@@ -364,7 +365,7 @@ SCIOresT:	mvw	SCIOdptr,A4
 	rts
 
 
-<span align="left">.ramsect
+.ramsect
 
 TRACK:	.block	1	; current read or write track
 SECTOR:	.block	1	; current read or write sector
@@ -372,4 +373,5 @@ TRKeaDSK:	.block	1	; current tracks per disk
 SECeaTRK:	.block	1	; current sectors per current track
 SCIOdptr:	.block	2	; sectors per track buffer pointer
 SCIOdrv:	.block	1	; flag for whether drive inited
-SCIObufp:	.block	2	; last buffer byte read, written</pre></body></html>
+SCIObufp:	.block	2	; last buffer byte read, written
+</pre></body></html>

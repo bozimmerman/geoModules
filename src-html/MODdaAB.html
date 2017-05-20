@@ -1,11 +1,12 @@
-<!DOCTYPE html><html><head><title>Untitled</title></head><body><pre><span align="left">.noeqin
+<!DOCTYPE html><html><head><title>Untitled</title></head><body><pre>
+.noeqin
 .include	GEOSequates
 .glbl
 .eqin
 
 ;****************************************
 ;* MODdaAB - geoProjects library (C) 1998 Bo Zimmerman
-<span align="left">;*
+;*
 ;* Intro:
 ;*	Handles initialization of geos menu, 
 ;*	execution of DA's off that menu, and
@@ -24,7 +25,7 @@
 ;****************************************
 .psect
 
-<span align="left">;*******************************
+;*******************************
 ;* InitDaAb
 ;*
 ;* Inputs:
@@ -72,7 +73,7 @@ InitDaAb:	mvb	curDrive,DAABdrv
 16$:	jsr	DAABinit
 	rts
 
-<span align="left">;*******************************
+;*******************************
 ;* i_InitDaAb
 ;*
 ;* Inputs:
@@ -93,7 +94,7 @@ i_InitDaAb:
 	jmp	APIreturn
 
 
-<span align="left">DAABinit:
+DAABinit:
 	ldw	R6,#DAABaces
 	ldb	R7L,#DESK_ACC
 	ldb	R7H,#7
@@ -119,7 +120,7 @@ i_InitDaAb:
 	sta	DAABMenu+1
 10$:	rts
 
-<span align="left">DAABabout:
+DAABabout:
 	jsr	GotoFirstMenu	; 0,1,2
 	ldb	dispBufferOn,#ST_WR_FORE
 	ldw	R0,#DAABbox
@@ -132,7 +133,7 @@ DAABrunDA:
 	pla
 	jmp	DAABrun
 
-<span align="left">DAABrun:	sta	R6L
+DAABrun:	sta	R6L
 	asl	a
 	asl	a
 	asl	a
@@ -185,7 +186,7 @@ DAABrun2:	jsr	DAABnada
 	jsr	RecoverRectangle
 DAABrun3:	jmp	DAABnada
 
-<span align="left">DAABnada:	rts
+DAABnada:	rts
 DAABbox:
 	.byte	$80 | $01
 	.byte	11
@@ -204,7 +205,7 @@ DAABbox:
 	.byte	0
 DAABtxt2:	.byte	" ",0
 
-<span align="left">DAABMenu:
+DAABMenu:
 	.byte	15
 	.byte	15+1+(1*14)
 	.word	0
@@ -242,9 +243,10 @@ DAABtxt2:	.byte	" ",0
 DAABtext:	.byte	"prog info",0
 
 
-<span align="left">.ramsect
+.ramsect
 
 DAABdrv:	.block	1
 DAABsprt:	.block	7*65
 DAABaces:	.block	148
+
 </pre></body></html>

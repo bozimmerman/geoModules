@@ -1,11 +1,12 @@
-<!DOCTYPE html><html><head><title>Untitled</title></head><body><pre><span align="left">.noeqin
-<span align="left">.include	GEOSequates
+<!DOCTYPE html><html><head><title>Untitled</title></head><body><pre>
+.noeqin
+.include	GEOSequates
 .glbl
 .eqin
 
-<span align="left">;****************************************
+;****************************************
 ;* MODseqR - geoProjects library (C) 1998 Bo Zimmerman
-<span align="left">;*
+;*
 ;* Intro:
 ;* 	This modules supports C= seq/prg file
 ;* 	reading.  A read buffer will be maintained
@@ -28,7 +29,7 @@
 ;****************************************
 .psect
 
-<span align="left">;******************************
+;******************************
 ;* OpenSF	Open a file for reading
 ;* Inputs:
 ;*		A2	name of file to open
@@ -57,7 +58,7 @@ OpenSF:	mvw	A2,R6	; put filename into position
 11$:	rts
 
 
-<span align="left">;******************************
+;******************************
 ;* i_OpenSF	Open a file for reading
 ;* Inputs:
 ;*		.word	name of file to open
@@ -74,7 +75,7 @@ i_OpenSF:
 	ldy	#3	; 1 word and 2 bytes = 4 bytes
 	jmp	APIreturn
 
-<span align="left">;******************************
+;******************************
 ;* GetSByte	Read a byte from an open file
 ;* Inputs:
 ;* Outputs:	
@@ -97,7 +98,7 @@ GetSByte:
 	cpx	#0
 	rts
 
-<span align="left">;******************************
+;******************************
 ;* GetSString	Inputs a string from a sequential file
 ;* Inputs:
 ;*		A2	pointer to $ buffer
@@ -126,7 +127,7 @@ SIORSS2:	jsr	GetSByte
 11$:	jmp	SIORSS2	; go write the next byte
 12$:	rts
 
-<span align="left">;******************************
+;******************************
 ;* i_GetSString	Input a string from a sequential file
 ;* Inputs:
 ;*		.word	pointer to $ buffer
@@ -141,7 +142,7 @@ i_GetSString:
 	ldy	#2
 	jmp	APIreturn
 
-<span align="left">;******************************
+;******************************
 ;* GetSBuf	Input a buffer from a seq file
 ;* Inputs:
 ;*		A2	pointer to buffer
@@ -160,7 +161,7 @@ GetSBuf:	adw	A2,A3	; convert to GetSMem
 	dec	A3H
 10$:	jmp	GetSMem
 
-<span align="left">;******************************
+;******************************
 ;* i_GetSBuf	Input a buffer from a seq file
 ;* Inputs:
 ;*		.word	pointer to buffer
@@ -178,7 +179,7 @@ i_GetSBuf:
 	ldy	#4
 	jmp	APIreturn
 
-<span align="left">;******************************
+;******************************
 ;* GetSMem	Input a block of memory from a seq file
 ;* Inputs:
 ;*		A2	pointer to start location
@@ -201,14 +202,14 @@ GetSMem:
 	cpx	#0
 	bne	13$
 	cpw	A2,A3	; now see if end is reached
-<span align="left">	beq	13$	; if yes, then exit
+	beq	13$	; if yes, then exit
 	inc	A2L	; otherwise increment A2
 	bne	12$	; no low byte overflow?
 	inc	A2H	; low byte overflow means inc A2H
 12$:	bra	10$	; and write the next byte
 13$:	rts
 
-<span align="left">;******************************
+;******************************
 ;* i_GetSMem	Input a block of memory from a seq file
 ;* Inputs:
 ;*		.word	pointer to start location
@@ -226,7 +227,7 @@ i_GetSMem:
 	ldy	#4
 	jmp	APIreturn
 
-<span align="left">SIORrDrv:
+SIORrDrv:
 	cpb	curDrive,SIORdrv
 	beq	99$
 	lda	SIORdrv
@@ -246,14 +247,15 @@ SIORNxt:	lda	SIORBuf+2	; get track byte
 SIORths:	ldb	SIORBuf,#$02	; default first byte to $02 ALWAYS
 	ldb	SIORBuf+1,#$ff	; otherwise, default end byte
 	lda	SIORBuf+2	; is there a NEXT track
-<span align="left">	bne	10$
+	bne	10$
 	mvb	SIORBuf+3,SIORBuf+1
 10$:	ldx	#0	; if not, move end byte into place
 	rts
 
 
-<span align="left">.ramsect
+.ramsect
 
 SIORBuf:	.block	258 * 1	; want to support multiple open files
 SIORdrv:	.block	1	; drive type reading from
-SIORTnS:	.block	2	; track and sectors</pre></body></html>
+SIORTnS:	.block	2	; track and sectors
+</pre></body></html>

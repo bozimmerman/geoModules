@@ -1,10 +1,11 @@
-<!DOCTYPE html><html><head><title>Untitled</title></head><body><pre><span align="left">.noeqin
+<!DOCTYPE html><html><head><title>Untitled</title></head><body><pre>
+.noeqin
 .include	GEOSequates
 .glbl
 .eqin
 ;****************************************
 ;* MODfbox - geoProjects library (C) 1998 Bo Zimmerman
-<span align="left">;*
+;*
 ;* Intro:
 ;* This is a fantastic module that handles the entire
 ;* opening screens for a typical application, from
@@ -24,7 +25,7 @@
 ;****************************************
 
 
-<span align="left">;*******************************
+;*******************************
 ;* FileBox
 ;*
 ;* Inputs:	
@@ -58,7 +59,7 @@ FileBox:	lda	numDrives
 	
 
 
-<span align="left">FBOXdo:	jsr	FBOXnada	;draw any intro type stuff
+FBOXdo:	jsr	FBOXnada	;draw any intro type stuff
 	ldw	R0,#FBOXfbox	;open create/open/quit box
 	jsr	DoDlgBox
 FBOX2:	jsr	FBOXnada	;clear any intro type stuff
@@ -74,12 +75,12 @@ FBOX2:	jsr	FBOXnada	;clear any intro type stuff
 
 
 
-<span align="left">FBOXopdo:	ldb	FBOXnoo2,#$06	; reset disk icon
+FBOXopdo:	ldb	FBOXnoo2,#$06	; reset disk icon
 	cpb	curDrive,FBOXddrv
 	bne	10$
 	ldb	FBOXnoo2,#0	; clear out disk icon
-<span align="left">10$:	ldw	$885b,#$ff00
-<span align="left">55$:	jsr	FBOXmvnm
+10$:	ldw	$885b,#$ff00
+55$:	jsr	FBOXmvnm
 	mvw	A4,R10	;permanent filename
 	mvw	A5,R5	;filename location
 	ldb	R7L,#APPL_DATA	;type of file
@@ -102,10 +103,10 @@ FBOX2:	jsr	FBOXnada	;clear any intro type stuff
 	lda	(A5),y	;non-null filename
 	beq	21$
 	jsr	FBOXopen
-<span align="left">	ldb	sysDBData,#$ff	;denote an open and exit
+	ldb	sysDBData,#$ff	;denote an open and exit
 44$:	rts
 
-<span align="left">FBOXsele:	;This routine handles clicks in the filename box
+FBOXsele:	;This routine handles clicks in the filename box
 	lda	mouseData	;was button pressed?
 	bmi	94$
 	jsr	FBOXckch	;check all filenames for click
@@ -156,7 +157,7 @@ FBOXckch:	;This routine finds which filename is clicked on
 ClkCht:	.byte	$24,$32,$40,$4e,$5c,$6a
 	;chart for calculating the top and bottom scanlines
 
-<span align="left">FBOXobox:	.byte	$80 | $01
+FBOXobox:	.byte	$80 | $01
 	.byte	16	;getFiles
 	.byte	$06,$03	;XOffset, YOffset
 	.byte	11
@@ -185,7 +186,7 @@ FBOXdmag:
 	FBOXdhit	=picH
 
 
-<span align="left">FBOXopen:	ldw	A6,#$8300	;Set start of filename grid
+FBOXopen:	ldw	A6,#$8300	;Set start of filename grid
 	ldx	$885c	;Find filename index
 	bne	12$	;If first filename, your done!
 	beq	13$
@@ -203,12 +204,12 @@ FBOXdmag:
 	rts
 
 
-<span align="left">FBOXcrdo:	ldb	FBOXnod2,#$06	; reset disk icon
+FBOXcrdo:	ldb	FBOXnod2,#$06	; reset disk icon
 	cpb	curDrive,FBOXddrv
 	bne	10$
 	ldb	FBOXnod2,#0	; clear out disk icon
-<span align="left">10$:	jsr	FBOXmvnm
-<span align="left">	ldw	R0,#FBOXcbox	;now perform actual dialog box
+10$:	jsr	FBOXmvnm
+	ldw	R0,#FBOXcbox	;now perform actual dialog box
 	ldw	A6,#FBOXdnam
 	jsr	DoDlgBox
 	cbi	sysDBData,#$02	;was cancel hit?
@@ -220,7 +221,7 @@ FBOXdmag:
 	bne	14$	;a change disk error?
 	jmp	FBOXcrdo
 16$:	cmp	#$f0	;if other than filename, repeat
-<span align="left">	beq	FBOXcrdo
+	beq	FBOXcrdo
 	ldy	#0
 	lda	(A5),y	;non-null filename
 	beq	14$
@@ -230,7 +231,7 @@ FBOXdmag:
 	ldb	sysDBData,#$00	;denote a create and exit
 	rts
 
-<span align="left">FBOXswdv:	jsr	FBOXswd2
+FBOXswdv:	jsr	FBOXswd2
 	cpx	#$00	;check for error!
 	beq	21$
 	jsr	FBOXswd2
@@ -246,18 +247,18 @@ FBOXswd2:	ldy	curDrive
 	ldy	#8
 11$:	tya
 	pha
-<span align="left">	jsr	SetDevice
+	jsr	SetDevice
 	pla
 	cmp	curDrive
 	beq	12$
 	sta	curDrive
 	bra	FBOXswd2
-<span align="left">12$:	jsr	OpenDisk
+12$:	jsr	OpenDisk
 	cpx	#0
 	bne	FBOXswd2
 	rts
 
-<span align="left">FBOXchgd:
+FBOXchgd:
 10$:	ldw	R0,#FBOXcdbx	;handle swap disk box
 	jsr	DoDlgBox
 	jsr	OpenDisk	;open new disk
@@ -273,7 +274,7 @@ FBOXcdbx:
 	.byte	$01,$0f,$42	;OK icon
 	.byte	0	;end of defintion
 
-<span align="left">FBOXmvnm:
+FBOXmvnm:
 	ldx	#A6	;discover the current drives
 	jsr	GetPtrCurDkNm	;name. should this be a routine?
 	ldy	#$00
@@ -291,7 +292,7 @@ FBOXcdbx:
 	rts
 
 
-<span align="left">FBOXcrve:
+FBOXcrve:
 	jsr	GetDirHead	;get BAM into memory
 	cpx	#0
 	bne	99$	; exit on disk error
@@ -329,7 +330,7 @@ FBOXnbox:
 	.byte	$02,$0f,$40	;cancel icon
 	.byte	0	;end of defintion
 
-<span align="left">FBOXcbox:	.byte	$80 | $01
+FBOXcbox:	.byte	$80 | $01
 	.byte	11	;add text
 	.byte	$16,$11
 	.word	FBOXtxt4
@@ -357,7 +358,7 @@ FBOXdcn2:
 	.word	FBOXswdv	;location of action routine
 
 
-<span align="left">FBOXfbox:	.byte	$80 | $01
+FBOXfbox:	.byte	$80 | $01
 	.byte	11	;add text
 	.byte	$16,$13
 	.word	FBOXtxt0
@@ -397,7 +398,7 @@ FBOXqmag:
 <img src="00066.png" />	FBOXqwid	=picW
 	FBOXqhit	=picH
 
-<span align="left">
+
 FBOXquit:	ldb	sysDBData,#$00	;clear response, exit
 	jmp	RstrFrmDialogue
 
@@ -406,9 +407,9 @@ FBOXcrea:	ldb	sysDBData,#$0f	;create response, exit
 
 FBOXnada:	rts
 
-<span align="left">FBOXtxt0:	.byte	$18,"Please select an option:",27,0
+FBOXtxt0:	.byte	$18,"Please select an option:",27,0
 FBOXtxt1:	.byte	$18,"new work file",27,0
-<span align="left">FBOXtxt2:	  .byte	$18,"existing file",27,0
+FBOXtxt2:	  .byte	$18,"existing file",27,0
 FBOXtxt3:	  .byte	$18,"to deskTop",27,0
 FBOXtxt4:  .byte	$18,"On Disk:",27,0
 FBOXtxt5:	  .byte	$18,"Please enter new filename:",27,0
@@ -419,8 +420,9 @@ FBOXtxt9:  .byte	$18,"ERROR: Disk full!",27,0
 FBOXtxtA:  .byte	$18,"ERROR: Cannot create!",27,0
 
 
-<span align="left">.ramsect
+.ramsect
 FBOXdnam:	.block	20
 FBOXddrv:	.block	1
+
 
 </pre></body></html>

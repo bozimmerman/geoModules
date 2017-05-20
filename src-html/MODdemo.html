@@ -1,4 +1,5 @@
-<!DOCTYPE html><html><head><title>Untitled</title></head><body><pre><span align="left">.noeqin
+<!DOCTYPE html><html><head><title>Untitled</title></head><body><pre>
+.noeqin
 .noglbl
 .include	GEOSequates
 .glbl
@@ -6,7 +7,7 @@
 
 ;****************************************
 ;* MODdemo - geoProjects library (C) 1998 Bo Zimmerman
-<span align="left">;*
+;*
 ;* Intro:
 ;* 	Helps limit the number of times a
 ;*	program is executed.
@@ -26,7 +27,7 @@
 ;****************************************
 .psect
 
-<span align="left">;******************************
+;******************************
 ;* SetDemo 	initialiZe set boot disk
 ;* Inputs:
 ;*		A2	Name of executable
@@ -91,7 +92,7 @@ SetDemo:	jsr	DEMINITS
 	ldx	#$00
 	rts
 
-<span align="left">;******************************
+;******************************
 ;* i_SetDemo 	initialiZe set boot disk
 ;* Inputs:
 ;*		.word	Name of executable
@@ -103,13 +104,13 @@ SetDemo:	jsr	DEMINITS
 ;*		.a	0
 ;******************************
 
-<span align="left">i_SetDemo:
+i_SetDemo:
 	jsr	APIinit
 	jsr	SetDemo
 	ldy	#4	; 2 word parameter list
 	jmp	APIreturn
 
-<span align="left">DEMINITS:
+DEMINITS:
 	mvb	A3L,DEMAPPC
 	mvb	A3H,DEMNUM
 	ldb	DEMBADF,#0
@@ -128,7 +129,7 @@ SetDemo:	jsr	DEMINITS
 	jsr	CopyString
 	rts
 
-<span align="left">DEMUPH:	ldx	#$90
+DEMUPH:	ldx	#$90
 	lda	DEMNUMH
 	sta	$8100,x
 	mvw	$8300,R1
@@ -176,7 +177,7 @@ DEMOPF:	mvw	A2,R6
 
 
 
-<span align="left">DEMOKEE:	.byte	"Demo executions left: ",0,0,".",27,0
+DEMOKEE:	.byte	"Demo executions left: ",0,0,".",27,0
 
 DEMNOW:	.byte	$18,"Cannot write to disk!",27,0
 DEMDONE:	.byte	"Order from www.loadstar.com!",27,0
@@ -224,7 +225,7 @@ DEMOKBOX:
 	.byte	$01,$0f,$40
 	.byte	0
 
-<span align="left">.ramsect
+.ramsect
 
 DEMAPPC:	.block	1
 DEMBAML:	.block	2
@@ -232,4 +233,5 @@ DEMDRIVE:	.block	1
 DEMNUM:	.block	1
 DEMNUMH:	.block	1
 DEMNUMD:	.block	1
-DEMBADF:	.block	1</pre></body></html>
+DEMBADF:	.block	1
+</pre></body></html>

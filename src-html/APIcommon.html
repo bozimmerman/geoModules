@@ -1,0 +1,120 @@
+<!DOCTYPE html><html><head><title>Untitled</title></head><body><pre>
+;****************************************
+;* APIcommon - geoProjects library (C) 1998 Bo Zimmerman
+;*
+;* Intro:
+;*	Handles register, status and other saves and
+;*	restores for other MODules and API modules.
+;* 	.x is the only protected register for i_function
+;*	calls. A2-A6 are the protected app-registers.
+;*
+;* Functions:
+;* 	APISavRegs	Save status, .a, .x
+;* 	APIResRegs	Restore .a, .x, status (last done!!)
+;* 	APISavSys	Save status, .a, .x, A2-A6
+;* 	APIreturn	Send param bytes in .y, restore and return!
+;* 	APIinit	Save system, return address, get params
+;*
+;* Comments:
+;*	Perhaps this works.. who knows?
+;****************************************
+
+
+.psect
+
+;* Saves status, .x, and .a.  Exits with .x intact
+APISavRegs:
+	php
+	sta	APIRegBuf
+	stx	APIRegBuf+1
+	pla
+	sta	APIRegBuf+3
+	rts
+
+;* Restores .a, .x, .y, and status
+APIResRegs:
+	lda	APIRegBuf+3
+	pha
+	ldy	APIRegBuf+2
+	ldx	APIRegBuf+1
+	lda	APIRegBuf
+	plp
+	rts
+
+
+
+APISavSys:
+	jsr	APISavRegs
+	sty	APIRegBuf+2
+	ldx	#10
+10$:	lda	$6f,x
+	sta	APISysBuf,x
+	dex
+	bne	10$
+	rts
+
+APIreturn:
+	jsr	APISavRegs
+	tya
+	clc
+	adc	$3d
+	sta	$3d
+	bcc	10$	
+	lda	$3e
+	adc	#0
+	sta	$3e	
+10$:	lda	$3e
+	pha
+	lda	$3d
+	pha
+	ldx	#10
+20$:	lda	APISysBuf,x
+	sta	$6f,x
+	dex
+	bne	20$
+	jmp	APIResRegs
+
+
+
+APIinit:
+	jsr	APISavSys
+	pla
+	sta	APIAddBuf
+	pla
+	sta	APIAddBuf+1
+	pla	
+	sta	$3d
+	pla
+	sta	$3e
+	lda	APIAddBuf+1
+	pha
+	lda	APIAddBuf
+	pha
+	ldy	#10
+	ldx	#10
+10$:	lda	($3d),y
+	sta	$6f,x
+	dey
+	dex
+	bne	10$
+	jmp	APIResRegs
+
+.ramsect
+APIRegBuf:
+	.block	3
+APISysBuf:
+	.block	11
+APIAddBuf:
+	.block	2
+
+APITemp1:
+	.block	30
+APITemp2:
+	.block	30
+APITemp3:
+	.block	30
+APITemp4:
+	.block	30
+APITemp5:
+	.block	30
+</pre></body></html>

@@ -1,10 +1,11 @@
-<!DOCTYPE html><html><head><title>Untitled</title></head><body><pre><span align="left">.noeqin
+<!DOCTYPE html><html><head><title>Untitled</title></head><body><pre>
+.noeqin
 .include	GEOSequates
 .glbl
 .eqin
 ;****************************************
 ;* MODconvert - geoProjects library (C) 1998 Bo Zimmerman
-<span align="left">;*
+;*
 ;* Grants the functionality to do in-place file 
 ;* conversions to and from the .cvt format.
 ;*
@@ -21,7 +22,7 @@
 ;****************************************
 
 
-<span align="left">;*******************************
+;*******************************
 ;* Convert
 ;*
 ;* Inputs:	
@@ -75,7 +76,7 @@ Convert:	mvw	A2,R6
 	jsr	CONVlink
 	rts
 
-<span align="left">;*******************************
+;*******************************
 ;* i_Convert
 ;*
 ;* Inputs:	
@@ -85,13 +86,13 @@ Convert:	mvw	A2,R6
 ;* Outputs:
 ;*	.x	errors or msgs, if any
 ;*******************************
-<span align="left">
+
 i_Convert:	jsr	APIinit
 	jsr	Convert
 	ldy	#2	; a single word pointer
 	jmp	APIreturn
 
-<span align="left">;*******************************
+;*******************************
 ;* unConv
 ;*
 ;* Inputs:	
@@ -130,7 +131,7 @@ unConv:	mvw	A2,R6
 30$:	jsr	CONVulnk
 	rts
 
-<span align="left">;*******************************
+;*******************************
 ;* i_unConv
 ;*
 ;* Inputs:	
@@ -146,7 +147,7 @@ i_unConv:	jsr	APIinit
 	ldy	#2	; a single word pointer
 	jmp	APIreturn
 
-<span align="left">CONVisit:	mvw	CONVdptr,R5
+CONVisit:	mvw	CONVdptr,R5
 	ldy	#$01
 	lda	(R5),y
 	sta	R1L
@@ -170,7 +171,7 @@ i_unConv:	jsr	APIinit
 	rts
 	
 
-<span align="left">CONVbldd:	mvw	CONVdptr,R5
+CONVbldd:	mvw	CONVdptr,R5
 	ldy	#$00
 10$:	lda	CONVblk+2,y	; copy old dir entry
 	sta	(R5),y
@@ -215,7 +216,7 @@ i_unConv:	jsr	APIinit
 	ldx	#0
 	rts
 
-<span align="left">CONVulnk:	lda	CONVblk+$17	; check if was vlir
+CONVulnk:	lda	CONVblk+$17	; check if was vlir
 	bne	10$
 	ldx	#0
 	rts		; it was NOT, so done.
@@ -265,7 +266,7 @@ i_unConv:	jsr	APIinit
 	cpx	#0
 	rts
 
-<span align="left">CONVsigB:	mvw	CONVdptr,R5
+CONVsigB:	mvw	CONVdptr,R5
 	ldy	#0	; build signiture block
 16$:	lda	(R5),y
 	sta	CONVblk+2,y
@@ -295,7 +296,7 @@ i_unConv:	jsr	APIinit
 	sta	CONVblk,y
 	rts
 
-<span align="left">CONVallB:	jsr	GetDirHead	; read BAM
+CONVallB:	jsr	GetDirHead	; read BAM
 	cpx	#0
 	beq	10$
 	rts
@@ -324,7 +325,7 @@ i_unConv:	jsr	APIinit
 	cpx	#0
 	rts
 
-<span align="left">CONVunGeo:	mvw	CONVdptr,R5
+CONVunGeo:	mvw	CONVdptr,R5
 	ldy	#0
 	lda	#129	; make SEQ
 	sta	(R5),y
@@ -375,7 +376,7 @@ i_unConv:	jsr	APIinit
 	jsr	PutBlock	; now update directory!
 	rts
 
-<span align="left">CONVinfo:	mvw	CONVblk,R1
+CONVinfo:	mvw	CONVblk,R1
 	ldw	R4,#$8100
 	jsr	GetBlock
 	cpx	#0
@@ -388,7 +389,7 @@ i_unConv:	jsr	APIinit
 	cpx	#0
 	rts
 
-<span align="left">CONVlink:	ldy	#$17	; check if sequential
+CONVlink:	ldy	#$17	; check if sequential
 	lda	CONVblk,y
 	bne	10$
 	ldx	#0	; already sequential! done!
@@ -450,7 +451,7 @@ i_unConv:	jsr	APIinit
 	cpx	#0	; and exit!
 	rts
 
-<span align="left">CONVcvtx:	.byte	".CVT",0
+CONVcvtx:	.byte	".CVT",0
 CONVtabc:	.byte	"_}{~`\|abcdefghijklmnopqrstuvwxyz",0
 CONVtabd:	.byte	"-[]+'/!ABCDEFGHIJKLMNOPQRSTUVWXYZ",0
 CONVsigD:
@@ -464,7 +465,7 @@ CONVsigD:
 	.byte $00,$00,$00,$00
 
 
-<span align="left">.ramsect
+.ramsect
 CONVblk:	.block	256	; signiture block
 CONVtns:	.block	2	; track and sector 
 CONVdtns:	.block	2	; directory tns
@@ -475,4 +476,5 @@ CONVvlil:	.block	1	; VLIR end chain char size
 CONVstns:	.block	2	; signiture block tns
 CONVvtns:	.block	2	; vlir block tns
 
-<span align="left"></pre></body></html>
+
+</pre></body></html>

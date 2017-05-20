@@ -1,10 +1,11 @@
-<!DOCTYPE html><html><head><title>Untitled</title></head><body><pre><span align="left">.noeqin
+<!DOCTYPE html><html><head><title>Untitled</title></head><body><pre>
+.noeqin
 .include	GEOSequates
 .glbl
 .eqin
 ;****************************************
 ;* MODstring- geoProjects library (C) 1998 Bo Zimmerman
-<span align="left">;*
+;*
 ;* Intro:
 ;*	This module handles all facets of string
 ;*	manipulation.
@@ -33,9 +34,9 @@
 ;*	You can get GetStrWidth from MODwin2
 ;****************************************
 
-<span align="left">.psect
+.psect
 
-<span align="left">;*******************************
+;*******************************
 ;* AppStr
 ;*
 ;* Inputs:	
@@ -66,7 +67,7 @@ AppStr:
 	bne	10$	; appendable str len < 255!!!
 11$:	jmp StrLen	; fullfill the return parameters
 
-<span align="left">;*******************************
+;*******************************
 ;* i_AppStr
 ;*
 ;* Inputs:	
@@ -86,7 +87,7 @@ i_AppStr:
 	jmp	APIreturn
 
 
-<span align="left">;*******************************
+;*******************************
 ;* StrLen
 ;*
 ;* Inputs:	
@@ -114,7 +115,7 @@ StrLen:
 12$:	lda	A5L	; get high byte into .a
 	rts		; and exit!
 
-<span align="left">;*******************************
+;*******************************
 ;* i_StrLen
 ;*
 ;* Inputs:	
@@ -124,7 +125,7 @@ StrLen:
 ;*	.a	string length (high byte)
 ;*	.x	string length (low byte)
 ;*******************************
-<span align="left">
+
 i_StrLen:
 	jsr	APIinit
 	jsr	StrLen
@@ -132,7 +133,7 @@ i_StrLen:
 	jmp	APIreturn
 
 
-<span align="left">;*******************************
+;*******************************
 ;* RevStr
 ;*
 ;* Inputs:	
@@ -174,7 +175,7 @@ RevStr:
 	bne	11$	; no, so decrement hind and do over
 	; the end!
 
-<span align="left">;*******************************
+;*******************************
 ;* i_RevStr
 ;*
 ;* Inputs:	
@@ -192,14 +193,14 @@ i_RevStr:
 	jmp	APIreturn
 
 
-<span align="left">;*******************************
+;*******************************
 ;* ToUpper
 ;*
 ;* Inputs:	
 ;*	A2	Pointer to null-terminated
-<span align="left">;*		string to convert to uppercase.
+;*		string to convert to uppercase.
 ;* Outputs:
-<span align="left">;*	.a	NULL
+;*	.a	NULL
 ;*	.x	NULL
 ;*******************************
 
@@ -221,12 +222,12 @@ ToUpper:
 	ldx	#0
 	rts	
 
-<span align="left">;*******************************
+;*******************************
 ;* i_ToUpper
 ;*
 ;* Inputs:	
 ;*	.word	Pointer to null-terminated
-<span align="left">;*		string to convert to uppercase.
+;*		string to convert to uppercase.
 ;* Outputs:
 ;*	.a	NULL
 ;*	.x	NULL
@@ -239,14 +240,14 @@ i_ToUpper:
 	jmp	APIreturn
 
 
-<span align="left">;*******************************
+;*******************************
 ;* ToLower
 ;*
 ;* Inputs:	
 ;*	A2	Pointer to null-terminated
 ;*		string to convert to lowercase.
 ;* Outputs:
-<span align="left">;*	.a	NULL
+;*	.a	NULL
 ;*	.x	NULL
 ;*******************************
 
@@ -269,13 +270,13 @@ ToLower:
 	rts	
 
 
-<span align="left">;*******************************
+;*******************************
 ;* i_ToLower
 ;*
 ;*	.word	Pointer to null-terminated
 ;*		string to convert to lowercase.
 ;* Outputs:
-<span align="left">;*	.a	NULL
+;*	.a	NULL
 ;*	.x	NULL
 ;*******************************
 
@@ -286,14 +287,14 @@ i_ToLower:
 	jmp	APIreturn
 
 
-<span align="left">;*******************************
+;*******************************
 ;* ToPETSKII
 ;*
 ;* Inputs:	
 ;*	A2	Pointer to null-terminated
 ;*		string to convert to PETSKII.
 ;* Outputs:
-<span align="left">;*	.a	NULL
+;*	.a	NULL
 ;*	.x	NULL
 ;*******************************
 
@@ -332,12 +333,12 @@ ToPETSKII:
 	ldx	#0
 	rts	
 
-<span align="left">;*******************************
+;*******************************
 ;* i_ToPETSKII
 ;*
 ;* Inputs:	
 ;*	.word	Pointer to null-terminated
-<span align="left">;*		string to convert to PETSKII.
+;*		string to convert to PETSKII.
 ;* Outputs:
 ;*	.a	NULL
 ;*	.x	NULL
@@ -350,7 +351,7 @@ i_ToPETSKII:
 	jmp	APIreturn
 
 
-<span align="left">;*******************************
+;*******************************
 ;* ToASCII
 ;*
 ;* Inputs:	
@@ -398,12 +399,12 @@ ToASCII:
 	ldx	#0
 	rts	
 
-<span align="left">;*******************************
+;*******************************
 ;* i_ToASCII
 ;*
 ;* Inputs:	
 ;*	.word	Pointer to null-terminated
-<span align="left">;*		string to convert to ASCII.
+;*		string to convert to ASCII.
 ;* Outputs:
 ;*	.a	NULL
 ;*	.x	NULL
@@ -416,7 +417,7 @@ i_ToASCII:
 	jmp	APIreturn
 
 
-<span align="left">;*******************************
+;*******************************
 ;* InStr
 ;*
 ;* Inputs:	
@@ -452,7 +453,7 @@ InStr:
 	rts
 			
 
-<span align="left">;*******************************
+;*******************************
 ;* i_InStr
 ;*
 ;* Inputs:	
@@ -472,7 +473,7 @@ i_InStr:
 	jmp	APIreturn
 
 
-<span align="left">;*******************************
+;*******************************
 ;* CpyStr
 ;*
 ;* Inputs:	
@@ -490,7 +491,7 @@ CpyStr:
 	jmp	StrLen	; get this for free
 
 
-<span align="left">;*******************************
+;*******************************
 ;* i_CpyStr
 ;*
 ;* Inputs:	
@@ -508,7 +509,7 @@ i_CpyStr:
 	ldy	#4	; 2 word pointers = 4 bytes
 	jmp	APIreturn
 
-<span align="left">;*******************************
+;*******************************
 ;* CmpStr
 ;*
 ;* Inputs:	
@@ -525,7 +526,7 @@ CmpStr:
 	ldy	#A3
 	jmp	CmpString	; use the kernel! (not safe though!)
 
-<span align="left">;*******************************
+;*******************************
 ;* i_CmpStr
 ;*
 ;* Inputs:	
@@ -545,4 +546,5 @@ i_CmpStr:
 	stx	APIRegBuf+3
 	ldy	#4	; 2 word pointers = 4 bytes
 	jmp	APIreturn
+
 </pre></body></html>

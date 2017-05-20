@@ -1,4 +1,5 @@
-<!DOCTYPE html><html><head><title>Untitled</title></head><body><pre><span align="left">.noeqin
+<!DOCTYPE html><html><head><title>Untitled</title></head><body><pre>
+.noeqin
 .if Pass1
 .include GEOSequates
 .endif
@@ -6,7 +7,7 @@
 
 ;****************************************
 ;* MODtbox - geoProjects library (C) 1998 Bo Zimmerman
-<span align="left">;*
+;*
 ;* Intro:
 ;* 	Implements a multi-line input box that
 ;*	also allows character limit enforcement.
@@ -31,7 +32,7 @@
 ;****************************************
 .psect
 
-<span align="left">;******************************
+;******************************
 ;* i_OpenTBox
 ;* Inputs:		R2-R4H	box dimensoins
 ;*		.word	pointer to text area
@@ -49,7 +50,7 @@ i_OpenTBox:
 	ldy	#4
 	jmp	APIreturn
 
-<span align="left">;******************************
+;******************************
 ;* i_PrintTBox
 ;* Inputs:		R2-R4H	box dimensoins
 ;*		.word	pointer to text area
@@ -67,7 +68,7 @@ i_PrintTBox:
 	ldy	#4
 	jmp	APIreturn
 
-<span align="left">
+
 PrintTBox:	mvw	keyVector,TBOXVec
 	ldw	keyVector,#0
 	jsr	TBOXinit
@@ -104,7 +105,7 @@ TBoxResume:	mvw	keyVector,TBOXVec
 
 
 
-<span align="left">TBOXgo:	mvw	TBOXBuf,A2
+TBOXgo:	mvw	TBOXBuf,A2
 	lda	keyData
 
 TBOXlp:	cmp	#$0d
@@ -160,7 +161,7 @@ TBOXends:	lda	#0	; its the END (for now)
 	sta	TBOXflag
 	rts
 
-<span align="left">TBOXisln:	ldx	currentMode
+TBOXisln:	ldx	currentMode
 	jsr	GetRealSize
 	mvw	TBOXxy,APITemp1
 	tya
@@ -172,7 +173,7 @@ TBOXends:	lda	#0	; its the END (for now)
 10$:	cpw	APITemp1,TBOXWinX+2
 	rts
 
-<span align="left">TBOXgetX:	lda	TBOXLine
+TBOXgetX:	lda	TBOXLine
 	asl	a
 	tax
 	rts
@@ -185,7 +186,7 @@ TBOXnxtc:	lda	TBOXflag
 	lda	(A2),y
 	rts
 
-<span align="left">TBOXnxln:	cpb	TBOXLine,TBOXmaxL
+TBOXnxln:	cpb	TBOXLine,TBOXmaxL
 	bge	10$
 	mvb	TBOXxy+2,APITemp1
 	avb	#$0a,APITemp1
@@ -216,7 +217,7 @@ TBOXnxtc:	lda	TBOXflag
 	ldx	#0
 	rts
 
-<span align="left">TBOXpmpt:	mvw	TBOXxy,stringX	; move cursor
+TBOXpmpt:	mvw	TBOXxy,stringX	; move cursor
 	lda	TBOXxy+2
 	sub	#7
 	sta	stringY
@@ -224,7 +225,7 @@ TBOXnxtc:	lda	TBOXflag
 
 
 
-<span align="left">TBOXinit:	mvw	R3,TBOXWinX
+TBOXinit:	mvw	R3,TBOXWinX
 	mvw	R4,TBOXWinX+2
 	mvw	R2,TBOXWinY
 	mvw	A2,TBOXBuf
@@ -240,7 +241,7 @@ TBOXnxtc:	lda	TBOXflag
 	mvw	TBOXBuf,A2
 	rts
 
-<span align="left">TBOXdel:	lda	TBOXdex
+TBOXdel:	lda	TBOXdex
 	bne	10$
 	jmp	TBOXlp2
 
@@ -276,7 +277,7 @@ TBOXnxtc:	lda	TBOXflag
 	jsr	PutChar
 	jmp	TBOXlp2
 
-<span align="left">.ramsect
+.ramsect
 
 TBOXWinX:	.block 6
 TBOXWinY:	.block 2
@@ -296,4 +297,5 @@ TBOXmaxC:	.block 1	; max chars
 
 TBOXVec:	.block 2
 ; that's all folks!
+
 </pre></body></html>

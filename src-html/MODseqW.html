@@ -1,11 +1,12 @@
-<!DOCTYPE html><html><head><title>Untitled</title></head><body><pre><span align="left">.noeqin
-<span align="left">.include	GEOSequates
+<!DOCTYPE html><html><head><title>Untitled</title></head><body><pre>
+.noeqin
+.include	GEOSequates
 .glbl
 .eqin
 
-<span align="left">;****************************************
+;****************************************
 ;* MODseqW - geoProjects library (C) 1998 Bo Zimmerman
-<span align="left">;*
+;*
 ;* Intro:
 ;* 	This modules supports C= seq/prg file
 ;* 	creation and writing.  A write buffer
@@ -31,7 +32,7 @@
 ;*
 ;* Comments:
 ;* 	A multi file version will have to await
-<span align="left">;* 	some thought to the multiple-dir block
+;* 	some thought to the multiple-dir block
 ;* 	problem (two files sharing a dir block).
 ;*	There is also the problem of shared 
 ;*	BAM space between different disks.
@@ -44,7 +45,7 @@
 ;****************************************
 .psect
 
-<span align="left">;******************************
+;******************************
 ;* CreatSF	Create a new c= sequential file
 ;* Inputs:
 ;*		A2	pointer to a file name
@@ -110,7 +111,7 @@ CreatSF:	mvb	curDrive,SIOWdrv
 	lda	#0
 	rts
 
-<span align="left">;******************************
+;******************************
 ;* i_CreatSF	Create a new c= sequential file
 ;* Inputs:
 ;*		.word	pointer to a file name
@@ -130,7 +131,7 @@ i_CreatSF:
 	ldy	#3	; three byte parameter list
 	jmp	APIreturn
 
-<span align="left">;******************************
+;******************************
 ;* PutSByte	Output a byte to a sequential file
 ;* Inputs:
 ;*		.a	byte to write out
@@ -149,7 +150,7 @@ PutSByte:
 11$:	sta	APITemp1		; save byte for later
 	jsr	SIOWrDrv
 	jsr	SIOWLdBAM	; reload this disks BAM
-<span align="left">	avw	#1,SIOWFsize	; increment file size
+	avw	#1,SIOWFsize	; increment file size
 	ldw	R2,#3	; 3 bytes is all thats needed...
 	ldw	R6,#APITemp2	; to allocate 1 new block
 	jsr	BlkAlloc
@@ -168,7 +169,7 @@ PutSByte:
 	jmp	PutSByte	; and write it out
 
 
-<span align="left">;******************************
+;******************************
 ;* i_PutSByte	Output a byte to a sequential file
 ;* Inputs:
 ;*		.byte	byte to write out
@@ -185,7 +186,7 @@ i_PutSByte:
 	lda	A2L
 	jmp	APIreturn
 
-<span align="left">;******************************
+;******************************
 ;* PutSString	Output a string to a sequential file
 ;* Inputs:
 ;*		A2	pointer to $ to write out
@@ -210,7 +211,7 @@ SIOWSS2:	ldy	#0
 10$:	jmp	SIOWSS2	; go write the next byte
 11$:	rts
 
-<span align="left">;******************************
+;******************************
 ;* i_PutSString	Output a string to a sequential file
 ;* Inputs:
 ;*		.word	pointer to $ to write out
@@ -225,7 +226,7 @@ i_PutSString:
 	ldy	#2
 	jmp	APIreturn
 
-<span align="left">;******************************
+;******************************
 ;* PutSBuf	Output a buffer to a seq file
 ;* Inputs:
 ;*		A2	pointer to buffer
@@ -244,7 +245,7 @@ PutSBuf:	adw	A2,A3	; convert to PutSMem
 	dec	A3H
 10$:	jmp	PutSMem
 
-<span align="left">;******************************
+;******************************
 ;* i_PutSBuf	Output a buffer to seq file
 ;* Inputs:
 ;*		.word	pointer to buffer
@@ -261,7 +262,7 @@ i_PutSBuf:
 	ldy	#4
 	jmp	APIreturn
 
-<span align="left">;******************************
+;******************************
 ;* PutSMem	Output a block of memory to a seq file
 ;* Inputs:
 ;*		A2	pointer to start location
@@ -287,7 +288,7 @@ PutSMem:
 11$:	bra	10$	; and write the next byte
 12$:	rts
 
-<span align="left">;******************************
+;******************************
 ;* i_PutSMem	Output a block of memory to seq file
 ;* Inputs:
 ;*		.word	pointer to start location
@@ -304,7 +305,7 @@ i_PutSMem:
 	ldy	#4
 	jmp	APIreturn
 
-<span align="left">;******************************
+;******************************
 ;* ClosSF	Close a file opened with CreatSF
 ;* Inputs:
 ;*		A2L	file type to close as
@@ -341,7 +342,7 @@ ClosSF:
 	rts
 
 
-<span align="left">;******************************
+;******************************
 ;* i_ClosSF	Close a file opened with CreatSF
 ;* Inputs:
 ;*		.byte	file type (0=PRG)
@@ -359,7 +360,7 @@ i_ClosSF:
 	ldy	#1
 	jmp	APIreturn
 
-<span align="left">;******************************
+;******************************
 ;* CpyFName	Copy a filename A2->A3
 ;* Inputs:
 ;*		A2	file name to copy
@@ -384,7 +385,7 @@ CpyFname:
 	bne	11$
 12$:	rts
 
-<span align="left">;******************************
+;******************************
 ;* MakeFNUpp	Make a filename uppercase
 ;* Inputs:
 ;*		A2	file name to change
@@ -409,13 +410,13 @@ MakeFNUpp:
 	bra	10$
 11$:	rts
 
-<span align="left">SIOWrDrv:	cpb	curDrive,SIOWdrv
+SIOWrDrv:	cpb	curDrive,SIOWdrv
 	beq	99$
 	lda	SIOWdrv
 	jsr	SetDevice
 99$:	rts
 
-<span align="left">SIOWSvBAM:
+SIOWSvBAM:
 	ldy	#$00
 10$:	lda	$9c80,y
 	sta	SIOWBAM,y
@@ -431,7 +432,7 @@ SIOWLdBAM:
 	bne	10$
 	rts
 
-<span align="left">SIOWiniBlk:
+SIOWiniBlk:
 	ldw	R0,#256
 	ldw	R1,#SIOWBuf
 	jsr	ClearRam
@@ -452,7 +453,7 @@ SIOWiniDir:
 	bne	10$	; copy until done
 	rts
 
-<span align="left">.ramsect
+.ramsect
 
 SIOWBuf:	.block	256	; working output buffer
 SIOWdirBlk:	.block	256	; working directory block?!
@@ -461,4 +462,5 @@ SIOWdirTS:	.block	2	; directory entry track & sector
 SIOWFsize:	.block	2	; working file siZe
 SIOWdirPtr:	.block	2	; directory entry pointer
 SIOWTnS:	.block	2	; track and sector holder
-SIOWdrv:	.block	1	; drive file created on</pre></body></html>
+SIOWdrv:	.block	1	; drive file created on
+</pre></body></html>

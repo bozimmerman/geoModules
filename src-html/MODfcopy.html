@@ -1,10 +1,11 @@
-<!DOCTYPE html><html><head><title>Untitled</title></head><body><pre><span align="left">.noeqin
+<!DOCTYPE html><html><head><title>Untitled</title></head><body><pre>
+.noeqin
 .include	GEOSequates
 .glbl
 .eqin
 ;****************************************
 ;* MODfcopy - geoProjects library (C) 1998 Bo Zimmerman
-<span align="left">;*
+;*
 ;* Copies any file type to another drive.
 ;*
 ;* Functions:
@@ -22,7 +23,7 @@
 ;****************************************
 
 
-<span align="left">;*******************************
+;*******************************
 ;* FileCopy
 ;*
 ;* Inputs:	
@@ -77,7 +78,7 @@ FileCopy:	mvb	curDrive,FCOPsrc
 15$:	stx	FCOPaflg
 	jmp	FCOPcopy
 
-<span align="left">;*******************************
+;*******************************
 ;* i_FileCopy
 ;*
 ;* Inputs:	
@@ -97,19 +98,19 @@ i_FileCopy:	jsr	APIinit
 	ldy	#9	; 4 words + 1 byte
 	jmp	APIreturn
 
-<span align="left">FCOPgetI:	mvw	APITemp1+$13,R1
+FCOPgetI:	mvw	APITemp1+$13,R1
 	lda	FCOPbufP
 	sta	FCOPinfo
 	lda	FCOPbufP+1
 	sta	FCOPinfo+1
 10$:	mvw	FCOPbufP,R4
 	jsr	GetBlock
-<span align="left">	cpx	#0
+	cpx	#0
 	beq	20$
 	rts
 20$:	mvw	FCOPbufP,R4
 	ldy	#0
-<span align="left">	lda	(R4),y
+	lda	(R4),y
 	beq	30$
 	sta	R1L
 	iny
@@ -117,11 +118,11 @@ i_FileCopy:	jsr	APIinit
 	sta	R1H
 	inc	FCOPbufP+1
 	bra	10$
-<span align="left">30$:	inc	FCOPbufP+1
+30$:	inc	FCOPbufP+1
 	ldx	#0
-<span align="left">	rts
+	rts
 
-<span align="left">FCOPgetV:	mvw	APITemp1+1,R1
+FCOPgetV:	mvw	APITemp1+1,R1
 	lda	FCOPbufP
 	sta	FCOPbufS
 	sta	FCOPvlir
@@ -140,7 +141,7 @@ i_FileCopy:	jsr	APIinit
 	sta	FCOPvddx
 	jmp	FCOPnxtV
 
-<span align="left">FCOPnxtV:	mvw	FCOPvlir,R4
+FCOPnxtV:	mvw	FCOPvlir,R4
 	ldy	FCOPvdex
 10$:	lda	(R4),y
 	beq	11$
@@ -159,7 +160,7 @@ i_FileCopy:	jsr	APIinit
 	rts		; EQ is done
 
 
-<span align="left">FCOPcopy:	jsr	FCOPosrc
+FCOPcopy:	jsr	FCOPosrc
 	bne	10$
 	jsr	FCOPfill
 	cpx	#0
@@ -171,7 +172,7 @@ i_FileCopy:	jsr	APIinit
 11$:	stx	FCOPendf
 	mvw	FCOPbufS,FCOPbufD	; set destination start
 	jsr	FCOPodst
-<span align="left">	bne	10$
+	bne	10$
 	jsr	FCOPcrfi	; create the file on disk
 	cpx	#0
 	bne	10$
@@ -194,7 +195,7 @@ i_FileCopy:	jsr	APIinit
 	jsr	FCOPfill	; read more data blocks
 	mvw	FCOPbufS,FCOPbufD	; set destination start
 	cpx	#0
-<span align="left">	beq	17$
+	beq	17$
 	cpx	#$ff
 	beq	17$
 	rts
@@ -205,7 +206,7 @@ i_FileCopy:	jsr	APIinit
 
 
 
-<span align="left">FCOPwrinfo:	lda	FCOPinfo+1
+FCOPwrinfo:	lda	FCOPinfo+1
 	bne	10$
 	rts
 10$:	jsr	FCOPallo
@@ -226,7 +227,7 @@ i_FileCopy:	jsr	APIinit
 	jsr	FCOPallo	; allocate the next
 	mvw	FCOPinfo,R4	; now save it to disk
 	ldy	#0
-<span align="left">	lda	R1L
+	lda	R1L
 	sta	(R4),y
 	iny
 	lda	R1H
@@ -253,7 +254,7 @@ i_FileCopy:	jsr	APIinit
 
 
 
-<span align="left">FCOPwrset:	jsr	FCOPallo	; grab a block
+FCOPwrset:	jsr	FCOPallo	; grab a block
 	bne	99$
 	mvw	FCOPdptr,R4
 	ldy	#$01
@@ -268,7 +269,7 @@ i_FileCopy:	jsr	APIinit
 	sta	FCOPvtns+1
 	sta	FCOPbtns+1
 	sta	FCOPlast+1
-<span align="left">	lda	FCOPvlir+1	; now, is this vlir block?
+	lda	FCOPvlir+1	; now, is this vlir block?
 	beq	99$
 	jsr	FCOPallo	; grab a block
 	bne	99$
@@ -282,7 +283,7 @@ i_FileCopy:	jsr	APIinit
 99$:	rts
 
 
-<span align="left">FCOPfill:	lda	FCOPtns	; always data block!
+FCOPfill:	lda	FCOPtns	; always data block!
 	bne	20$
 	lda	FCOPvlir+1	; is a VLIR?
 	bne	15$
@@ -313,7 +314,7 @@ i_FileCopy:	jsr	APIinit
 	inc	FCOPbufP+1
 40$:	jmp	FCOPfill
 
-<span align="left">FCOPcrfi:	mvw	A3, R6	; copy dst filename pointer
+FCOPcrfi:	mvw	A3, R6	; copy dst filename pointer
 	ldb	$886e,#1
 	jsr	FindFile	; ensure file doesn't already exist
 	cpx	#5	; file not found only good error
@@ -370,7 +371,7 @@ i_FileCopy:	jsr	APIinit
 	jsr	PutBlock
 	rts
 
-<span align="left">FCOPwr:	mvw	FCOPbufD,R4	; check for end of chain
+FCOPwr:	mvw	FCOPbufD,R4	; check for end of chain
 	ldw	R1,#0
 	ldy	#0
 	lda	(R4),y	; don't allocate ahead
@@ -378,8 +379,8 @@ i_FileCopy:	jsr	APIinit
 	lda	FCOPvlir+1	; unless its vlir
 	beq	11$
 	lda	FCOPendf	; and there's more
-<span align="left">	beq	10$	
-<span align="left">	mvw	FCOPbufD,R1
+	beq	10$	
+	mvw	FCOPbufD,R1
 	inc	R1H
 	cpw	FCOPbufP,R1
 	ble	11$
@@ -422,7 +423,7 @@ i_FileCopy:	jsr	APIinit
 	ble	39$
 	jmp	FCOPwr
 
-<span align="left">FCOPvdput:	mvw	FCOPvlir,R1
+FCOPvdput:	mvw	FCOPvlir,R1
 	ldy	FCOPvddx
 	lda	(R1),y
 	beq	10$
@@ -438,7 +439,7 @@ i_FileCopy:	jsr	APIinit
 	inc	FCOPvddx
 	jmp	FCOPvdput
 
-<span align="left">FCOPclose:	lda	FCOPvlir+1
+FCOPclose:	lda	FCOPvlir+1
 	beq	11$
 	mvw	FCOPvtns,R1
 	mvw	FCOPvlir,R4
@@ -473,10 +474,10 @@ i_FileCopy:	jsr	APIinit
 12$:	jsr	FCOPosrc
 99$:	rts
 
-<span align="left">FCOPodst:	lda	FCOPdst	; if disks same, no re-open
+FCOPodst:	lda	FCOPdst	; if disks same, no re-open
 	ldx	#0
 	cmp	curDrive
-<span align="left">	beq	13$
+	beq	13$
 	jsr	SetDevice	; if diff, reopen
 	jsr	OpenDisk
 	cpx	#0
@@ -495,7 +496,7 @@ FCOPosrc:	lda	FCOPaflg
 12$:	lda	FCOPsrc	; if disks same, no re-open
 	ldx	#0
 	cmp	curDrive
-<span align="left">	beq	13$
+	beq	13$
 	jsr	SetDevice	; if diff, reopen
 	jsr	OpenDisk
 13$:	cpx	#0
@@ -512,7 +513,7 @@ FCOPallo:	ldw	R2,#$0a
 	cpx	#0
 	rts
 
-<span align="left">FCOPreLink:	mvw	FCOPbufS,FCOPinfo
+FCOPreLink:	mvw	FCOPbufS,FCOPinfo
 	mvw	FCOPbufS,FCOPvlir
 	inc	FCOPvlir+1
 	mvw	FCOPvlir,FCOPbufP
@@ -576,7 +577,7 @@ FCOPallo:	ldw	R2,#$0a
 	cpx	#0
 	rts	
 
-<span align="left">FCOPreL1:	ldb	FCOPvdex,#2
+FCOPreL1:	ldb	FCOPvdex,#2
 	mvw	FCOPvtns,R1
 	ldy	#0
 90$:	lda	#0
@@ -609,7 +610,7 @@ FCOPallo:	ldw	R2,#$0a
 98$:	ldx	#0
 	rts
 
-<span align="left">FCOPreL2:	mvw	FCOPvlir,R4
+FCOPreL2:	mvw	FCOPvlir,R4
 	mvw	FCOPvtns,R1	; get THIS index block
 	jsr	GetBlock
 	cpx	#0
@@ -641,7 +642,7 @@ FCOPrsav:	mvw	FCOPvlir,R4
 	rts
 
 
-<span align="left">FCOPrst:	ldy	FCOPdst
+FCOPrst:	ldy	FCOPdst
 	lda	driveType-8,y
 	and	#%00000111
 	cmp	#3
@@ -664,23 +665,23 @@ FCOPrdel:	mvw	FCOPvtns,R1
 
 FCOPradd:	jsr	FCOPallo
 	mvw	R1,FCOPvtns
-<span align="left">	mvw	FCOPinfo,R4
+	mvw	FCOPinfo,R4
 	jsr	PutBlock
 	cpx	#0
 	beq	10$
 	rts
 10$:	mvw	FCOPinfo,R4
 	ldy	#0
-<span align="left">11$:	lda	#0
+11$:	lda	#0
 	sta	(R4),y
 	iny
 	bne	11$
 	ldy	#0
 	lda	FCOPvtns
-<span align="left">	sta	(R4),y
+	sta	(R4),y
 	iny
 	lda	FCOPvtns+1
-<span align="left">	sta	(R4),y
+	sta	(R4),y
 	iny
 	lda	#254
 	sta	(R4),y
@@ -689,7 +690,7 @@ FCOPradd:	jsr	FCOPallo
 	cpx	#0
 	rts
 
-<span align="left">FCOPreL4:	mvw	FCOPvlir,R4	; now store data sectors
+FCOPreL4:	mvw	FCOPvlir,R4	; now store data sectors
 	ldy	FCOPvdex
 	lda	FCOPbtns
 	sta	(R4),y
@@ -735,7 +736,7 @@ FCOPradd:	jsr	FCOPallo
 50$:	ldx	#0
 	rts	
 
-<span align="left">.ramsect
+.ramsect
 FCOPsrc:	.block 1	; the source drive
 FCOPdst:	.block 1	; the destination drive
 FCOPbufS:	.block 2	; start of usable buffer
@@ -757,4 +758,5 @@ FCOPbufD:	.block 2	; dest buffer pointer
 FCOPbuf:	.block	20	; some work butes
 FCOPlast:	.block 2	; next dest tns
 FCOPlas2:	.block 2	; temp next dest tns holder
-FCOPaflg:	.block	1	; allocated block flag</pre></body></html>
+FCOPaflg:	.block	1	; allocated block flag
+</pre></body></html>

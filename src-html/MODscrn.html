@@ -1,11 +1,12 @@
-<!DOCTYPE html><html><head><title>Untitled</title></head><body><pre><span align="left">.noeqin
+<!DOCTYPE html><html><head><title>Untitled</title></head><body><pre>
+.noeqin
 .include	GEOSequates
 .glbl
 .eqin
 
 ;****************************************
 ;* MODscrn - geoProjects library (C) 1998 Bo Zimmerman
-<span align="left">;*
+;*
 ;* Intro:
 ;*	Will someday include a myriad of screen
 ;*	control functions for very general use.
@@ -23,7 +24,7 @@
 .psect
 
 
-<span align="left">;*******************************
+;*******************************
 ;* ClrScrn
 ;*
 ;* Inputs:
@@ -47,7 +48,7 @@ SCRNclr:	.byte	NEWPATTERN,2
 	.byte	199
 	.byte	0
 
-<span align="left">;*******************************
+;*******************************
 ;* OKCANBox
 ;*
 ;* Inputs:
@@ -70,7 +71,7 @@ SCRNokc:	.byte	$80 | $01
 	.byte	0	;end of defintion
 
 
-<span align="left">;*******************************
+;*******************************
 ;* i_OKCANBox
 ;*
 ;* Inputs:
@@ -88,7 +89,7 @@ i_OKCANBox:
 	jmp	APIreturn
 
 
-<span align="left">;*******************************
+;*******************************
 ;* YNBox
 ;*
 ;* Inputs:
@@ -110,7 +111,7 @@ SCRNyn:	.byte	$80 | $01
 	.byte	0	;end of defintion
 
 
-<span align="left">;*******************************
+;*******************************
 ;* i_YNBox
 ;*
 ;* Inputs:
@@ -128,7 +129,7 @@ i_YNBox:
 	jmp	APIreturn
 
 
-<span align="left">;*******************************
+;*******************************
 ;* OKBox
 ;*
 ;* Inputs:
@@ -149,7 +150,7 @@ SCRNok:	.byte	$80 | $01
 	.byte	$01,$0f,$40
 	.byte	0
 
-<span align="left">;*******************************
+;*******************************
 ;* i_OKBox
 ;*
 ;* Inputs:
@@ -171,7 +172,7 @@ i_OKBox:
 
 
 
-<span align="left">;*******************************
+;*******************************
 ;* CNCLBox
 ;*
 ;* Inputs:
@@ -192,7 +193,7 @@ SCRNcncl:	.byte	$80 | $01
 	.byte	$02,$0f,$40
 	.byte	0
 
-<span align="left">;*******************************
+;*******************************
 ;* i_CNCLBox
 ;*
 ;* Inputs:
@@ -210,7 +211,8 @@ i_CNCLBox:
 	jmp	APIreturn
 
 
-<span align="left">.ramsect
+.ramsect
+
 
 
 

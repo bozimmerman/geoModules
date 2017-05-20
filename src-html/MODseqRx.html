@@ -1,11 +1,12 @@
-<!DOCTYPE html><html><head><title>Untitled</title></head><body><pre><span align="left">.noeqin
-<span align="left">.include	GEOSequates
+<!DOCTYPE html><html><head><title>Untitled</title></head><body><pre>
+.noeqin
+.include	GEOSequates
 .glbl
 .eqin
 
 ;****************************************
 ;* MODseqRx - geoProjects library (C) 1998 Bo Zimmerman
-<span align="left">;*
+;*
 ;* Intro:
 ;* 	This modules supports advanced C= seq/prg file
 ;* 	reading.  It allows multiple files to be opened,
@@ -17,7 +18,7 @@
 ;****************************************
 
 
-<span align="left">;******************************
+;******************************
 ;* OpenSF	Open a file for reading
 ;* Inputs:
 ;*		A2	name of file to open
@@ -51,7 +52,7 @@ OpenSF:	jsr	SIORMyBuf	; get pointer to my work buffers
 			; (cycling sectors if necessary),
 			; and prepares sector for reading.
 
-<span align="left">;******************************
+;******************************
 ;* i_OpenSF	Open a file for reading
 ;* Inputs:
 ;*		.word	name of file to open
@@ -69,7 +70,7 @@ i_OpenSF:
 	ldy	#4	; 1 word and 2 bytes = 4 bytes
 	jmp	APIreturn
 
-<span align="left">;******************************
+;******************************
 ;* ReadSB	Read a byte from an open file
 ;* Inputs:
 ;*		A2L	file number to read from (1, 2, 3...)
@@ -116,7 +117,7 @@ ReadSB:
 			; (cycling sectors if necessary),
 			; and prepares sector for reading.
 
-<span align="left">SIORNwTS:	ldy	#0	; A5 = buf, A6 = TS list (w/new sec!)
+SIORNwTS:	ldy	#0	; A5 = buf, A6 = TS list (w/new sec!)
 	lda	(A6),y	; get track & sec index
 	sta	APITemp1
 	tay
@@ -164,7 +165,7 @@ ReadSB:
 	rts
 
 
-<span align="left">SIORMyBuf:
+SIORMyBuf:
 	ldw	A5,#SIORBuf
 	ldw	A6,#SIORSec
 10$:	dec	A3L
@@ -175,8 +176,9 @@ ReadSB:
 11$:	rts	
 
 
-<span align="left">.ramsect
+.ramsect
 
 SIORBuf:	.block	256 * 1	; want to support multiple open files
 SIORTnS:	.block	11 * 1	; first byte is index to rest
+
 </pre></body></html>

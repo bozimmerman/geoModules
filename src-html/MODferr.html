@@ -1,11 +1,12 @@
-<!DOCTYPE html><html><head><title>Untitled</title></head><body><pre><span align="left">.noeqin
+<!DOCTYPE html><html><head><title>Untitled</title></head><body><pre>
+.noeqin
 .include	GEOSequates
 .glbl
 .eqin
 
 ;****************************************
 ;* MODferr - geoProjects library (C) 1998 Bo Zimmerman
-<span align="left">;*
+;*
 ;* Intro:
 ;*	Displays a Disk Error: dialog box based on
 ;*	a disk error in .x.
@@ -17,7 +18,7 @@
 ;****************************************
 .psect
 
-<span align="left">;*******************************
+;*******************************
 ;* FError
 ;*
 ;* Inputs:
@@ -56,7 +57,7 @@ FError:	txa
 	
 
 
-<span align="left">FERRcht:	.byte	1
+FERRcht:	.byte	1
 	.word	FERRt1
 	.byte	2
 	.word	FERRt2
@@ -105,7 +106,7 @@ FError:	txa
 	.byte	115
 	.word	FERRt115
 
-<span align="left">FERRbox:	.byte	$80 | $01
+FERRbox:	.byte	$80 | $01
 	.byte	11
 	.byte	$20,$14
 	.word	FERRt
@@ -115,7 +116,7 @@ FError:	txa
 	.byte	$02,$0f,$40
 	.byte	0
 
-<span align="left">
+
 FERRt:	.byte	$18,"Disk error:",27,0
 FERRtu:	.byte	$18,"Unknown disk error.",27,0
 .noglbl
@@ -143,4 +144,5 @@ FERRt39:	.byte	$18,"Bad header block.",27,0
 FERRt41:	.byte	$18,"Cannot open disk.",27,0
 FERRt63:	.byte	$18,"File exists.",27,0
 FERRt115:	.byte	$18,"DOS mismatch on disk.",27,0
+
 </pre></body></html>
