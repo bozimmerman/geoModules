@@ -36,7 +36,7 @@ GEOWCBuf = $8300
 ;*	GWPage() - closes current page & opens another.
 ;*	CloseWF(	.word	Filename pointer) *
 ;*
-;*	* = includes i_Function call, and returns 
+;*	* = includes i_Function call, and returns
 ;*		status in the .x register
 ;*
 ;* Comments:
@@ -52,7 +52,7 @@ GEOWCBuf = $8300
 ;* Inputs:
 ;*		A2	pointer to a file name
 ;*		curDrive	drive to create file on
-;* Outputs:	
+;* Outputs:
 ;*		.x 	status
 ;*		.a	0
 ;******************************
@@ -116,7 +116,7 @@ CreatWF:	jsr	OpenDisk
 ;* Inputs:
 ;*		.word	pointer to a file name
 ;*		curDrive	drive to create file on
-;* Outputs:	
+;* Outputs:
 ;*		.x 	status
 ;*		.a	0
 ;******************************
@@ -132,7 +132,7 @@ i_CreatWF:
 ;* Inputs:
 ;*		.a	byte to write out
 ;*		curDrive	drive to create file on
-;* Outputs:	
+;* Outputs:
 ;*		.x 	status
 ;*		.a	?
 ;******************************
@@ -156,7 +156,7 @@ PutWByte:
 ;* Inputs:
 ;*		.byte	byte to write out
 ;*		curDrive	drive to create file on
-;* Outputs:	
+;* Outputs:
 ;*		.x 	status
 ;*		.a	byte written
 ;******************************
@@ -175,7 +175,7 @@ i_PutWByte:
 ;* Inputs:
 ;*		A2	pointer to $ to write out
 ;*		curDrive	drive to create file on
-;* Outputs:	
+;* Outputs:
 ;*		.x 	status
 ;*		.a	?
 ;* Destroyed:
@@ -187,7 +187,7 @@ PutWString:
 	lda	(A2),y
 	bne	11$	; Zero is delimeter
 	ldx	#0	; non-disk exit though
-	rts	
+	rts
 11$:	jsr	PutWByte
 	bne	13$	; finally save the byte
 	inw	A2	; increment the string pointer
@@ -205,7 +205,7 @@ PutWString:
 ;* Inputs:
 ;*		.word	pointer to $ to write out
 ;*		curDrive	drive to create file on
-;* Outputs:	
+;* Outputs:
 ;*		.x 	status
 ;*		.a	?
 ;******************************
@@ -221,9 +221,9 @@ i_PutWString:
 ;* PutWBuf	Output a buffer to a geowrite file
 ;* Inputs:
 ;*		A2	pointer to buffer
-;*		A3	number of bytes to write 
+;*		A3	number of bytes to write
 ;*		curDrive	drive to create file on
-;* Outputs:	
+;* Outputs:
 ;*		.x 	status
 ;*		.a	?
 ;* Destroyed:
@@ -244,9 +244,9 @@ PutWBuf:	ldy	#0
 ;* i_PutWBuf	Output a buffer to geowrite file
 ;* Inputs:
 ;*		.word	pointer to buffer
-;*		.word	number of bytes to write 
+;*		.word	number of bytes to write
 ;*		curDrive	drive to create file on
-;* Outputs:	
+;* Outputs:
 ;*		.x 	status
 ;*		.a	?
 ;* Destroyed:
@@ -263,9 +263,9 @@ i_PutWBuf:
 ;* PutWMem	Output a block of memory to a geowrite file
 ;* Inputs:
 ;*		A2	pointer to start location
-;*		A3	pointer to last byte 
+;*		A3	pointer to last byte
 ;*		curDrive	drive to create file on
-;* Outputs:	
+;* Outputs:
 ;*		.x 	status
 ;*		.a	?
 ;* Destroyed:
@@ -288,7 +288,7 @@ PutWMem:
 ;*		.word	pointer to a photo scrap
 ;*		.word	pointer to number of bytes
 ;*		curDrive	drive to create file on
-;* Outputs:	
+;* Outputs:
 ;*		.x 	status
 ;*		.a	?
 ;* Destroyed:
@@ -306,7 +306,7 @@ i_PutWMem:
 ;* Inputs:
 ;*		A2	pointer to photo scrap
 ;*		A3	pointer to last byte
-;* Outputs:	
+;* Outputs:
 ;*		.x 	status
 ;*		.a	?
 ;* Destroyed:
@@ -368,7 +368,7 @@ PutWPic:	lda	#$10	; put gfx escape
 ;* Inputs:
 ;*		.word	pointer to a photo scrap
 ;*		.word	pointer to last byte
-;* Outputs:	
+;* Outputs:
 ;*		.x 	status
 ;*		.a	?
 ;* Destroyed:
@@ -385,13 +385,13 @@ i_PutWPic:
 ;* CloseWF	Close a file opened with CreatWF
 ;* Inputs:	A2	file name to close
 ;*		curDrive	drive file created on
-;* Outputs:	
+;* Outputs:
 ;*		.x 	status
 ;*		.a	0
 ;******************************
 
 CloseWF:	lda	#0
-	jsr	PutWByte	; is this necessary?	
+	jsr	PutWByte	; is this necessary?
 	jsr	GEOWClo2
 	ldy	#0
 11$:	lda	BAM3HEAD,y
@@ -434,7 +434,7 @@ GEOWClo2:
 ;* i_CloseWF	Close a file opened with CreatWF
 ;* Inputs:	.word	file name to close
 ;*		curDrive	drive file created on
-;* Outputs:	
+;* Outputs:
 ;*		.x 	status
 ;*		.a	0
 ;******************************
@@ -450,7 +450,7 @@ i_CloseWF:
 ;* GWPage	Close this page and move to next
 ;* Inputs:
 ;*		curDrive	drive file created on
-;* Outputs:	
+;* Outputs:
 ;*		.x 	status
 ;*		.a	0
 ;******************************
@@ -559,9 +559,27 @@ GEOWppB:	sta	R10L	; save the byte for a sec
 	beq	13$
 11$:	cpx	#0
 12$:	rts		; return an error!
-13$:	mvw	APITemøˇˇˇÄpÄpˇp
-ˇQΩü„ˇè√ˇè◊ˇè«ˇèCyÜ
-}ÑˇÇ˝Å«ôÉÁ¡ÉÁ¡É„ãÅ¡áÅÅGÅˇˇˇÉˇgeoWAR      V1.0Lysle E. Shields    Play the game of world domination !GEOWHead:
+13$:	mvw	APITemp2,GEOWCBuf
+	mvw	GEOWXTns,R1L
+	ldw	R4L,#GEOWCBuf
+	jsr	PutBlock
+	cpx	#$00
+	bne	12$
+	mvw	APITemp2,GEOWCTnS
+	ldw	R0L,#$0100
+	ldw	R1L,#GEOWCBuf
+	jsr	ClearRam
+	ldb	GEOWCBuf,#$00
+	ldb	GEOWCBuf+1,#$02
+14$:	ldy	GEOWCBuf+1
+	lda	R10L
+	sta	GEOWCBuf,y
+	inc	GEOWCBuf+1
+	ldx	#$00
+	rts
+
+
+GEOWHead:
 	.word	$0000
 	.byte	$03,$15,$bf
 	.byte	$ff,$ff,$ff,$80,$00,$01,$8f,$ff
