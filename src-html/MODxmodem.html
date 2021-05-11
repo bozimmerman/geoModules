@@ -1,0 +1,573 @@
+<!DOCTYPE html><html><head><title>Untitled</title></head><body><pre>
+.noeqin
+.include	GEOSequates
+.glbl
+.eqin
+
+;*********************************************
+;* MODxmodem - geoProjects library 
+;*               (c) 2017 Bo Zimmerman
+;*
+;* Intro:
+;*     A module for sending and receiving data using
+;*     the X-Modem protocol.  Supports CHK and CRC16.
+;*     Requires MODmodem or compatible library
+;* 
+;* Functions:
+;* 	XMOrcvChk(	.word	Vector - Receive a single byte in .a
+;*		.word	Vector - Received a good block
+;*		.word	Vector - Received a bad block
+;*		.word	Vector - Abort check (carry set = abort)
+;*		) .x = 0 no error
+;* 	XMOrcvCrc(	.word	Vector - Receive a single byte in .a
+;*		.word	Vector - Received a good block
+;*		.word	Vector - Received a bad block
+;*		.word	Vector - Abort check (carry set = abort)
+;*		) .x = 0 no error
+;* 	XMOsend(	.word	Vector - Ensure 128 bytes available
+;*		.word	Vector - Send a single byte in .a, .x=no more
+;*		.word	Vector - Sent a bad block
+;*		.word	Vector - Abort Check (carry set = abort)
+;*		) .x = 0 no error
+;*
+;*     * = includes i_Function call, and returns
+;*            status in the .x register
+;*
+;* Comments:
+;*
+;*********************************************
+
+.psect
+
+XMO_ACK	= $06
+XMO_CAN	= $18
+XMO_EOT	= $04
+XMO_NAK	= $15
+XMO_SOH	= $01
+XMO_CNAK	= $43
+XMO_PAD	= $1A
+XMO_OTH	= $02
+
+XMOSPut:	jmp ComSPut
+XMOGet:	jmp ComGet
+XMOnline:	jmp ComOnline
+XMOPause:	jmp PauSec
+XMOBufR:	jmp CLL2xxRb
+
+;****************************************
+;* XMOrcvChk		X-Modem Receive (checksum)
+;* XMOrcvCrc		X-Modem Receive (CRC-16)
+;* Inputs:
+;*	A2	Vector - Receive a single byte in .a
+;*	A3	Vector - Received a good block
+;*	A4	Vector - Received a bad block
+;*	A5	Vector - Abort check (carry set = abort)
+;* Outputs:
+;*	.x 	0 means A-OK, or abort/error
+;*
+;********************************
+XMOrcvChk:	ldb	XMOXType,#0
+	ldb	XMOBufSize,#$84
+	jmp	XMOrcvSt
+XMOrcvCrc:	ldb	XMOXType,#1
+	ldb	XMOBufSize,#$85
+XMOrcvSt:	mvw	A2,XMORcVec+1	; receive 1 byte in .a
+	mvw	A3,XMORgVec+1	; receive good block
+	mvw	A4,XMOErVec+1	; receive error block
+	mvw	A5,XMOabVec+1	; abort check
+	ldb	XMOUpDn,#1
+	jsr	XMOClear
+	jsr	XMOBufFlush
+	inc	XMOBlock
+	lda	XMOXType
+	bne	10$
+	lda	#XMO_NAK
+	bne	20$
+10$:	lda	#XMO_CNAK
+20$:	jsr	XMOSPut
+	jmp	XMOrcvLp
+
+XMORcVec:	jmp	XMONada	; receive 1 byte
+XMORgVec:	jmp	XMONada	; good block receive bytes
+XMOErVec:	jmp	XMONada	; error block receive bytes
+XMONada:	rts
+
+XMOrcvLp:	lda	XMOErrors
+	cmp	#$0e
+	bcc	11$
+10$:	ldb	XMOAbort,#$01
+11$:	jsr	XMOChkAbort
+	jsr	XMOChkTm
+	lda	XMOAbort
+	beq	15$
+	jmp	XMOXAbort
+14$:	jmp	XMOXRcv
+15$:	cbi	XMOBlock,#$01
+	bne	17$
+	cbi	XMOTmOuts,#$02
+	bne	17$
+	beq	10$	; to cancel
+17$:	lda	XMOClock
+	beq	18$
+	jmp	XMONoBort
+18$:	lda	XMOBuf
+	cmp	#XMO_CAN
+	beq	10$
+	cmp	#XMO_EOT
+	beq	14$
+	jsr	XMOgetKey
+	lda	XMOKeySync
+	beq	XMOrcvLp
+	jsr	XMOReTm
+	ldy	XMOBufBit
+	lda	XMOKeyFree
+	sta	XMOBuf,y
+	inc	XMOBufBit
+	iny
+	cpy	XMOBufSize
+	bcc	XMOrcvLp	; 
+	jsr	XMOPause	; Check the Block
+	lda	XMOBuf
+	cmp	#XMO_EOT
+	beq	14$
+	cmp	#XMO_CAN
+	beq	10$
+	cmp	#XMO_OTH
+	beq	20$
+	cmp	#XMO_SOH
+	beq	20$
+19$:	jmp	XMOConRcv
+20$:	cpb	XMOBuf+1, XMOBlock
+	bne	19$
+	eor	#$ff
+	cmp	XMOBuf+2
+	bne	19$
+	jsr	XMOchkBlk
+	lda	XMOXType
+	bne	22$
+	cpb	XMOChkSum, XMOBufEnd
+	beq	25$
+21$:	jmp	XMOConRcv
+22$:	cpb	XMOBufEnd, XMOCrc
+	bne	21$
+	cpb	XMOBufCrc,XMOCrc+1
+	bne	21$
+25$:	ldb	XMOGood,#1
+	jmp	XMOConRcv
+
+XMOConRcv:	lda	XMOGood
+	beq	20$
+	ldb	XMOBufCt,#0
+10$:	ldy	XMOBufCt
+	lda	XMOBuf3,y
+	jsr	XMORcVec
+	inc	XMOBufCt
+	cbi	XMOBufCt,#$80
+	bcc	10$
+	jsr	XMOBufFlush
+	jsr	XMORgVec
+	lda	#XMO_ACK
+	jsr	XMOSPut
+	inc	XMOBlock
+	jmp	XMOrcvLp
+20$:	lda	XMOAbort
+	beq	XMONoBort
+	jmp	XMOXAbort
+XMONoBort:	jsr	XMOBufFlush
+	jsr	XMOerVec
+	lda	XMOXType
+	bne	30$
+25$:	lda	#XMO_NAK
+	jsr	XMOSPut
+	bra	40$
+30$:	lda	XMOBlock
+	cmp	#$02
+	bcs	25$
+	lda	#XMO_CNAK
+	jsr	XMOSPut
+40$:	inc	XMOErrors
+	jmp	XMOrcvLp
+
+XMOXRcv:	lda	#XMO_ACK
+	jsr	XMOSPut
+	jmp	XMOExit
+
+XMOXAbort:	lda	#$01
+	sta	XMOAbort
+	lda	#XMO_CAN
+	jsr	XMOSPut
+	lda	#XMO_CAN
+	jsr	XMOSPut
+	lda	#XMO_CAN
+	jsr	XMOSPut
+	jmp	XMOExit
+
+XMOExit:	ldx	XMOAbort
+	jsr	XMOClear
+	stx	XMOAbort
+	jsr	XMOBufFlush
+	lda	#0
+	sta	XMOXType
+	sta	XMOUpDn
+	lda	XMOAbort
+	tax
+	rts
+
+
+;****************************************
+;* XMOsend		X-Modem Send
+;* Inputs:
+;*	A2	Vector - Ensure 128 bytes available
+;*	A3	Vector - Send a single byte in .a, .x=no more
+;*	A4	Vector - Sent a bad block
+;*	A5	Vector - Abort Check (carry set = abort)
+;* Outputs:
+;*	.x 	0 means A-OK, or abort/error
+;*
+;********************************
+
+XMOsend:	ldb	XMOUpDn,#0	; flag for upload
+	jsr	XMOClear	; reset all the vars
+	;jsr	XMOBufFlush	; this makes no sense!
+	jsr	XMOgosCrc	; default CRC setup
+	mvw	A2,XMOSsVec+1	; setup our vectors
+	mvw	A3,XMOSnVec+1
+	mvw	A4,XMOErVec+1
+	mvw	A5,XMOabVec+1
+	jmp	XMOsendStart	; start the upload
+
+XMOSsVec:	jmp	XMONada	; prepare 128 bytes
+XMOSnVec:	jmp	XMONada	; send 1 byte
+XMOabVec:	jmp	XMONada
+
+XMOgosChk:	ldb	XMOXType,#$00
+	ldb	XMOBufSize,#$84
+	rts
+XMOgosCrc:	ldb	XMOXType,#$01
+	ldb	XMOBufSize,#$85
+	rts
+
+
+
+XMObuild:	jsr	XMOSsVec
+	ldy	#0
+	sty	XMOIOStat
+	sty	XMOBufCt
+10$:	jsr	XMOSnVec
+	ldy	XMOBufCt
+	sta	XMOBuf3,y
+	stx	XMOIOStat
+	inc	XMOBufCt
+	cpx	#0
+	bne	20$
+	cbi	XMOBufCt,#$80
+	bcc	10$
+	bra	30$
+20$:	nop		; BZ: why? inc 	XMOBufCt
+25$:	ldy	XMOBufCt
+	lda	#XMO_PAD
+	sta	XMOBuf3,y
+	inc	XMOBufCt
+	cbi	XMOBufCt,#$80
+	bcc	25$
+30$:	ldb	XMOBuf,#XMO_SOH
+	lda	XMOBlock
+	sta	XMOBuf+1
+	eor	#$ff
+	sta	XMOBuf+2
+	jsr	XMOchkBlk
+	lda	XMOChkSum
+	sta	XMOBufEnd
+	lda	XMOXType
+	beq	XMOcontSend
+	mvb	XMOCrc,XMOBufEnd
+	mvb	XMOCrc+1,XMOBufCrc
+XMOcontSend:	jsr	XMOminFlush
+	ldy	#0
+	sty	XMOBufBit
+50$:	lda	XMOBuf,y
+	jsr	XMOSPut
+	ldy	XMOBufBit
+	iny
+	sty	XMOBufBit
+	cpy	XMOBufSize
+	bcc	50$
+	jmp	XMOsendStart
+
+XMOsendStart:	jsr	XMOReTm
+10$:	jsr	XMOChkAbort
+	jsr	XMOChkTm
+	jsr	XMOGet
+	bcs	19$
+	cmp	#XMO_NAK
+	beq	33$
+	cmp	#XMO_CNAK
+	beq	32$
+	cmp	#XMO_CAN
+	beq	30$
+	cmp	#XMO_ACK
+	beq	50$
+19$:	cbi	XMOErrors,#$0e
+	beq	30$
+	lda	XMOAbort
+	bne	30$
+	lda	XMOClock
+	bne	40$
+29$:	beq	10$
+30$:	jmp	XMOXAbort
+32$:	jsr	XMOgosCrc
+	bra	35$
+33$:	jsr	XMOgosChk
+35$:	lda	XMOBlock
+	beq	50$
+40$:	inc	XMOErrors
+	jsr	XMOErVec
+	jsr	XMOPause
+	lda	XMOBlock
+	beq	10$
+	jsr	XMOBufR
+	jmp	XMOcontSend
+50$:	lda	XMOBlock
+	bne	51$
+	ldb	XMOErrors,#0
+	jsr	XMOBufR
+51$:	inc	XMOBlock
+	lda	XMOIOStat
+	beq	80$
+	ldy	#0
+70$:	tya
+	pha
+	lda	#XMO_EOT
+	jsr	XMOSPut
+	pla
+	tay
+	iny
+	cpy	#$85
+	bne	70$
+	jmp	XMOExit
+80$:	jsr	XMOPause
+	jsr	XMOBufFlush
+	jmp	XMObuild	
+
+XMOClear:	lda	#0
+	sta	XMOBlock
+	sta	XMOGood
+	sta	XMOErrors
+	sta	XMOAbort
+	sta	XMOBufBit
+	sta	XMOChkSum
+	sta	XMOCrc
+	sta	XMOCrc+1
+	sta	XMOTmOuts
+	sta	XMOIOStat
+	rts
+
+
+
+XMOReTm:	jsr	Check128
+	beq	10$
+	phb	$01
+	ldb	$01,#$35
+	jsr	XMOClrTm
+	plb	$01
+	rts
+10$:	phb	$ff00
+	ldb	$ff00,#$7e
+	jsr	XMOClrTm
+	plb	$ff00
+	rts
+
+XMOChkTm:	ldb	XMOClock,#0
+	jsr	Check128
+	beq	20$
+	phb	$01
+	ldb	$01,#$35
+	jsr	XMOGooTm
+	plb	$01
+10$:	cbi	XMOChkC,#3
+	bcs	XMOBadTm
+	rts
+20$:	phb	$ff00
+	ldb	$ff00,#$7e
+	jsr	XMOGooTm
+	plb	$ff00
+	bra	10$
+XMOBadTm:	inc	XMOTmOuts
+	inc	XMOClock
+	jmp	XMOReTm
+
+XMOGooTm:	lda	$dc09
+	beq	10$
+	inc	XMOChkC
+	lda	#0
+	sta	$dc09
+	sta	$dc08
+10$:	lda	$dc08	; forces clock restart
+	rts
+
+XMOClrTm:	lda	#0
+	sta	XMOChkC
+	sta	$dc09
+	sta	$dc08
+	rts
+
+XMOChkAbort:	clc
+	jsr	XMOabVec
+	bcs	10$
+	jsr	XMOnline
+	beq	10$
+	lda	#0
+	rts
+10$:	ldb	XMOAbort,#1
+	rts
+
+XMOErrFlush:	inc	XMOErrors
+XMOBufFlush:	ldy	#0
+	tya
+10$:	sta	XMOBuf,y
+	iny
+	cpy	#$85
+	bcc	10$
+XMOMinFlush:	;jsr	XMOBufR	; TODO: could this be a prob?
+	lda	#0
+	sta	XMOBufBit
+	sta	XMOGood
+	jsr	XMOReTm
+	rts
+
+XMOgetKey:	tya
+	pha
+	lda	#0
+	sta	XMOKeySync
+	jsr	XMOGet
+	bcc	10$
+	pla
+	tay
+	rts
+10$:	sta	XMOKeyFree
+	inc	XMOKeySync
+	pla
+	tay
+	rts
+
+XMOchkBlk:	lda	XMOXType
+	bne	XMOchkCrc
+	ldy	#0
+	sta	XMOChkSum
+10$:	lda	XMOBuf3,y
+	add	XMOChkSum
+	sta	XMOChkSum
+	iny
+	cpy	#$80
+	bcc	10$
+	rts
+
+XMOchkCrc:	ldy	#0
+	sty	XMOCrc
+	sty	XMOCrc+1
+10$:	lda	XMOBuf3,y
+	eor	XMOCrc
+	tax
+	lda	XMOcrcMB,x
+	eor	XMOCrc+1
+	sta	XMOCrc
+	lda	XMOcrcLB,x
+	sta	XMOCrc+1
+	iny
+	cpy	#$80
+	bne	10$
+	rts	
+
+XMOcrcLB:	.byte 0,33,66,99,132,165,198,231
+	.byte 8,41,74,107,140,173,206,239
+	.byte 49,16,115,82,181,148,247,214
+	.byte 57,24,123,90,189,156,255,222
+	.byte 98,67,32,1,230,199,164,133
+	.byte 106,75,40,9,238,207,172,141
+	.byte 83,114,17,48,215,246,149,180
+	.byte 91,122,25,56,223,254,157,188
+	.byte 196,229,134,167,64,97,2,35
+	.byte 204,237,142,175,72,105,10,43
+	.byte 245,212,183,150,113,80,51,18
+	.byte 253,220,191,158,121,88,59,26
+	.byte 166,135,228,197,34,3,96,65
+	.byte 174,143,236,205,42,11,104,73
+	.byte 151,182,213,244,19,50,81,112
+	.byte 159,190,221,252,27,58,89,120
+	.byte 136,169,202,235,12,45,78,111
+	.byte 128,161,194,227,4,37,70,103
+	.byte 185,152,251,218,61,28,127,94
+	.byte 177,144,243,210,53,20,119,86
+	.byte 234,203,168,137,110,79,44,13
+	.byte 226,195,160,129,102,71,36,5
+	.byte 219,250,153,184,95,126,29,60
+	.byte 211,242,145,176,87,118,21,52
+	.byte 76,109,14,47,200,233,138,171
+	.byte 68,101,6,39,192,225,130,163
+	.byte 125,92,63,30,249,216,187,154
+	.byte 117,84,55,22,241,208,179,146
+	.byte 46,15,108,77,170,139,232,201
+	.byte 38,7,100,69,162,131,224,193
+	.byte 31,62,93,124,155,186,217,248
+	.byte 23,54,85,116,147,178,209,240
+
+
+XMOcrcMB:	.byte 0,16,32,48,64,80,96,112
+	.byte 129,145,161,177,193,209,225,241
+	.byte 18,2,50,34,82,66,114,98
+	.byte 147,131,179,163,211,195,243,227
+	.byte 36,52,4,20,100,116,68,84
+	.byte 165,181,133,149,229,245,197,213
+	.byte 54,38,22,6,118,102,86,70
+	.byte 183,167,151,135,247,231,215,199
+	.byte 72,88,104,120,8,24,40,56
+	.byte 201,217,233,249,137,153,169,185
+	.byte 90,74,122,106,26,10,58,42
+	.byte 219,203,251,235,155,139,187,171
+	.byte 108,124,76,92,44,60,12,28
+	.byte 237,253,205,221,173,189,141,157
+	.byte 126,110,94,78,62,46,30,14
+	.byte 255,239,223,207,191,175,159,143
+	.byte 145,129,177,161,209,193,241,225
+	.byte 16,0,48,32,80,64,112,96
+	.byte 131,147,163,179,195,211,227,243
+	.byte 2,18,34,50,66,82,98,114
+	.byte 181,165,149,133,245,229,213,197
+	.byte 52,36,20,4,116,100,84,68
+	.byte 167,183,135,151,231,247,199,215
+	.byte 38,54,6,22,102,118,70,86
+	.byte 217,201,249,233,153,137,185,169
+	.byte 88,72,120,104,24,8,56,40
+	.byte 203,219,235,251,139,155,171,187
+	.byte 74,90,106,122,10,26,42,58
+	.byte 253,237,221,205,189,173,157,141
+	.byte 124,108,92,76,60,44,28,12
+	.byte 239,255,207,223,175,191,143,159
+	.byte 110,126,78,94,46,62,14,30
+
+
+.ramsect
+XMOBlock:	.block 1
+XMOGood:	.block 1
+XMOErrors:	.block 1
+XMOAbort:	.block 1
+XMOTmOut:	.block 1
+XMOBufBit:	.block 1
+XMOBufSize:	.block 1
+XMOChkSum:	.block 1
+XMOCrc:	.block 2
+XMOClock:	.block 1
+XMOChkC:	.block 1
+XMOIOStat:	.block 1
+XMOKeySync:	.block 1
+XMOKeyFree:	.block 1
+XMOXType:	.block 1
+XMOUpDn:	.block 1
+XMOBufCt:	.block 1
+
+XMOBuf:	.block 3
+XMOBuf3:	.block $80
+XMOBufEnd:	.block 1
+XMOBufCrc:	.block 1
+
+</pre></body></html>

@@ -1,0 +1,596 @@
+<!DOCTYPE html><html><head><title>Untitled</title></head><body><pre>
+.if MODMODEM = 128
+BANK_REG = $ff00
+BANK_vIO = $7e
+BANK_vSTD = $7e
+.endif
+.if MODMODEM = 64
+BANK_REG = $01
+BANK_vIO = $35
+BANK_vSTD = $30
+.endif
+
+.noeqin
+.include	GEOSequates
+.glbl
+.eqin
+
+;*********************************************
+;* MODmodem - geoProjects library 
+;*		written by Bo Zimmerman
+;*		adapted from commLib2.bin by Ilker Ficicilar
+;*
+;* Intro:
+;*     A module for reading and writing to an RS-232 
+;*     device connected to a C64 or C128 user port such
+;*     as traditional or internet modems.
+;* 
+;* Functions:
+;*	ComInit(	.byte	Input Buffer Addr Page
+;*		.byte	Size of A2 Buf in Pages (unimpl)
+;*		.byte	Baud Rate Code
+;*		.byte	Flow Control Code )
+;*	ComUninst(	)
+;*	ComReInit(	)
+;*	ComDisable(	)
+;*	ComEnable(	)
+;*	ComFlon(	)
+;*	ComFloff(	)
+;*	ComOnline(	) .ne = online, .eq = not online
+;*	ComSend(	.a byte to send )
+;*	ComSPut(	.a byte to send )
+;*	BaudSet(	.byte	baud rate code )
+;*	IsNTSC(	) .ne = pal, .eq = ntsc
+;*	PauSec(     ) pause about a second
+;*	ComGet(	) .a byte, .cc = byte, .cs = nada
+;*
+;*     * = includes i_Function call, and returns
+;*            status in the .x register
+;*
+;* Comments:
+;*
+;*********************************************
+
+.psect
+
+;********************************
+;* ComInit	Initialize RS-232 system
+;* Inputs:
+;*	A2L Input Buffer Addr Page
+;*	A2H Size of A2 Buf in Pages (unimpl)
+;*	A3L Baud Rate Code
+;*	A3H Flow Control Code
+;*
+;*
+;* Flow Ctrl:	0=None, $40=XOFF, 
+;* 	$80=RTSCTS,$C0=BOTH
+;* Baud Cds:	0=300, 1=1200, 2=2400,3=4800
+;*	4=7200,5=9600,6=144, 7=192
+;********************************
+ComInit:	mvb A2L,CLL2B1+2
+	mvb A2L,CLL2B2+2
+	mvb A2L,CLL2B3+2
+	jsr CLL2xxRb
+	lda A3L
+	jsr CLL2BSet
+	mvb A3H,CLL2FloC
+ 	sei
+	phb BANK_REG
+	ldb BANK_REG, #BANK_vIO
+	lda CLL2NMIv+2
+	bne 20$
+.if MODMODEM = 128
+	jsr CLL2Bnkr
+.endif
+	lda $fffa
+	sta CLL2NMIv+1
+	lda $fffb
+	sta CLL2NMIv+2
+20$:	lda #<CLL2NMI1
+	sta $fffa
+	lda #>CLL2NMI1
+	sta $fffb
+.if MODMODEM = 128
+	jsr CLL2Bnkw
+.endif
+	ldy #$03
+50$:	lda CLL2WTime,y
+	sta $dd04,y
+	dey 
+	bpl 50$
+	lda #$7f
+	sta $dd0d
+	lda #$90
+	sta $dd0d
+	iny 
+	sty CLL2Busy
+	lda $dd00
+	and #$fb
+	sta CLL2Mark
+	ora #$04
+	sta CLL2Space
+	sta $dd00
+	lda $dd03
+	and #$ae
+	ora #$02
+	sta $dd03
+	sta $dd01 ; set everything high thats writeable
+	plb BANK_REG
+	cli 
+	rts 
+
+;************************
+;* ComUninst	Remove RS-232 system
+;* Inputs:
+;*
+;************************
+ComUninst: 	sei 
+	phb BANK_REG
+	ldb BANK_REG, #BANK_vIO
+	lda CLL2NMIv+1
+	sta $fffa
+	lda CLL2NMIv+2
+	sta $fffb
+.if MODMODEM = 128
+	jsr CLL2BnkU
+.endif
+	lda #$7f
+	sta $dd0d
+	lda $dd00
+	ora #$04
+	sta $dd00
+	plb BANK_REG
+	cli
+	clc 
+	rts 	
+
+CLL2xxRb:	lda #0
+	sta CLL2BfRdx
+	sta CLL2BfWdx
+	ldb CLL2BfFdx,#$F0
+	rts
+
+
+;********************************
+;* ComReInit	Re-Initialize RS-232 system
+;* Inputs:
+;********************************
+
+ComReInit:	sei 
+	phb BANK_REG
+	ldb BANK_REG, #BANK_vIO
+	lda CLL2NMIv+1
+	sta $fffa
+	lda CLL2NMIv+2
+	sta $fffb
+.if MODMODEM = 128
+	jsr CLL2Bnkr
+	jsr CLL2BnkU
+.endif
+	plb BANK_REG
+	cli
+	mvb	CLL2Baud,A3L
+	mvb	CLL2FloC,A3H
+	ldb	A2H,#1
+	mvb	CLL2B1+2,A2L
+	jmp	ComInit
+
+
+
+;************************
+;* ComDisable	Disable RS-232 system
+;* Inputs:
+;*
+;************************
+ComDisable:	jsr ComFloff
+20$:	lda CLL2Busy
+	bmi 20$
+	sei
+30$:	phb BANK_REG
+	ldb BANK_REG, #BANK_vIO
+	lda #$7f
+	sta $dd0d
+	plb BANK_REG
+	lda #$00
+	sta CLL2Busy
+	cli
+	clc 
+	rts 
+
+
+
+;**********************************
+;* ComEnable	Re+Enable disabled RS-232 system
+;* Inputs:
+;*
+;**********************************
+ComEnable:	phb BANK_REG
+	ldb BANK_REG, #BANK_vIO
+	lda CLL2WTime+2
+	sta $dd06
+	lda CLL2WTime
+	sta $dd04
+	lda CLL2WTime+1
+	sta $dd05
+	sta $dd07
+	sta CLL2Busy
+	lda #$90
+	sta $dd0d
+	plb BANK_REG
+	jsr ComFlon
+	clc 
+	rts 
+
+
+;**********************************
+;* ComOnline	Check whether DCD is high
+;* Inputs:
+;* Outputs:	N = 0, not online
+;*	N > 0, online
+;**********************************
+ComOnline:	phb BANK_REG
+	ldb BANK_REG, #BANK_vIO
+	lda	$dd01
+	and	#$10
+	sta	ComOFlg+1
+	plb	$01
+ComOFlg:	lda	#$00
+	rts
+
+
+;*****************************
+;* ComSend	Send byte to RS-232
+;* Inputs:
+;*	.a Byte to send
+;******************************
+ComSend:	php 
+	pha 
+CLL2SndL:	lda CLL2Busy
+	bmi CLL2SndL
+	sei 
+	pla 
+	sta CLL2WTmp
+	phb BANK_REG
+	ldb BANK_REG, #BANK_vIO
+	lda #$81
+	sta $dd0d
+	lda #$11
+	sta $dd0e
+	lda #$09
+	sta CLL2WBit
+	lda #$80
+	sta CLL2Busy
+	lda CLL2Mark
+	sta $dd00
+	lsr CLL2WTmp
+	bcc 10$
+	lda CLL2Space
+10$:	sta CLL2NxtO
+	plb BANK_REG
+	plp 
+	rts 
+
+CLL2NMI1:	sei 
+CLL2NMI2:	pha
+	phb BANK_REG
+	ldb BANK_REG, #BANK_vIO
+	lda $dd0d
+	bpl 40$
+	and #$03
+	beq 50$
+	and #$02
+	bne 55$
+	dec CLL2WBit
+	bmi 30$
+	beq 20$
+	lda CLL2NxtO
+	sta $dd00
+	lda CLL2Space
+	lsr CLL2WTmp
+	bcs 10$
+	lda CLL2Mark
+10$:	sta CLL2NxtO
+	plb BANK_REG
+	pla 
+	rti
+20$:	lda CLL2Space
+	sta $dd00
+	plb BANK_REG
+	pla 
+	rti
+30$:	lda #$10
+	sta $dd0e
+	lda #$01
+	sta $dd0d
+	sta CLL2Busy
+	jmp CLL2NMxt
+40$:	jmp CLL2NMxt
+50$:	lda #$11
+	sta $dd0f
+	lda #$10
+	sta $dd0d
+	lda #$82
+	sta $dd0d
+	lda #$08
+	sta CLL2RBit
+	jmp CLL2NMxt
+55$:	lda $dd01
+	lsr a
+	ror CLL2RTmp
+	dec CLL2RBit
+	beq CLL2NMI_
+	jmp CLL2NMxt
+
+
+CLL2NMI_:	lda #$02
+	sta $dd0d
+	lda #$10
+	sta $dd0f
+	tya
+	pha
+	ldy CLL2BfWdx
+	lda CLL2RTmp
+CLL2B1:	sta $5f00,y
+	inc CLL2BfWdx
+	pla
+	tay
+	cpb CLL2BfWdx,CLL2BfFdx
+	bne 20$
+	bit CLL2FloC
+	bpl 10$
+	lda $dd01
+	and #$fd
+	sta $dd01
+	bit CLL2FloC
+10$:	bvc 20$
+	lda #$13
+	;jsr ComSend	; obviously a bad idea.
+20$:	lda #$90
+	sta $dd0d
+CLL2NMxt:	plb BANK_REG
+	pla 
+	rti
+CLL2BnkN:	ldb $ff00,#$3e
+	plw $fffa
+	ldb $ff00,#$7e
+	rts 
+CLL2NMIv:	jmp $0000	;$fe56
+
+
+;*****************************
+;* ComSPut	Safe Send byte to RS-232
+;* Inputs:
+;*	.a Byte to send
+;******************************
+ComSPut:	php 
+	pha
+	phb BANK_REG
+	ldb BANK_REG, #BANK_vIO
+10$:	lda $d012
+	cmp #$f2
+	bcs 20$
+	cmp #$2c
+	bcs 10$
+20$:	plb BANK_REG
+	jmp CLL2SndL
+
+
+
+;*****************************
+;* BaudSet	Change RS-232 Baud Rate
+;* Inputs:
+;*	A2L Baud Rate Code
+;*
+;* Baud Cds:	0=300, 1=1200, 2=2400,3=4800
+;*	4=7200,5=9600,6=144, 7=192
+;******************************
+BaudSet:	lda A2L
+CLL2BSet:	sta CLL2Baud
+	asl a
+	asl a
+	tay 
+	ldw A0,#CLL2NBVals
+	jsr IsNTSC
+	beq 19$
+	ldw A0,#CLL2PBVals		
+19$:	phb BANK_REG
+	ldb BANK_REG, #BANK_vIO
+	ldx #$00
+20$:	lda (A0),y
+	sta CLL2WTime,x
+	sta $dd04,x
+	iny 
+	inx 
+	cpx #$04
+	bne 20$
+	plb BANK_REG
+	rts 
+
+;*****************************
+;* IsNTSC	Is the computer NTSC?
+;* Outputs:
+;*	duh
+;******************************
+IsNTSC:	lda #$00
+	beq 10$
+	cmp #$01
+	rts
+10$:	sei
+	phb BANK_REG
+	ldb BANK_REG, #BANK_vIO
+	lda $d011
+	pha
+	mvw $fffa,CLL2nmsv
+	ldw $fffa,#CLL2rti
+20$:	lda $d012
+	bne 20$
+	ldb $d012,#$37
+	ldb $d011,#$9b
+	ldb $d019,#$01
+30$:	lda $d011
+	bpl 30$
+40$:	lda $d011
+	bmi 40$
+	lda $d019
+	and #$01
+	sta $d019
+	inc IsNTSC+1	; is NTSC
+	cmp #$00
+	beq 50$
+	inc IsNTSC+1	; is PAL
+50$:	pla
+	sta $d011
+	mvw CLL2nmsv,$fffa
+	plb BANK_REG
+	cli
+	jmp IsNTSC
+CLL2rti:	rti
+
+
+;*****************************
+;* PauSec	Pause about a second
+;* Outputs:	Lost Time.
+;******************************
+PauSec:	phb BANK_REG
+	ldb BANK_REG, #BANK_vIO
+	lda	#0
+	sta	APITemp2
+10$:	lda	#0
+	sta	$dc08
+20$:	lda	$dc08
+	beq	20$
+	inc	APITemp2
+	cbi	APITemp2,#9	; almost a second
+	bcc	10$
+	plb BANK_REG
+	rts
+
+
+;*****************************
+;* ComGet	Read RS-232 Byte
+;* Outputs:
+;*	.carry set=nada, clear=byte!
+;*	.a the byte received or 0
+;******************************
+ComGet:	lda CLL2BfRdx
+	cmp CLL2BfWdx
+	bne 20$
+	sec 
+	lda #$00
+	rts 
+20$:	tya
+	pha
+	ldy CLL2BfRdx
+CLL2B2:	lda $5f00,y
+	sta CLL2Byte
+	inc CLL2BfFdx
+	inc CLL2BfRdx
+	cpb CLL2BfRdx,CLL2BfWdx
+	bne 30$
+	jsr ComFlon
+30$:	pla
+	tay
+40$:	lda CLL2Byte
+	clc 
+	rts
+
+ComPush:	ldy CLL2BfWdx
+CLL2B3:	sta $5f00,y
+	inc CLL2BfWdX
+	rts
+	
+
+;**********************************
+;* ComFlon	Turn on incoming data by 
+;*	turnning on RTS flag
+;* Inputs:
+;* Outputs:
+;**********************************
+ComFlon:	pha
+	bit CLL2FloC
+	bpl 10$
+	phb BANK_REG
+	ldb BANK_REG, #BANK_vIO
+	lda $dd01
+	ora #$02
+	sta $dd01
+	plb BANK_REG
+	bit CLL2FloC
+10$:	bvc 20$
+	lda #$11
+	jsr ComSend
+20$:	pla
+	rts
+
+;**********************************
+;* ComFloff	Turn off incoming data by 
+;*	turnning off RTS flag
+;* Inputs:
+;* Outputs:
+;**********************************
+ComFloff:	pha
+	bit CLL2FloC
+	bpl 10$
+	phb BANK_REG
+	ldb BANK_REG, #BANK_vIO
+	lda $dd01
+	and #$fd
+	sta $dd01
+	plb BANK_REG
+	bit CLL2FloC
+10$:	bvc 30$
+	lda #$13
+	jsr ComSend
+30$:	pla
+	rts
+
+
+;**** c128 only -- copy NMI routine to bank 1, called from ram bank 0
+.if MODMODEM = 128
+
+CLL2Bnkr:	ldw R0,#CLL2NMI1
+	ldw R1,#CLL2NMI1
+	ldw R2,#(CLL2NMIv - CLL2NMI1 + 10)
+	ldb R3L,#$01
+	ldb R3H,#$00
+	jsr $c2e3	; MoveBData
+	rts
+
+CLL2Bnkw:	phw $fffa
+	jmp CLL2BnkN
+
+CLL2BnkU:	phw CLL2NMIv+1
+	jmp CLL2BnkN
+
+.endif
+
+CLL2Busy:	.byte $01 ; busy flag
+CLL2BfRdx:	.byte $00
+CLL2BfWdx:	.byte $00
+CLL2BfFdx:	.byte $F0
+CLL2Byte:	.byte $0a ; byte read
+CLL2RTmp:	.byte $0a ; read temp
+CLL2WTmp:	.byte $00 ; write temp
+CLL2RBit:	.byte $00 ; read bit counter
+CLL2WBit:	.byte $ff ; write bit counter
+CLL2WTime:	.byte $51,$03 ; send data bit time
+CLL2RTime:	.byte $50,$03 ; read data bit time
+CLL2FloC:	.byte $00 ; flow control method
+CLL2NxtO:	.byte $c3 ; value for $dd00
+CLL2Mark:	.byte $c3 ; mark bit 
+CLL2Space:	.byte $c7 ; space bits
+CLL2Baud:	.byte $01 ; speed/baud
+CLL2nmsv:	.byte $00,$00
+
+; below are baud timing values
+CLL2NBVals:	.byte $81,$0d,$94,$0d,$54,$03,$63,$03
+	.byte $a7,$01,$b3,$01,$cf,$00,$d8,$00
+	.byte $8a,$00,$90,$00,$64,$00,$69,$00
+	.byte $44,$00,$47,$00,$31,$00,$34,$00
+
+CLL2PBVals:	.byte $00,$0d,$10,$0d,$34,$03,$42,$03
+	.byte $97,$01,$a2,$01,$c7,$00,$d0,$00
+	.byte $85,$00,$8b,$00,$60,$00,$65,$00
+	.byte $41,$00,$44,$00,$2f,$00,$32,$00
+
+</pre></body></html>

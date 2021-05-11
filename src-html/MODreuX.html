@@ -1,0 +1,293 @@
+<!DOCTYPE html><html><head><title>Untitled</title></head><body><pre>
+.noeqin
+.include	GEOSequates
+.glbl
+.eqin
+
+;*********************************************
+;* MODreuX - geoProjects library 
+;*          Read and write to REU memory bank like a file
+;*
+;* Intro:
+;*     A module for reading and writing to REU
+;*     memory as a file device, forward and 
+;*     backward, after dynamically checking for
+;*     a free block.
+;* 
+;* Functions:
+;*	OpenRR()  .x error
+;*	SeekRR(	.word	Pointer to read position ) .x error
+;*	SeekRW( ) .x error
+;*	GetRByte()	.a	byte read in, .x error
+;*	GetRevB()	.a	byte read in, .x error
+;* TODO:	GetRString(	.word	String pointer) 
+;* TODO:	GetRBuf(	.word	Buffer pointer
+;*		.word	Number of bytes) 
+;* TODO:	GetRMem(	.word	Buffer pointer
+;*		.word	Last byte pointer) 
+;*	CreatRW()  .x error
+;*	PutRByte(	.a	Byte to write out) 
+;* TODO:	PutRString(	.word	String pointer) 
+;* TODO:	PutRBuf(	.word	Buffer pointer
+;*			.word	Number of bytes) 
+;* TODO:	PutRMem(	.word	Buffer pointer
+;*			.word	Last byte pointer) 
+;*	FlushR(	)
+;*     * = includes i_Function call, and returns
+;*            status in the .x register
+;*
+;* Comments:
+;*
+;*********************************************
+
+.psect
+
+
+
+;*****************************
+;* OpenRR	Open buffer for reading.
+;* Outputs:
+;*	.x > 0 for error
+;******************************
+OpenRR:	jsr	REUxVal
+	beq	10$
+	rts
+10$:	mvb	REUxTPg,REUxRPg
+	ldb	REUxRDx,#0
+REUxRChk:	cpb	REUxRPg,REUxWPg
+	bcs	20$
+15$:	ldx	#0
+	rts
+20$:	cpb	REUxRDx,REUxWdx
+	bcc	15$
+	ldx	#1
+	rts
+
+
+
+;*****************************
+;* SeekRR	Seek to read position
+;* Inputs:
+;*	A2	Pointer to new read positon (0-n)
+;* Outputs:
+;*	.x > 0 for error
+;******************************
+SeekRR:	lda	A2H
+	clc
+	adc	REUxTPg
+	sta	REUxRPg
+	mvb	A2L,REUxRDx
+	jmp	REUxRChk
+
+
+
+;*****************************
+;* SeekRW	Seek to EOF read position
+;* Outputs:
+;*	.x > 0 for error
+;******************************
+SeekRW:	mvb	REUxWPg,REUxRPg
+	mvb	REUxWDx,REUxRDx
+	beq	20$
+	dec	REUxRDx
+10$:	ldx	#0
+	rts
+20$:	lda	REUxRPg
+	cmp	REUxTPg
+	beq	30$
+	dec	REUxRPg
+	ldx	#0
+	rts
+30$:	ldx	#$ff
+	rts
+
+REUxVal:	ldx	#0
+	nop
+	lda	ramExpSize
+	cmp	#$02
+	bcs	10$
+05$:	ldb	REUxVal+1,#$ff
+	ldb	REUxVal+2,#$60
+	jmp	REUxVal
+10$:	ldb	REUxBnk,#1
+	ldy	#$03
+20$:	lda	$88c7,y
+	bne	30$
+	dey
+	cpy	#$ff
+	bne	20$
+	beq	50$
+30$:	lda	$848e,y
+	and	#$0f
+	cmp	#$04
+	bcs	45$
+	tax
+	lda	$88c7,y
+	clc
+	adc	REUxBctC,x
+	sta	REUxBnk
+	clc
+	adc	#1
+	cmp	ramExpSize
+	bcc	$50
+45$:	ldb	REUxVal+1,#$ff
+50$:	lda	#0
+	jsr	REUxFtch
+90$:	ldb	REUxVal+2,#$60
+	jmp	REUxVal
+REUxBctC:	.byte	0,3,6,13
+
+
+REUxFtch:	pha
+	mvb	R1H,REUxFtc1+1
+	ldw	R0,#REUxBlk
+	ldb	R1L,#$00
+	sta	R2L
+	ldb	R2H,#$01
+	.byte	$a9	; lda immediate
+REUxBnk:	.byte	7
+	sta	R3L
+	.byte	$a9	; lda immediate
+REUxCdty:	.byte	0	; curr pg dirty flag
+	beq	10$
+	lda	REUxCPg
+	sta	R1H
+	jsr	StashRAM
+	ldb	REUxCdty,#0	; clear dirty flag
+10$:	pla
+	sta	REUxCPg
+	sta	R1H
+	jsr	FetchRAM	; finish the fetch
+REUxFtc1:	lda	#0
+	sta	R1H
+	rts
+
+
+;*****************************
+;* GetRByte	Read byte from open buffer
+;* Inputs:
+;* Outputs:
+;*	.a	byte read
+;*	.x > 0 for error
+;******************************
+GetRByte:	sty	GetROt+1
+	jsr	REUxGet
+	bne	GetROt
+	inc	REUxRDx
+	bne	GetROt
+	inc	REUxRPg
+GetROt:	ldy	#0
+	rts
+
+REUxGet:	.byte	$a9	; lda immediate
+REUxRPg:	.byte	0
+	cmp	REUxCPg
+	beq	10$
+	jsr	REUxFtch
+	lda	REUxRPg
+10$:	pha
+	.byte $a0	; ldy immediate
+REUxRDx:	.byte	0	
+	pla
+	cmp	REUxWPg
+	bne	REUxFGt
+	cpy	REUxWDx	; now chk byte
+	bcc	REUxFGt
+	ldx	#$ff
+	rts
+REUxFGt:	lda	REUxBlk,y
+	ldx	#0
+	rts	
+
+;*****************************
+;* GetRevB	Read byte, go backwards
+;* Inputs:
+;* Outputs:
+;*	.a	byte read in
+;*	.x > 0 for error
+;******************************
+GetRevB:	sty	GetRvOt+1
+	jsr	REUxGet
+	bne	GetRvOt
+	ldx	REUxRDx
+	beq	30$
+	dec	REUxRDx
+	ldx	#0
+	beq	GetRvOt
+30$:	ldx	REUxRPg
+	cmp	REUxTPg	; check against header
+	bne	40$
+	ldx	#$ff
+	bne	GetRvOt
+40$:	dec	REUxRDx
+	dec	REUxRPg
+	ldx	#0
+GetRvOt:	ldy	#0
+	rts
+
+;*****************************
+;* CreatRW	Create/Reset write buffer
+;* Inputs:
+;* Outputs:
+;*	.x > 0 for error
+;******************************
+CreatRW:	jsr	REUxVal
+	beq	10$
+	rts
+10$:	ldb	REUxWPg,#0
+	sta	REUxRDx
+	sta	REUxWDx
+	sta	REUxTPg
+REUxWChk:	ldx	#0
+	rts
+
+
+;*****************************
+;* PutRByte	Write to open write buffer
+;* Inputs:
+;*	.a	Byte to write out
+;* Outputs:
+;*	(no error, as buffer is a loop)
+;******************************
+PutRByte:	sty	PutROt+1
+	pha
+	.byte	$a9	; lda immediate
+REUxWPg:	.byte	0
+	cmp	REUxCPg
+	beq	10$
+	jsr	REUxFtch
+10$:	.byte $a0	; ldy immediate
+REUxWDx:	.byte	0	
+	pla
+	sta	REUxBlk,y
+10$:	inc	REUxCdty	; set dirty flag
+	beq	10$
+	inc	REUxWDx
+	bne	PutROt
+	inc	REUxWPg
+	lda	REUxWPg
+	.byte	$c9	; cmp immediate
+REUxTPg:	.byte 0
+	bne	PutROt
+	lda	REUxTPg
+	clc
+	adc	#$10
+	sta	REUxTPg
+PutROt:	ldy	#0
+	rts
+
+
+;*****************************
+;* FlushR	Flush written bytes to REU
+;* Inputs:
+;* Outputs:
+;******************************
+;*	FlushR(	)
+FlushR:	lda	REUxCPg
+	jmp	REUxFtch	
+
+.ramsect
+REUxCPg:	.block 1
+REUxBlk:	.block 257	; Current Page
+
+</pre></body></html>

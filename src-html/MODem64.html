@@ -1,0 +1,34 @@
+<!DOCTYPE html><html><head><title>Untitled</title></head><body><pre>
+;*********************************************
+;* MODem64   - geoProjects library 
+;*		written by Bo Zimmerman
+;*		adapted from commLib2.bin by Ilker Ficicilar
+;*
+;* Intro:
+;*	Package for C64 version of MODmodem.
+;*	See MODmodem for more information.
+;*********************************************
+
+MODMODEM = 64
+
+;* Jump table, to make it relocatable
+JComInit:		jmp ComInit
+JComUninst:	jmp ComUninst
+JComReInit:		jmp ComReInit
+JComDisable:	jmp ComDisable
+JComEnable:	jmp ComEnable
+JComFlon:		jmp ComFlon
+JComFloff:		jmp ComFloff
+JComOnline:	jmp ComOnline
+JComSend:		jmp ComSend
+JComSPut:		jmp ComSPut
+JBaudSet:		jmp BaudSet
+JIsNTSC:		jmp IsNTSC
+JPauSec:		jmp PauSec
+JComGet:		jmp ComGet
+JComBufR:		jmp CLL2xxRb
+JComPush:		jmp ComPush
+
+.include MODmodem
+
+</pre></body></html>
