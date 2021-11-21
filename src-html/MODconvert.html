@@ -6,7 +6,7 @@
 ;****************************************
 ;* MODconvert - geoProjects library (C) 1998 Bo Zimmerman
 ;*
-;* Grants the functionality to do in-place file 
+;* Grants the functionality to do in-place file
 ;* conversions to and from the .cvt format.
 ;*
 ;* Functions:
@@ -14,8 +14,8 @@
 ;* unConv	(A2	pointer to .cvt filename) *
 ;*
 ;* 	* = includes i_Function call
-;*	.x	errors if any, 
-;*		0 = ok, 
+;*	.x	errors if any,
+;*		0 = ok,
 ;*		$ff = not geos, not cvt
 ;*	curDrive - device file is on
 ;* Comments:
@@ -25,7 +25,7 @@
 ;*******************************
 ;* Convert
 ;*
-;* Inputs:	
+;* Inputs:
 ;*	A2	pointer to filename of GEOS file
 ;*
 ;*	curDrive - device file is on
@@ -79,7 +79,7 @@ Convert:	mvw	A2,R6
 ;*******************************
 ;* i_Convert
 ;*
-;* Inputs:	
+;* Inputs:
 ;*	.word	pointer to filename of GEOS file
 ;*
 ;*	curDrive - device file is on
@@ -95,7 +95,7 @@ i_Convert:	jsr	APIinit
 ;*******************************
 ;* unConv
 ;*
-;* Inputs:	
+;* Inputs:
 ;*	A2	pointer to filename of .cvtfile
 ;*
 ;*	curDrive - device file is on
@@ -111,11 +111,11 @@ unConv:	mvw	A2,R6
 	rts
 10$:	mvw	R1,CONVdtns
 	mvw	R5,CONVdptr
-	ldy	#0
-	lda	(R5),y
-	and	#$1f
-	cmp	#3	; REL,USR files not allowed!
-	bge	14$
+	;ldy	#0
+	;lda	(R5),y	; Apparantly, USR convert
+	;and	#$1f	; files are a thing...
+	;cmp	#3	; REL,USR files not allowed!
+	;bge	14$
 	ldy	#$16
 	lda	(R5),y	; is GEOS file?
 	beq	15$
@@ -134,7 +134,7 @@ unConv:	mvw	A2,R6
 ;*******************************
 ;* i_unConv
 ;*
-;* Inputs:	
+;* Inputs:
 ;*	.word	pointer to filename of .cvt file
 ;*
 ;*	curDrive - device file is on
@@ -161,15 +161,16 @@ CONVisit:	mvw	CONVdptr,R5
 	cpx	#0
 	beq	11$
 10$:	rts
-11$:	lda	CONVblk+$20,x
+11$:	ldx	#$03	; SKIP 'PRG' part
+20$:	lda	CONVblk+$20,x
 	cmp	CONVsigD,x
 	bne	10$
 	inx
 	cpx	#26
-	blt	11$
+	blt	20$
 	ldx	#0
 	rts
-	
+
 
 CONVbldd:	mvw	CONVdptr,R5
 	ldy	#$00
@@ -467,7 +468,7 @@ CONVsigD:
 
 .ramsect
 CONVblk:	.block	256	; signiture block
-CONVtns:	.block	2	; track and sector 
+CONVtns:	.block	2	; track and sector
 CONVdtns:	.block	2	; directory tns
 CONVdptr:	.block	2	; directory entry ptr
 CONVvlix:	.block	1	; VLIR index
