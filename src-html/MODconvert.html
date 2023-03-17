@@ -71,8 +71,7 @@ Convert:	mvw	A2,R6
 	jsr	CONVunGeo	; rebuild directory entry
 	cpx	#0
 	bne	19$
-	jsr	CONVlink
-	rts
+	jmp	CONVlink
 
 ;*******************************
 ;* i_Convert
@@ -126,8 +125,7 @@ unConv:	mvw	A2,R6
 20$:	jsr	CONVbldd
 	beq	30$
 	rts
-30$:	jsr	CONVulnk
-	rts
+30$:	jmp	CONVulnk
 
 ;*******************************
 ;* i_unConv
@@ -399,8 +397,7 @@ CONVunGeo:	mvw	CONVdptr,R5
 	sta	(R5),y	; done increasing block size
 	ldw	R4,#$8000
 	mvw	CONVdtns,R1
-	jsr	PutBlock	; now update directory!
-	rts
+	jmp	PutBlock	; now update directory!
 
 CONVinfo:	mvw	CONVblk,R1
 	ldw	R4,#$8100
