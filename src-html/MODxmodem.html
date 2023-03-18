@@ -432,8 +432,7 @@ XMOMinFlush:	;jsr	XMOBufR	; TODO: could this be a prob?
 	lda	#0
 	sta	XMOBufBit
 	sta	XMOGood
-	jsr	XMOReTm
-	rts
+	jmp	XMOReTm
 
 XMOgetKey:	tya
 	pha
