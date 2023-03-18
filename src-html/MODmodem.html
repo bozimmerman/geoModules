@@ -553,8 +553,7 @@ CLL2Bnkr:	ldw R0,#CLL2NMI1
 	ldw R2,#(CLL2NMIv - CLL2NMI1 + 10)
 	ldb R3L,#$01
 	ldb R3H,#$00
-	jsr $c2e3	; MoveBData
-	rts
+	jmp $c2e3	; MoveBData
 
 CLL2Bnkw:	phw $fffa
 	jmp CLL2BnkN
