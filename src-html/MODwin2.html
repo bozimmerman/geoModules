@@ -517,8 +517,7 @@ WIN2Otln:	lda	#0
 	mvb	APITemp1,R2H	; APITemp1 has WIN1Bot or WIN2Bot!!
 	svw	#12,R4
 	lda	#255
-	jsr	FrameRectangle
-	rts
+	jmp	FrameRectangle
 
 
 WIN2TbTx:	mvb	R2L,R1H	; write the title bar
@@ -537,8 +536,7 @@ WIN2TbTx:	mvb	R2L,R1H	; write the title bar
 	lsr	APITemp2+1
 	ror	APITemp2
 	sbw	APITemp2,R11	; divide words by two now
-12$:	jsr	PutString
-	rts
+12$:	jmp	PutString
 
 
 
@@ -582,8 +580,7 @@ WIN2ClBx:	mvw	R4,R3	; right into left
 	avb	#3,R2L
 	avw	#4,R3
 	svw	#4,R4
-	jsr	Rectangle
-	rts	
+	jmp	Rectangle
 
 WIN2Evnt:	jsr	WIN2Nada
 	lda	WIN2moto
