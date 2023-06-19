@@ -1,4 +1,4 @@
-geoModules (C)1997-2017 Bo Zimmerman
+geoModules (C)1997-2023 Bo Zimmerman
 Please read the LICENSE file for license information
 Please read the NOTICE file for credits information
 Home Page: http://www.zimmers.net/geos/geomods.html
@@ -40,26 +40,33 @@ geoModules implemented
 
 Below are all of the modules hitherto implemented along with their functions and parameters. They are all tested unless otherwise noted.
 
-MODstring - Various string handling routines
-MODwin2 - Dual movable windows module
-MODflist - Directory files/list handling routines
-MODclicks - Random click area helper code
-MODdaAB - Desk accessory menu and About menu module
-MODferr - File/Disk error message box
-MODscrn - General OK, Cancel, and Yes/No dialogs
-MODvPrg - VLIR application support module
-MODfbox - Open/Create/Quit box, along with support dialogs
-MODseqW - Create and write to sequential-type files.
-MODgeoWx - Creation and writing to geoWrite documents.
-MODseqR - Opening and reading from sequential-type files.
-MODsecIO - Support for reading to and from disk sectors in order.
-MODgeoRx - Opening and reading geoWrite documents to a window.
-MODtbox - Multi-line text box support.
-MODdemo - Assist in creation of limited-use demo applications.
-MODconvert - Convert and Unconvert GEOS files to and from .CVT.
-MODfcopy - Copy any file type from one drive to another.
-
+ MODstring  - Various string handling routines
+ MODwin2    - Dual movable windows module
+ MODflist   - Directory files/list handling routines
+ MODclicks  - Random click area helper code
+ MODdaAB    - Desk accessory menu and About menu module
+ MODferr    - File/Disk error message box
+ MODscrn    - General OK, Cancel, and Yes/No dialogs
+ MODvPrg    - VLIR application support module
+ MODfbox    - Open/Create/Quit box, along with support dialogs
+ MODseqR    - Opening and reading from sequential-type files.
+ MODseqW    - Create and write to sequential-type files.
+ MODgeoRx   - Opening and reading geoWrite documents to a window.
+ MODgeoWx   - Creation and writing to geoWrite documents.
+ MODsecIO   - Support for reading to and from disk sectors in order.
+ MODtbox    - Multi-line text box support.
+ MODdemo    - Assist in creation of limited-use demo applications.
+ MODconvert - Convert and Unconvert GEOS files to and from .CVT.
+ MODfcopy   - Copy any file type from one drive to another.
+ MODem64    - User port modem interactions for C64.
+ MODem128   - User port modem interactions for C128.
+ MODmodem   - Shared code for MODem64 & MODem128 - DO NOT USE
+ MODreuX    - Use a REU/geoRAM as read/write stream.
+ MODxmodem  - X-Modem serial transfer protocol.  Requires MODem64/128
+ 
+------------
 MODstring
+------------
 
 Introduction: This module is intended to handle all facets of string manipulation. A string is defined as a sequential series of bytes representing GEOS ASCII characters, and terminated by a null character (0).
 
@@ -145,7 +152,9 @@ i_CpyStr
 	.word	Pointer to destination string
 
 
+------------
 MODwin2
+------------
 
 Introduction: This powerful modules provides support for the creation of two movable, resizable, overlapping windows. The windows contain a centered titlebar, and two work bars on the right and bottom, which the programmer may use as he pleases. They also contain a programmable close button on the top right, and a resizing gadget on the bottom right. The windows are moved by dragging the window by the title bar. The windows are initialized by calling Win1Mv, Win2Mv, Win1Init, Win2Init, and finally WindInit. Only that last should receive a non-null for the "Draw Now" parameter. Also, WindInit must only be called once per application, while the others may be re-called at will.
 
@@ -268,7 +277,9 @@ i_Winact
 	.byte	0 = swap, 1=activate Window 1, 2=activate Window 2
 
 
+------------
 MODflist
+------------
 
 Introduction: Handles the retreival of complete disk filename lists into a buffer as null-terminated strings. It also includes all manner of traversal and display routines for any lists formatted in this way.
 
@@ -286,12 +297,12 @@ i_File2List
 Get File List 2: Retreives a buffer of filenames from the current drive.
 				This version is slightly more versatile than Get File List
 Return Values: .x contains standard errors
-FileList
+File2List
 	A2	Pointer to a destination buffer
 	A3	Pointer to the end of the destination buffer
 	A4L	Number of file entries to skip
 	A4H	Maximum number of file entried to read
-i_FileList
+i_File2List
 	.word	Pointer to a destination buffer
 	.word	Pointer to the end of the destination buffer
 	.byte	Number of file entries to skip
@@ -371,7 +382,9 @@ i_PikList
 	R4	Right side of the box to print in
 
 
+------------
 MODclicks
+------------
 
 Introduction: Remembers the dimensions of 20 or more click areas (buttons, or whatever). Includes functions to dynamically set the click areas, detect mouse clicks within them, and automatically handle these clicks.
 
@@ -428,7 +441,9 @@ Return Values: NONE
 DoAllClicks
 
 
+------------
 MODdaAB
+------------
 
 Introduction: This great module handles the initialization of a GEOS menu to include all desk accessories on the current drive. It will handle execution of the desk accessories on this menu when appropriate. It also includes a "program info" (about) option off the geos menu, and will display a dialog box with strings of your choice on selection of this option. After this module is initialized, it must be linked to your main menu code by pointing your "geos" menu to the structure "DAABMenu".
 
@@ -448,7 +463,9 @@ i_InitDaAb
 	.word	Pointer to a buffer of four strings to display in the about box
 
 
+------------
 MODferr
+------------
 
 Introduction: Displays a dialog box with one of the GEOS disk error messages.
 
@@ -460,7 +477,9 @@ FError
 	.x	error message to generate, or 0 to abort
 
 
+------------
 MODscrn
+------------
 
 Introduction: Module to contain some common screen controls.
 
@@ -498,7 +517,9 @@ i_OKCANBox
 	.word	Pointer to string message to display
 
 
+------------
 MODvPrg
+------------
 
 Introduction: Module to support VLIR applications with module loading/app init functions.
 
@@ -528,8 +549,9 @@ i_VJump
 	.byte	Offset from VPRGBase to execute (0,3,6,9,etc)
 
 
-
+------------
 MODfbox
+------------
 
 Introduction: Module to support all major opening file screens for a workfile based application. This includes the standard OPEN an existing file/CREATE a new file/QUIT to deskTop. The Open/Create screens screens include fully functional DISK/DRIVE icons which are sensitive to the application disk (see curDrive below), and to single drive systems. The Create box will check for already existing files. Auto-clicked filenames are also supported.
 
@@ -548,8 +570,9 @@ FileBox
         curDrive the application drive (no DISK icon will appear on this drive)
 
 
-
+------------
 MODseqW
+------------
 
 Introduction: The creation of standard commodore sequential and program files is supported here as well as writing to them. All write/file buffers are maintained internally. Only one open file is supported at present.
 
@@ -605,7 +628,7 @@ Return Values: none
 MakeFNUpp
 	A2	Pointer to filename
 
-Close SF     : Close the last page in the geoWrite file and close the file.
+Close SF     : Close the last page in the file and close the file.
 Return Values: .x error message if any
 ClosSF
 	A2L	File type to save as
@@ -613,8 +636,9 @@ i_ClosSF
 	.byte	File type to save as
 
 
-
+------------
 MODgeoWx
+------------
 
 Introduction: This module supports the creation and SEQUENTIAL writing of genuine geoWrite 2.0 style files. This version is compatible with MODvPrg above, meaning that the file will remain open no matter what virtual block of code is loaded into memory. However, this means that all the standard disk block buffers ($8000-$8300) were extensively used. Pictures are also supported, as well as auto-matic page breaking after 65 lines.
 
@@ -681,8 +705,9 @@ i_CloseWF
 	.word	Pointer to geoWrite file name
 
 
-
+------------
 MODseqR
+------------
 
 Introduction: The reading of standard commodore sequential and program files is supported here. All read/file buffers are maintained internally. Only one open file is supported at present.
 
@@ -726,9 +751,34 @@ i_GetSMem
 	.word	Pointer to the buffer for input
 	.word	Pointer to the last byte in the buffer
 
+------------
+MODseqR
+------------
+
+Introduction: The reading of standard commodore sequential and program files is supported here. All read/file buffers are maintained internally. This library allows multiple files may be opened.
+
+Functions:
+
+Open SF    : Open the sequential file for reading.
+Return Values: .x error message if any
+OpenSF
+	A2	Pointer to file name
+	A3L	File number to open (1, 2, 3...)
+	A3L	Drive search flag, 0=current only
+i_OpenSF
+	.word	Pointer to file name
+	.byte	File number to open (1, 2, 3...)
+	.byte	Drive search flag, 0=current only
+
+Read S Byte   : Input a single character from a file
+Return Values: .a byte read in, .x error message if any
+ReadSB                                  * unprotected
+    A2L File number (1, 2, 3...)
 
 
+------------
 MODsecIO
+------------
 
 Introduction: This module supports reading from and writing to direct disk sectors in clumps. Only useful for disk archiver so far, but I may find another use in the future.
 
@@ -788,8 +838,9 @@ i_WriteSecs
 	SECTOR	Pre-set
 
 
-
+------------
 MODgeoRx
+------------
 
 Introduction: Given a particular window size, this module supports displaying and navigating the pages of a geoWrite document. Coded so far is support for Fonts, pictures, styles, and rulers.
 
@@ -846,9 +897,9 @@ NextGPg
 i_NextGPg
 
 
-
-
+------------
 MODtbox
+------------
 
 Introduction: Supports the maintenance of one or more text boxes which may have character limits for both input and display, and also may be more than one line.
 
@@ -889,8 +940,9 @@ Return Values: none
 TBoxResume
 
 
-
+------------
 MODdemo
+------------
 
 Introduction: For a special edition of ChromeMag, I received permission from LoadStar to republish many of my old GEOS programs. To encourage people to actually purchase the edition of LoadStar from which these programs came, I added code that would mark both the disk and the file with a counter. The same code then used the counter to enforce a limit on the number of times the program would run.
 
@@ -908,8 +960,9 @@ i_SetDemo
 	.byte	Maximum number of times to run
 
 
-
+------------
 MODconvert
+------------
 
 Introduction: The Convert series of applications has long been a staple in the GEOS world, allowing the non-standard GEOS formatted file to be changed into a more standard sequential style file, and back again. This allows the files to be easily transmitted between different computers. This module contains the basic functionality of that process.
 
@@ -930,7 +983,9 @@ i_Convert
 	.word	Name of .CVT file to unconvert
 
 
+------------
 MODfcopy
+------------
 
 Introduction: Quite simply, this module supports copying of a file of any file type between two drives. The copy buffer must be supplied by the application, and must be between 3 and 126 blocks long.
 
@@ -951,3 +1006,148 @@ i_FileCopy
 	.word	Address of the end of the copy buffer (+1)
 	.byte	The destination drive device number
 
+
+------------
+MODreuX
+------------
+
+Introduction: A module for reading and writing to REU memory as a file device, forward and backward, after dynamically checking for a free block.  Maintains its own small buffer.
+
+Functions:
+
+Open Ram     : Open buffer for reading.
+Return Values: .x $0 is ok, other is an error finding free ram space
+OpenRR
+
+Seek Ram     : Seek to read position
+Return Values: .x $0 is ok, other is an error finding position
+SeekRR
+    A2  Pointer to new read position (0-n)
+
+Get Ram Byte : Read byte from open buffer, advance
+Return Values: .a contains byte read, .x $0 is ok, other is an error
+GetRByte	
+
+Get Reverse Byte : Read byte from open buffer, go backwards
+Return Values: .a contains byte read, .x $0 is ok, other is an error
+GetRevB	
+
+Create Ram Write : Create/Reset write buffer
+Return Values: .x $0 is ok, other is an error
+CreatRW
+
+Put Ram Byte : Write to open write buffer
+Return Values: No error, since buffer is a loop
+PutRByte
+    .a  Byte to write out
+
+Flush Ram    : Flush written bytes to REU
+Return Values:
+FlushR
+
+
+------------
+MODem64 
+MODem128 
+MODmodem
+------------
+
+Introduction: A module for reading and writing to an RS-232 device connected to a C64 or C128 user port such as traditional or internet modems.
+
+Functions:
+
+Com Init	: Initialize RS-232 system
+Return Values: none
+ComInit
+	A2L Input Buffer Addr Page
+	A2H Size of A2 Buf in Pages (unimpl)
+	A3L Baud Rate Code (0=300, 1=1200, 2=2400, 3=4800, 4=7200,5=9600,6=144, 7=192)
+	A3H Flow Control Code (0=None, $40=XOFF, $80=RTSCTS,$C0=BOTH)
+
+Com Uninstall: Remove RS-232 system.  Should be called before exiting program or calling DA. 
+Return Values: none
+ComUninst
+
+Com Re-Init: Re-Initialize RS-232 system, for when Com Uninstall was previously called.
+Return Values: none
+ComReInit
+
+Com Disable: Disable RS-232 system, for temporary safety when doing I/O.
+Return Values: none
+ComDisable
+
+Com Enable: Re+Enable disabled RS-232 system, for when ComDisable was previously called.
+Return Values: none
+ComEnable
+
+Com Online: Check whether DCD is high
+Return Values: 	N = 0, not online, N > 0, online
+ComOnline
+
+Com Send: Send byte to RS-232
+Return Values: none
+ComSend
+	.a Byte to send
+
+Com Safe Put: Safe Send byte to RS-232
+Return Values: none
+ComSPut
+	.a Byte to send
+
+Baud Set: Change RS-232 Baud Rate
+Return Values: none
+BaudSet
+	A2L Baud Rate Code (0=300, 1=1200, 2=2400, 3=4800, 4=7200,5=9600,6=144, 7=192)
+
+Is NTSC: Is the computer NTSC?
+Return Values: none
+IsNTSC
+
+Pause Second: Pause about a second
+Return Values: 	Lost Time.
+PauSec
+
+Com Get: Read RS-232 Byte
+Return Values: .carry set=nada, clear=byte, .a the byte received or 0
+ComGet
+
+Com Flon: Turn on incoming data by turnning on RTS flag
+Return Values: none
+ComFlon
+
+Com Floff: Turn off incoming data by turnning off RTS flag
+Return Values: none
+ComFloff
+
+
+------------
+MODxmodem
+------------
+
+Introduction: A module for sending and receiving data using the X-Modem protocol.  Supports CHK and CRC16. Requires MODmodem or compatible library
+
+Functions:
+
+XModem Receive Checksum: X-Modem Receive (checksum)
+Return Values: .x = 0 no error
+XMOrcvChk
+    A2 Vector - Receive a single byte in .a
+	A3 Vector - Received a good block
+	A4 Vector - Received a bad block
+	A5 Vector - Abort check (carry set = abort)
+
+XModem Receive CRC: X-Modem Receive (CRC-16)
+Return Values: .x = 0 no error
+XMOrcvCrc
+    A2 Vector - Receive a single byte in .a
+	A3 Vector - Received a good block
+	A4 Vector - Received a bad block
+	A5 Vector - Abort check (carry set = abort)
+
+XModem Send: X-Modem Send
+Return Values: .x = 0 no error
+XMOsend
+    A2  Vector - Ensure 128 bytes available
+	A3  Vector - Send a single byte in .a, .x=no more
+	A4  Vector - Sent a bad block
+	A5  Vector - Abort Check (carry set = abort)
