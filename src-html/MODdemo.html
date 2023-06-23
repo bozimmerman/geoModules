@@ -126,8 +126,7 @@ DEMINITS:
 	ldw	A4,#DEMNOOP+12
 	ldx	#A6
 	ldy	#A5
-	jsr	CopyString
-	rts
+	jmp	CopyString
 
 DEMUPH:	ldx	#$90
 	lda	DEMNUMH
