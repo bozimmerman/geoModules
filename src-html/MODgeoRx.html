@@ -58,8 +58,7 @@ InitGeoR:	mvw	A2,GEORFBUF
 	mvw	A5,GEORPSIZ
 	mvw	A6,GEORCBUF
 	ldw	A6,#GEORFTAB
-	jsr	GEORRDFT	; destroys A1-A2, A5-A6
-	rts
+	jmp	GEORRDFT	; destroys A1-A2, A5-A6
 
 ;******************************
 ;* i_InitGeoR	InitialiZe this module
@@ -632,8 +631,7 @@ GEORMkPg:	mvb	GEORWIND,GEORTXTY	; top into first line
 	mvw	GEORCCRD,R0
 	ldy	#25
 	lda	(R0),y
-	jsr	GEORByNL
-	rts
+	jmp	GEORByNL
 
 
 
@@ -739,8 +737,7 @@ GEORnwC2:	ldy	#3
 	beq	10$	; mixed up BSW id
 	cwi	APITemp1,#9
 	bne	11$	; correct BSW id
-10$:	jsr	UseSystemFont
-	rts
+10$:	jmp	UseSystemFont
 11$:	ldw	A4,#GEORFTAB	; point to first font in table
 12$:	mvw	A4,A2
 	ldy	#0
@@ -1009,8 +1006,7 @@ GEORgfx1:	mvw	A2,A3	; make sure pointing to end!
 	jsr	GEORByNL
 	blt	12$
 	ldb	GEORTXTY,#$f0	; fake a bottoming out
-	jsr	GEORglTB
-	rts
+	jmp	GEORglTB
 12$:	jsr	GEORgPtH
 	ldy	#2
 	lda	(A2),y
@@ -1032,8 +1028,7 @@ GEORgfx1:	mvw	A2,A3	; make sure pointing to end!
 15$:	cpw	APITemp2,APITemp1	; picture bigger than remaining?
 	blt	GEORgfx2
 16$:	ldb	GEORTXTY,#$f0	; fake a bottoming out
-	jsr	GEORglTB
-	rts
+	jmp	GEORglTB
 
 	;* display a graphics clip from geoWrite
 GEORgfx2:	jsr	GEORsTSB	; make sure picture not shown 2ce
@@ -1112,8 +1107,7 @@ GEORclpR:	ldw	A4,#APITemp3	; see geos prg ref guide for
 	sta	(R0),y
 	jsr	GEORsvRg
 	ldw	A4,#APITemp3
-	jsr	GEORldRg
-	rts
+	jmp	GEORldRg
 
 
 
@@ -1165,8 +1159,7 @@ GEORdown:	ldb	APITemp1,#0	; save a next VLIR flag
 	iny
 	lda	#1	; save new byte into nxt currcard
 	sta	(R0),y	; and now we're ready!
-13$:	jsr	GEORNewPg
-	rts
+13$:	jmp	GEORNewPg
 
 
 
@@ -1196,8 +1189,7 @@ GEORup:	lda	GEORPNUM	; are we at first page?
 	jsr	GEORpVPg	; YES! So decrement VLIR pointer!
 12$:	mvw	GEORPCRD,GEORCCRD
 	svw	#26,GEORPCRD
-	jsr	GEORNewPg
-	rts
+	jmp	GEORNewPg
 
 ;*******************************
 ;* StngWidth
