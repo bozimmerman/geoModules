@@ -70,8 +70,7 @@ InitDaAb:	mvb	curDrive,DAABdrv
 15$:	pla
 	beq	13$
 	bne	14$
-16$:	jsr	DAABinit
-	rts
+16$:	jmp	DAABinit
 
 ;*******************************
 ;* i_InitDaAb
