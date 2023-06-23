@@ -201,8 +201,7 @@ FCOPcopy:	jsr	FCOPosrc
 	rts
 20$:	jsr	FCOPodst	; set destination drive
 	bne	10$
-	jsr	FCOPclose	; finalize the file
-	rts	
+	jmp	FCOPclose	; finalize the file
 
 
 
@@ -368,8 +367,7 @@ FCOPcrfi:	mvw	A3, R6	; copy dst filename pointer
 	blt	37$
 40$:	mvw	FCOPdtns,R1	; resave new dir entry
 	ldw	R4,#$8000
-	jsr	PutBlock
-	rts
+	jmp	PutBlock
 
 FCOPwr:	mvw	FCOPbufD,R4	; check for end of chain
 	ldw	R1,#0
